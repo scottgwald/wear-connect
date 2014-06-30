@@ -1,0 +1,23 @@
+<html style="width:100%; height:100%; overflow:hidden">
+<head>
+<!-- You can include external scripts here like so... -->
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>-->
+</head>
+<body style="width:100%; height:100%; overflow:hidden; margin:0" bgcolor="#000">
+<canvas id="canvas" width="640" height="360" style="display:block"></canvas>
+<script>
+function ui() {
+    WS.log('Welcome to WearScript');
+    WS.say('Welcome to WearScript');
+    WS.sound('SUCCESS')
+}
+function main() {
+    if (WS.scriptVersion(1)) return;
+    ctx = document.getElementById('canvas').getContext("2d");
+    ui();
+}
+window.onload = main;
+</script>
+</body>
+</html>
