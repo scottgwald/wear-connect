@@ -7,171 +7,17 @@
 <body style="width:100%; height:100%; overflow:hidden; margin:0" bgcolor="#000">
 <canvas id="canvas" width="640" height="360" style="display:block"></canvas>
 
-<script type="text/html" id="tpl_card0">
-    <article>
-      <section>
-        <ul class="text-x-small">
-          <li>Gingerbread</li>
-          <li>Chocolate Chip Cookies</li>
-          <li>Tiramisu</li>
-          <li>Donuts</li>
-          <li>Sugar Plum Gummies</li>
-        </ul>
-      </section>
-      <footer>
-        <p>Grocery list</p>
-      </footer>
-    </article>
-</script>
 <script type="text/html" id="tpl_card1">
-    <article>
-      <figure>
-        <img src="https://mirror-api-playground.appspot.com/links/lincoln.png">
-      </figure>
-      <section>
-        <table class="text-small align-justify"> 
-          <tbody>
-            <tr>
-              <td>Born</td>
-              <td>Feb 12, 1809</td>
-            </tr>
-            <tr>
-              <td>Died</td>
-              <td>Apr 15, 1865</td>
-            </tr>
-            <tr>
-              <td>Height</td>
-              <td>6ft 4in</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+    <article class="photo">
+        <img src="file:///storage/emulated/legacy/wearscript/gists/2ccc3cbc004d786a8580/pen1-BK.png" width="100%" height="100%">
+        <div class="overlay-gradient-tall-dark" />
+        <section>
+            <p class="text-auto-size" style="visibility: visible; font-size: 100%; text-align: center">
+                pen / pluma
+            </p>
+        </section>
     </article>
 </script>
-
-<script type="text/html" id="tpl_card2">
-    <article>
-      <figure>
-        <ul class="mosaic mosaic3">
-          <li style="background-image: url(https://mirror-api-playground.appspot.com/links/washington.jpg)"></li>
-          <li style="background-image: url(https://mirror-api-playground.appspot.com/links/lincoln.png)"></li>
-          <li style="background-image: url(https://mirror-api-playground.appspot.com/links/obama.jpg)"></li>
-          <li style="background-image: url(https://mirror-api-playground.appspot.com/links/washington.jpg)"></li>
-          <li style="background-image: url(https://mirror-api-playground.appspot.com/links/lincoln.png)"></li>
-        </ul>
-      </figure>
-      <section>
-        <p class="text-medium">
-          U.S. Presidents
-        </p>
-        <table class="text-small align-justify">
-          <tbody>
-            <tr>
-              <td>Washington</td>
-              <td>1<sup>st</sup></td>
-            </tr>
-            <tr>
-              <td>Lincoln</td>
-              <td>16<sup>th</sup></td>
-            </tr>
-            <tr>
-              <td>Obama</td>
-              <td>44<sup>th</sup></td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-    </article>
-</script>
-
-<script type="text/html" id="tpl_card3">
-    <article>
-      <section>
-        <table class="align-justify"> 
-          <tbody>
-            <tr>
-              <td>AAPL</td>
-              <td>503.73</td>
-              <td class="red">-16.57 (3.18%)</td>
-            </tr>
-            <tr>
-              <td>AMZN</td>
-              <td>274.03</td>
-              <td class="green">+6.09 (2.27%)</td>
-            </tr>
-            <tr>
-              <td>GOOG</td>
-              <td>727.58</td>
-              <td class="red">-12.41 (1.68%)</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-    </article>
-</script>
-
-<script type="text/html" id="tpl_card4">
-    <article>
-      <section>
-        <div class="layout-two-column">
-          <div class="align-center">
-            <p>Celtics</p>
-            <p class="text-x-large">101</p>
-          </div>
-          <div class="align-center">
-            <p>Bulls</p>
-            <p class="text-x-large">95</p>
-          </div>
-        </div>
-      </section>
-      <footer>
-        <p>Final Score</p>
-      </footer>
-    </article>
-</script>
-
-<script type="text/html" id="tpl_card5">
-    <article>
-      <section>
-        <div class="layout-figure">
-          <div class="align-center">
-            <p class="text-x-large">BOS</p>
-            <img src="https://mirror-api-playground.appspot.com/links/plane.png" width="50" height="50">
-            <p class="text-x-large">SFO</p>
-          </div>
-          <div>
-            <div class="text-normal">
-              <p>Virgin America 351</p>
-              <p>Gate B38</p>
-              <p>8:35am</p>
-              <p class="green">On Time</p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </article>
-</script>
-
-<script type="text/html" id="tpl_card6">
-    <article>
-      <figure>
-        <img src="https://mirror-api-playground.appspot.com/links/movie.jpg">
-      </figure>
-      <section>
-        <h1 class="text-large">Movie</h1>
-        <p class="text-x-small">
-          <img class="icon-small" src="https://mirror-api-playground.appspot.com/links/rated_r.png">
-          120 min / Drama
-        </p>
-        <hr>
-        <p class="text-normal">
-          1:15 2:10 4:15<br>
-          Movie Theatre
-        </p>
-      </section>
-    </article>
-</script>
-
 
 <script>
 function ui() {
@@ -180,7 +26,7 @@ function ui() {
     WS.sound('SUCCESS');
 
     var tree = new WS.Cards();
-    tree.addHTML('tpl_card0').addHTML('tpl_card1').addHTML('tpl_card2').addHTML('tpl_card3').addHTML('tpl_card4').addHTML('tpl_card5').addHTML('tpl_card6');
+    tree.addHTML('tpl_card1');
     WS.cardTree(tree);
     WS.displayCardTree();
 }
