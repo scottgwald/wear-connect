@@ -20,6 +20,7 @@
 </script>
 
 <script>
+
 function ui() {
     WS.log('Welcome to WearScript');
     WS.say('Welcome to WearScript');
@@ -29,7 +30,34 @@ function ui() {
     tree.addHTML('tpl_card1');
     WS.cardTree(tree);
     WS.displayCardTree();
+
+    var customEndpoint = 'ws://192.168.1.254:8112/';
+    WS.serverConnect(customEndpoint, serverCustom);
 }
+
+function serverCustom() {
+    WS.sound('SUCCESS');
+    WS.subscribe('registered', registered);
+    WS.subscribe('blob', blobCB);
+    WS.subscribe(WS.groupDevice(), blobCB);
+    WS.publish('register', 'registered', WS.groupDevice());
+    WS.publish('blob', 'glassmessage', 'glass body');
+}
+
+function registered(channel, name) {
+    WS.say("Registered as " + name);
+}
+
+function blobCB(channel, message) {
+    WS.sound('SELECTED');
+    WS.wake();
+    WS.activityCreate();
+    tree = new WS.Cards();
+    tree.add(message, currentTimeString());
+    WS.cardTree(tree);
+    WS.displayCardTree();
+}
+
 function main() {
     if (WS.scriptVersion(1)) return;
     ctx = document.getElementById('canvas').getContext("2d");
