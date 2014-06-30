@@ -10,7 +10,13 @@
 function ui() {
     WS.log('Welcome to WearScript');
     WS.say('Welcome to WearScript');
-    WS.sound('SUCCESS')
+    WS.sound('SUCCESS');
+
+    var tree = new WS.Cards();
+    tree.add('Body 0', 'Footer 0');
+    tree.add('Body 1', 'Footer 1');
+    WS.cardTree(tree);
+    WS.displayCardTree();
 }
 function main() {
     if (WS.scriptVersion(1)) return;
