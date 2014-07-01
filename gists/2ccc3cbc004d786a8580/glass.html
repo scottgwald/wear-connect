@@ -69,6 +69,10 @@ function serverCustom() {
     WS.subscribe('words', wordReceive);
     WS.publish('words', 'water', 'agua');
     WS.publish('words', 'pen', 'pluma');
+    WS.publish('words', 'pencil', 'lapiz');
+    setTimeout(function() {
+        WS.publish('words', 'hello', 'hola');
+    }, 10000)
 }
 
 var playground = true;
