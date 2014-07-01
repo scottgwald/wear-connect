@@ -49,8 +49,8 @@ currentTimeString = function () {
 function wordReceive(channel, word1, word2) {
     WS.wake();
     WS.activityCreate();
-    tree = new WS.Cards();
     tree.addHTML('tpl_card1');
+    WS.say(word2);
     tree.add(word1, word2);
     WS.cardTree(tree);
     WS.displayCardTree();
@@ -64,6 +64,7 @@ function serverCustom() {
     WS.sound('SUCCESS');
     WS.subscribe('words', wordReceive);
     WS.publish('words', 'water', 'agua');
+    //WS.publish('words', 'pen', 'pluma');
 }
 
 var playground = true;
@@ -84,8 +85,14 @@ WS.gestureCallback('onGestureTAP', toggleServer);
 function main() {
     if (WS.scriptVersion(1)) return;
     ctx = document.getElementById('canvas').getContext("2d");
+    tree = new WS.Cards();
     // WS.serverConnect('{{WSUrl}}', server);
     toggleServer();
+    /*WS.gestureCallback("TAP", function() {
+        WS.activityCreate();
+        WS.cardTree(tree);
+        WS.displayCardTree();
+    });*/
 }
 
 window.onload = main;
