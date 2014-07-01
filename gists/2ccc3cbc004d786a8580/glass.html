@@ -46,6 +46,7 @@ currentTimeString = function () {
     return new Date().today() + " @ " + new Date().timeNow();
 }
 
+displayedCardTree = false;
 function wordReceive(channel, word1, word2) {
     WS.wake();
     WS.activityCreate();
@@ -53,7 +54,10 @@ function wordReceive(channel, word1, word2) {
     WS.say(word2);
     tree.add(word1, word2);
     WS.cardTree(tree);
-    WS.displayCardTree();
+    if (!displayedCardTree) {
+        WS.displayCardTree();
+        displayedCardTree = true;
+    }
 }
 
 // function narrowcast(channel, message) {
@@ -64,7 +68,7 @@ function serverCustom() {
     WS.sound('SUCCESS');
     WS.subscribe('words', wordReceive);
     WS.publish('words', 'water', 'agua');
-    //WS.publish('words', 'pen', 'pluma');
+    WS.publish('words', 'pen', 'pluma');
 }
 
 var playground = true;
