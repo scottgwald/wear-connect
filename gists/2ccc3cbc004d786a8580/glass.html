@@ -4,7 +4,7 @@
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>-->
 </head>
-<body style="width:100%; height:100%; overflow:hidden; margin:0" bgcolor="#000">
+<body style="width:100%; height:100%; overflow:hidden; margin:0">
 <canvas id="canvas" width="640" height="360" style="display:block"></canvas>
 
 <script type="text/html" id="tpl_card1">
@@ -21,60 +21,73 @@
 
 <script>
 
-function ui() {
-    WS.log('Welcome to WearScript');
-    WS.say('Welcome to WearScript');
+var customEndpoint = 'ws://192.168.2.230:8112/';
+// var customEndpoint = 'ws://18.111.28.58:8112/';
+
+function server() {
     WS.sound('SUCCESS');
+    WS.say('wearscript dot com endpoint');
 
-    var tree = new WS.Cards();
-    tree.addHTML('tpl_card1');
-    WS.cardTree(tree);
-    WS.displayCardTree();
-
-    var customEndpoint = 'ws://192.168.2.230:8112/';
-    WS.serverConnect(customEndpoint, serverCustom);
-}
-
-function serverCustom() {
-    WS.sound('SUCCESS');
-    WS.subscribe('registered', registered);
-    WS.subscribe('blob', blobCB);
-    WS.subscribe(WS.groupDevice(), blobCB);
-    WS.publish('register', 'registered', WS.groupDevice());
-    WS.publish('blob', 'glassmessage', 'glass body');
 }
 
 function registered(channel, name) {
     WS.say("Registered as " + name);
 }
 
-function blobCB(channel, message) {
-    WS.sound('SELECTED');
-    WS.wake();
-    WS.activityCreate();
-    tree = new WS.Cards();
-    tree.add(message, currentTimeString());
-    WS.cardTree(tree);
-    WS.displayCardTree();
+Date.prototype.today = function () { 
+    return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
+}
+ 
+Date.prototype.timeNow = function () {
+     return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
 }
 
 currentTimeString = function () {
     return new Date().today() + " @ " + new Date().timeNow();
 }
 
-Date.prototype.today = function () {
-    return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
+function wordReceive(channel, word1, word2) {
+    WS.wake();
+    WS.activityCreate();
+    tree = new WS.Cards();
+    tree.addHTML('tpl_card1');
+    tree.add(word1, word2);
+    WS.cardTree(tree);
+    WS.displayCardTree();
 }
 
-Date.prototype.timeNow = function () {
-     return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+// function narrowcast(channel, message) {
+    
+// }
+
+function serverCustom() {
+    WS.sound('SUCCESS');
+    WS.subscribe('words', wordReceive);
+    WS.publish('words', 'water', 'agua');
 }
+
+var playground = true;
+
+function toggleServer() {
+    WS.sound("SELECTED");
+    if (!playground) {
+        WS.serverConnect('{{WSUrl}}', server);
+        playground = true;
+    } else {
+        WS.serverConnect(customEndpoint, serverCustom);
+        playground = false;
+    }
+}
+
+WS.gestureCallback('onGestureTAP', toggleServer);
 
 function main() {
     if (WS.scriptVersion(1)) return;
     ctx = document.getElementById('canvas').getContext("2d");
-    ui();
+    // WS.serverConnect('{{WSUrl}}', server);
+    toggleServer();
 }
+
 window.onload = main;
 </script>
 </body>

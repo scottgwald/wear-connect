@@ -104,9 +104,16 @@ def callback(ws, **kw):
         print "Server: Got blob %s %s" % (title,body)
         broadcast(ws, chan, title, body)
 
+    def words(channel, signal):
+        print("client says it's ready for tags")
+        print("channel: %s" % channel)
+        broadcast(ws, channel, "water", "agua")
+        print("broadcasted")
+
     print "processing initial subscription for ws object: " + str(ws)
     gevent.spawn(ws_subscribe, ws, 'register', register_client)
     gevent.spawn(ws_subscribe, ws, 'blob', get_blob)
+    gevent.spawn(ws_subscribe, ws, 'words', words)
     # ws_subscribe(ws, 'register', register_client)
     # ws_subscribe(ws, 'blob', get_blob)
 
