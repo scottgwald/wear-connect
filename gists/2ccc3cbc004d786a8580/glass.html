@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/shrig94/UROP/master/animate.css" />
     <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/shrig94/UROP/master/language.css" />
 
-    <script type="text/javascript">
+    <!--script type="text/javascript">
         $.fn.exists = function () {
             return this.length !== 0;
         }
@@ -20,7 +20,7 @@
         $(document).on("ready", function(){
             var slide = $('.slide').unslider({
                 delay: false,
-                dots: true,
+                dots: false,
                 complete: function() {
                     var cards = document.getElementById("cards");
                     var left = cards.style.left;
@@ -28,10 +28,12 @@
                 }
             });
             data = slide.data('unslider');
-            data.next();
+            timer = setInterval(data.next, 1000);
+
+            //wordReceive('words', 'hello', 'hola');
         });
-            
-    </script>
+
+    </script-->
 </head>
 <body style="width:100%; height:100%; overflow:hidden; margin:0">
 
@@ -101,33 +103,51 @@ currentTimeString = function () {
     return new Date().today() + " @ " + new Date().timeNow();
 }
 
-displayedCardTree = false;
+
+
 function wordReceive(channel, word1, word2) {
-    WS.wake();
-    WS.activityCreate();
-    tree.addHTML('tpl_card1');
-    WS.say(word2);
-    tree.add(word1, word2);
-    WS.cardTree(tree);
-    if (!displayedCardTree) {
-        WS.displayCardTree();
-        displayedCardTree = true;
-    }
+    $('#cards').append(newCard(word2));
+    clearInterval(timer);
+    var slide = $('.slide').unslider({
+                delay: false,
+                dots: false,
+                complete: function() {
+                    var cards = document.getElementById("cards");
+                    var left = cards.style.left;
+                    var index = parseInt(left.substr(left, left.length-1))/(-100);
+                }
+            });
+    data = slide.data('unslider');
+    timer = setInterval(data.next, 1000);
 }
 
-// function narrowcast(channel, message) {
-    
-// }
+function newCard(word) {
+    return '<li>\
+                <article>\
+                    <div class="layout-figure">\
+                        <div>\
+                            <img class="lang-img" src="file:///storage/emulated/legacy/wearscript/gists/2ccc3cbc004d786a8580/pen1-BK.png"></img>\
+                        </div>\
+                        <div>\
+\
+                            <phrase class="text-normal">' + word + '<span class="pri-lang">Milk</span></phrase>\
+                            <phrase class="text-small">Yo prefiero leche fria.<span class="pri-lang">I prefer cold milk.</span></phrase>\
+\
+                        </div>\
+                    </div>\
+                </article>\
+            </li>';
+}
 
 function serverCustom() {
     WS.sound('SUCCESS');
     WS.subscribe('words', wordReceive);
-    /*WS.publish('words', 'water', 'agua');
+    WS.publish('words', 'water', 'agua');
     WS.publish('words', 'pen', 'pluma');
     WS.publish('words', 'pencil', 'lapiz');
     setTimeout(function() {
         WS.publish('words', 'hello', 'hola');
-    }, 10000)*/
+    }, 10000);
 }
 
 var playground = true;
@@ -143,7 +163,7 @@ function toggleServer() {
     }
 }
 
-WS.gestureCallback('onGestureTAP', toggleServer);
+//WS.gestureCallback('onGestureTAP', toggleServer);
 
 function main() {
     if (WS.scriptVersion(1)) return;
@@ -156,6 +176,7 @@ function main() {
         WS.cardTree(tree);
         WS.displayCardTree();
     });*/
+    //wordReceive('words', 'hello', 'hola');
 }
 
 window.onload = main;
