@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/shrig94/UROP/master/animate.css" />
     <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/shrig94/UROP/master/language.css" />
 
-    <!--script type="text/javascript">
+    <script type="text/javascript">
         $.fn.exists = function () {
             return this.length !== 0;
         }
@@ -29,11 +29,9 @@
             });
             data = slide.data('unslider');
             timer = setInterval(data.next, 1000);
-
-            //wordReceive('words', 'hello', 'hola');
         });
 
-    </script-->
+    </script>
 </head>
 <body style="width:100%; height:100%; overflow:hidden; margin:0">
 
@@ -167,8 +165,7 @@ function toggleServer() {
 
 function main() {
     if (WS.scriptVersion(1)) return;
-    ctx = document.getElementById('canvas').getContext("2d");
-    tree = new WS.Cards();
+    //ctx = document.getElementById('canvas').getContext("2d");
     // WS.serverConnect('{{WSUrl}}', server);
     toggleServer();
     /*WS.gestureCallback("TAP", function() {
