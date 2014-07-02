@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="msgpack.js"></script>
     <script src="wearscript-client.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
   </head>
   <body>
+    <img />
+
   	<script>
       Date.prototype.today = function () {
         return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
@@ -47,6 +50,7 @@
           console.log('got image');
           console.log(JSON.stringify({chan: chan, timestamp: timestamp,
                                                              image: btoa(image)}));
+          $('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
         });
         ws.send('register', 'registered', currentTimeString());
       }, 2000);

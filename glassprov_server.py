@@ -15,7 +15,7 @@ def ws_parse(parser):
 
 def ws_send(ws, *argv):
     # global ws_dict
-    print "Sending to socket " + ws_dict[ws] + " with args " + str(argv)
+    print "Sending to socket " + ws_dict[ws] + " with args " + str(len(str(argv)))
     try:
         ws.send(*argv)
     except geventwebsocket.exceptions.WebSocketError:
