@@ -106,6 +106,7 @@ def callback(ws, **kw):
 
     def get_image(channel, timestamp, image_content):
         broadcast(ws, channel, timestamp, image_content)
+        print('got image: ' + image_content)
 
     def words(channel, signal):
         print("client says it's ready for tags")
