@@ -139,13 +139,22 @@ function newCard(word) {
 
 function serverCustom() {
     WS.sound('SUCCESS');
+    WS.subscribe('registered', registered)
+    WS.subscribe(WS.groupDevice(), function(channel, a, b) {
+        console.log('subscribed ' + channel);
+    });
     WS.subscribe('words', wordReceive);
+    WS.publish('register', 'registered', WS.groupDevice());
     WS.publish('words', 'water', 'agua');
     WS.publish('words', 'pen', 'pluma');
     WS.publish('words', 'pencil', 'lapiz');
     setTimeout(function() {
         WS.publish('words', 'hello', 'hola');
     }, 10000);
+}
+
+function registered(channel, name) {
+    WS.say("Registered as " + name);
 }
 
 var playground = true;
@@ -166,11 +175,11 @@ function toggleCamera() {
     if (cameraOn) {
         WS.cameraOff();
         WS.say('camera off');
-        cameraOn = true;
+        cameraOn = false;
     } else {
         WS.cameraOn(1, 1000, 1000);
         WS.say('camera on');
-        cameraOn = false;
+        cameraOn = true;
     }
 }
 
