@@ -4,6 +4,7 @@
 
 var scene;
 	var currentPreview;
+	var currentTag;
 	var isClicked;
 	var mouseDownPosition = new THREE.Vector2();
 	var currentMousePosition = new THREE.Vector2();
@@ -14,11 +15,20 @@ var scene;
     var boundingRect;
     var width, height;
     var plane;
-	init();
 	var ctx;
 	var image;
 	var planeG;
+	init();
+	var c;
 	
+	function submit() {
+		console.log($("input[name=user]").val());
+		c.width  = width; // in pixels
+		c.height = height;
+    	ctx.drawImage(image,mouseDownPosition.x,mouseDownPosition.y, width,height,0,0,width,height);
+	    var dataURL = c.toDataURL();
+	    console.log(dataURL);
+	}
 	function init() {
 		image = new Image();
 	image.src = 'kitchen.png'
@@ -50,7 +60,7 @@ var scene;
 
 	
 	
-	var c=document.getElementById("myCanvas");
+	c=document.getElementById("myCanvas");
 	c.style.display = 'none';
 	ctx=c.getContext("2d");
 
@@ -73,7 +83,7 @@ var scene;
 	function render() { 
 		requestAnimationFrame(render);
 		 renderer.render(scene, camera);
-		  } 
+	} 
 	render();
    
     renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
@@ -82,18 +92,8 @@ var scene;
     
     function onDocumentMouseUp(event) {
     	isClicked = false;
+    	currentTag = JSON.parse(JSON.stringify(currentPreview));
     	currentPreview = undefined;
-			c.width  = width; // in pixels
-			c.height = height;
-    		ctx.drawImage(image,mouseDownPosition.x,mouseDownPosition.y, width,height,0,0,width,height);
-	    	var dataURL = c.toDataURL();
-	    	//console.log('up x:' + event.clientX);
-       		//console.log('up y:' + event.clientY);
-	    	//console.log(width);
-	    	
-	    	      
-
-
     }
     
     function onDocumentMouseMove(event) {
@@ -138,13 +138,5 @@ var scene;
     	lastX = mouse3D.x;
     	lastY = mouse3D.y;
     	
-    
-    	// var geometry = new THREE.BoxGeometry( 200, 200, 200 );
-// 
-   // var material = new THREE.MeshBasicMaterial( { color: 0x000000 } );
-// 
-   // var mesh = new THREE.Mesh( geometry, material );
-
-  //scene is global
     }
    }

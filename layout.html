@@ -29,7 +29,14 @@
     	<div id ="cropper" >
     	</div>
    	<script src = "js/cropper.js"></script>
-   	<form name="input" action="demo_form_action.asp" method="get">
+   	<script src="js/jquery.min.js"></script>
+   	<script> 
+   		$(document).ready ( function(){
+   			$("#tagForm").submit(submit);
+   		})
+   		
+   	</script>
+   	<form name="input" action="javascript:void(0)" method="get" id="tagForm">
 	Tag: <input type="text" name="user">
 	<input type="submit" value="Submit">
 	</form> 
