@@ -25,12 +25,20 @@ var scene;
 		console.log($("input[name=user]").val());
 		c.width  = width; // in pixels
 		c.height = height;
+		var geometry = new THREE.BoxGeometry( width, height, 10 );
+   		var material = new THREE.MeshBasicMaterial( {  color:0x78AB46,opacity: .5,transparent: true} );
+   		var currentPreview2 = new THREE.Mesh( geometry, material );
+   		currentPreview2.position.x = lastX+width/2;
+   		currentPreview2.position.y = lastY-height/2;
+   		scene.remove(currentPreview);
+   		scene.add(currentPreview2);
     	ctx.drawImage(image,mouseDownPosition.x,mouseDownPosition.y, width,height,0,0,width,height);
 	    var dataURL = c.toDataURL();
 	    console.log(dataURL);
+	    
 	}
 	function init() {
-		image = new Image();
+	image = new Image();
 	image.src = 'kitchen.png'
 	var renderer = new THREE.WebGLRenderer();
     renderer.setSize(image.width, image.height);
@@ -92,8 +100,7 @@ var scene;
     
     function onDocumentMouseUp(event) {
     	isClicked = false;
-    	currentTag = JSON.parse(JSON.stringify(currentPreview));
-    	currentPreview = undefined;
+    	//currentPreview = undefined;
     }
     
     function onDocumentMouseMove(event) {
