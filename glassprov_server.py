@@ -104,6 +104,9 @@ def callback(ws, **kw):
         print "Server: Got blob %s %s" % (title,body)
         broadcast(ws, chan, title, body)
 
+    def get_image(channel, timestamp, image_content):
+        broadcast(ws, channel, timestamp, image_content)
+
     def words(channel, signal):
         print("client says it's ready for tags")
         print("channel: %s" % channel)
@@ -114,6 +117,7 @@ def callback(ws, **kw):
     gevent.spawn(ws_subscribe, ws, 'register', register_client)
     gevent.spawn(ws_subscribe, ws, 'blob', get_blob)
     gevent.spawn(ws_subscribe, ws, 'words', words)
+    gevent.spawn(ws_subscribe, ws, 'image', get_image)
     # ws_subscribe(ws, 'register', register_client)
     # ws_subscribe(ws, 'blob', get_blob)
 
