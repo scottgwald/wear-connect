@@ -18,8 +18,10 @@ var scene;
 	var ctx;
 	var image;
 	var planeG;
+	var control;
 	init();
 	var c;
+	var nextListPosition;
 	
 	function submit() {
 		console.log($("input[name=user]").val());
@@ -32,19 +34,21 @@ var scene;
    		currentPreview2.position.y = lastY-height/2;
    		scene.remove(currentPreview);
    		scene.add(currentPreview2);
-    	ctx.drawImage(image,mouseDownPosition.x,mouseDownPosition.y, width,height,0,0,width,height);
+   		
+    	ctx.drawImage(image,currentMousePosition.x,mouseDownPosition.y, width,height,0,0,width,height);
 	    var dataURL = c.toDataURL();
 	    console.log(dataURL);
+	    console.log('done');
 	    
 	}
 	function init() {
 	image = new Image();
 	image.src = 'kitchen.png'
 	var renderer = new THREE.WebGLRenderer();
-    renderer.setSize(image.width, image.height);
-    var container = document.getElementById('cropper');
-    container.appendChild(renderer.domElement);
-    
+    renderer.setSize(window.innerWidth, window.innerHeight);
+   // var container = document.getElementById('cropper');
+    //container.appendChild(renderer.domElement);
+    document.body.appendChild( renderer.domElement );
     elem = renderer.domElement;
     boundingRect = elem.getBoundingClientRect();
     
@@ -52,7 +56,9 @@ var scene;
     // camera 
     
 	
-	camera = new THREE.OrthographicCamera( image.width/ - 2, image.width / 2, image.height / 2, image.height / - 2, 1,1000 );   
+	
+	camera = new THREE.OrthographicCamera( -750, 750, window.innerHeight / 2, window.innerHeight / - 2, 1,5000 );
+	//camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 5000 );   
 	 camera.position.y = 0; 
     camera.position.z = 400; 
     camera.rotation.x = 0; 
@@ -80,10 +86,42 @@ var scene;
     img.map.needsUpdate = true; //ADDED
 
     // plane
-    planeG = new THREE.PlaneGeometry(image.width, image.height);
+    planeG = new THREE.PlaneGeometry(640, 480);
     plane = new THREE.Mesh(planeG,img);
+    plane.position.x = 0- 200;
+   
     plane.overdraw = true;
     scene.add(plane);
+    
+    controls = new THREE.TrackballControls( camera );
+
+	controls.rotateSpeed = 0.0;
+	controls.zoomSpeed = 1.2;
+	controls.panSpeed = 0.8;
+
+	controls.noZoom = false;
+	controls.noPan = false;
+
+	controls.staticMoving = true;
+	controls.dynamicDampingFactor = 0.3;
+
+	controls.addEventListener( 'change', render );
+	
+			var menuWidth  = .25 * window.innerWidth;
+			
+   			var menuGeometry = new THREE.BoxGeometry( menuWidth, window.innerHeight, 1 );
+   			
+   			var menuMaterial = new THREE.MeshBasicMaterial( {  opacity: .75,transparent: true} );
+   			var menu = new THREE.Mesh( menuGeometry, menuMaterial );
+   			menu.position.x = 750 -menuWidth/2;
+   			
+   			
+   			scene.add(menu);
+   			
+   			nextListPosition = window.innerHeight/2 - (window.innerHeight/12) - 10; 
+   			console.log(nextListPosition);//some padding here
+   			
+   			
 
 
     
@@ -92,7 +130,15 @@ var scene;
 		requestAnimationFrame(render);
 		 renderer.render(scene, camera);
 	} 
-	render();
+	//render();
+	animate();
+	
+			function animate() {
+
+			       requestAnimationFrame( animate );
+			       controls.update();
+
+			}
    
     renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -100,6 +146,18 @@ var scene;
     
     function onDocumentMouseUp(event) {
     	isClicked = false;
+    	
+    	var listItem = new THREE.BoxGeometry( .25 * window.innerWidth-30, window.innerHeight/6,10);
+    	var listMaterial = new THREE.MeshBasicMaterial({opacity:.7,transparent:true, color: 0x000000});
+    	var item = new THREE.Mesh(listItem,listMaterial);
+    	item.position.x = 750 - (.25 * window.innerWidth+10)/2;
+    	item.position.y = nextListPosition;
+    	item.position.z =1;
+    	scene.add(item);
+    	
+    	nextListPosition = nextListPosition - window.innerHeight/6 -10;
+    	
+    	
     	//currentPreview = undefined;
     }
     
@@ -109,41 +167,45 @@ var scene;
     			scene.remove(currentPreview);
     		}
     		
-    		var x = event.clientX;//(event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
-       		var y = event.clientY;//(event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
+    		var x = (event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
+       		var y = (event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
        		
        		width = x - mouseDownPosition.x;
     		height = y - mouseDownPosition.y ;
     		
 
-    		var geometry = new THREE.BoxGeometry( width, height, 10 );
+    		var geometry = new THREE.BoxGeometry( width, height, 100 );
    			var material = new THREE.MeshBasicMaterial( {  opacity: .5,transparent: true} );
    			currentPreview = new THREE.Mesh( geometry, material );
    			currentPreview.position.x = lastX+width/2;
    			currentPreview.position.y = lastY-height/2;
+   			currentPreview.position.z = 0;
+   	
    			
    			scene.add(currentPreview);
+   			
+   			
     	}
     }
     
     function onDocumentMouseDown(event) {
     	
+    	mouseDownPosition.x = (event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
+    	mouseDownPosition.y = (event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
+    	console.log(mouseDownPosition.x);
+    	if (mouseDownPosition.x < .75* window.innerWidth) {
     	isClicked = true ;
-    	mouseDownPosition.x = event.clientX;//(event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
-    	mouseDownPosition.y = event.clientY;//(event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
+    	
 	
     	currentMousePosition.x = (event.clientX - boundingRect.left) * (renderer.domElement.width / boundingRect.width);
     	currentMousePosition.y = (boundingRect.top -window.innerHeight + event.clientY) * (renderer.domElement.height / boundingRect.height);
-    	
-    	
-    	mouse3D = projector.unprojectVector( new THREE.Vector3( ( currentMousePosition.x / (renderer.domElement.width) ) * 2 - 1, - ( event.clientY / renderer.domElement.height) * 2 + 1, 1 ), camera );
-    	console.log(event.clientY);
-    	console.log(renderer.domElement.height);
-    	console.log(container.offsetHeight);
-    	console.log(boundingRect);
+    
+    	mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (window.innerWidth) ) * 2 - 1, - ( event.clientY / window.innerHeight) * 2 + 1, 1 ), camera );
+    	mouse3D.sub(camera.position);
     	//mouse3D.normalize();
     	lastX = mouse3D.x;
     	lastY = mouse3D.y;
     	
+    	}
     }
    }
