@@ -11,6 +11,7 @@
     <img />
 
   	<script>
+    $(document).ready(function () {
       Date.prototype.today = function () {
         return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
       }
@@ -52,9 +53,9 @@
                                                              image: btoa(image)}));
           $('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
         });
-        ws.send('register', 'registered', currentTimeString());
+        ws.send('register', 'registered', 'worker:' + currentTimeString());
       }, 2000);
-      
+    }); 
   	</script>
   </body>
 </html>

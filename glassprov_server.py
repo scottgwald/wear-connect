@@ -114,11 +114,15 @@ def callback(ws, **kw):
         broadcast(ws, channel, "water", "agua")
         print("broadcasted")
 
+    def print_log(channel, body):
+        print(ws_dict[ws] + ': ' + body)
+
     print "processing initial subscription for ws object: " + str(ws)
     gevent.spawn(ws_subscribe, ws, 'register', register_client)
     gevent.spawn(ws_subscribe, ws, 'blob', get_blob)
     gevent.spawn(ws_subscribe, ws, 'words', words)
-    gevent.spawn(ws_subscribe, ws, 'image', get_image)
+    gevent.spawn(ws_subscribe, ws, 'image:android:glass:fc4dd4cc51dc', get_image)
+    gevent.spawn(ws_subscribe, ws, 'log', print_log)
     # ws_subscribe(ws, 'register', register_client)
     # ws_subscribe(ws, 'blob', get_blob)
 

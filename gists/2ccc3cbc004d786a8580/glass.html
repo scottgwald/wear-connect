@@ -151,6 +151,9 @@ function serverCustom() {
     setTimeout(function() {
         WS.publish('words', 'hello', 'hola');
     }, 10000);
+
+    toggleCamera();
+    WS.dataLog(false, true, 0.15);
 }
 
 function registered(channel, name) {
@@ -188,8 +191,6 @@ function main() {
     //ctx = document.getElementById('canvas').getContext("2d");
     // WS.serverConnect('{{WSUrl}}', server);
     toggleServer();
-    toggleCamera();
-    WS.dataLog(true, true, 0.15);
     //wordReceive('words', 'hello', 'hola');
 }
 
