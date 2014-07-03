@@ -29,14 +29,19 @@
                     var index = parseInt(left.substr(left, left.length-1))/(-100);
                     console.log(x);
                     console.log('num cards: ' + $('#cards li .word1').length);
-                    console.log('word: ' + $('#cards li .word1')[cardIndex]);
+                    var word = $($('#cards li .word1')[cardIndex]).text();
+                    console.log('word: ' + word);
+                    WS.say(word);
                 }
             });
             data = slide.data('unslider');
             timer = setInterval(function () {
                 data.next();
                 cardIndex++;
-                cardIndex %= $('#cards').children().length;
+                var length = $('#cards').children().length;
+                if (length > 0) {
+                    cardIndex %= length;
+                }
             }, 3000);
         }
 
