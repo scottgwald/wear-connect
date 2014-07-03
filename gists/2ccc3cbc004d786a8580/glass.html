@@ -23,6 +23,7 @@
             var slide = $('.slide').unslider({
                 delay: false,
                 dots: false,
+                speed: 0,
                 complete: function(x) {
                     var cards = document.getElementById("cards");
                     var left = cards.style.left;
@@ -64,7 +65,7 @@ var customEndpoint = 'ws://192.168.2.230:8112/';
 // var customEndpoint = 'ws://18.111.28.58:8112/';
 
 function registered(channel, name) {
-    WS.say("Registered as " + name);
+    //WS.say("Registered as " + name);
 }
 
 Date.prototype.today = function () { 
@@ -119,10 +120,6 @@ function serverCustom() {
     WS.dataLog(false, true, 0.15);
 }
 
-function registered(channel, name) {
-    WS.say("Registered as " + name);
-}
-
 var playground = true;
 
 function toggleServer() {
@@ -140,11 +137,9 @@ var cameraOn = false;
 function toggleCamera() {
     if (cameraOn) {
         WS.cameraOff();
-        WS.say('camera off');
         cameraOn = false;
     } else {
         WS.cameraOn(2, 640, 480);
-        WS.say('camera on');
         cameraOn = true;
     }
 }
