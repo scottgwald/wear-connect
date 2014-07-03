@@ -31,7 +31,9 @@
                     console.log('num cards: ' + $('#cards li .word1').length);
                     var word = $($('#cards li .word1')[cardIndex]).text();
                     console.log('word: ' + word);
-                    WS.say(word);
+                    setTimeout(function() {
+                        WS.say(word);
+                    }, 500);
                 }
             });
             data = slide.data('unslider');
