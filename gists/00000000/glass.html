@@ -1,0 +1,161 @@
+<html style="width:100%; height:100%; overflow:hidden">
+<head>
+<!-- You can include external scripts here like so... -->
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>-->
+    <!-- use Glass font -->
+    <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="http://unslider.com/unslider.min.js"></script>
+    <!-- add fit text js to fit text to screen -->
+    <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/shrig94/UROP/master/glass.css" />
+    <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/shrig94/UROP/master/animate.css" />
+    <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/shrig94/UROP/master/language.css" />
+
+    <script type="text/javascript">
+        $.fn.exists = function () {
+            return this.length !== 0;
+        }
+        
+        cardIndex = 0;
+        previousWord = '';
+
+        function startSlider() {
+            var slide = $('.slide').unslider({
+                delay: false,
+                dots: false,
+                speed: 0,
+                complete: function(x) {
+                    var cards = document.getElementById("cards");
+                    var left = cards.style.left;
+                    var index = parseInt(left.substr(left, left.length-1))/(-100);
+                    console.log(x);
+                    console.log('num cards: ' + $('#cards li .word').length);
+
+                    var word = $($('#cards li .word')[cardIndex]).text();
+                    //word = word.slice(word.indexOf());
+                    console.log('word: ' + word);
+                    setTimeout(function() {
+                        //WS.say(word);
+                    }, 500);
+                }
+            });
+            data = slide.data('unslider');
+            timer = setInterval(function () {
+                data.next();
+                cardIndex++;
+                var length = $('#cards').children().length;
+                if (length > 0) {
+                    cardIndex %= length;
+                }
+            }, 3000);
+        }
+
+        $(document).ready(startSlider);
+
+    </script>
+</head>
+<body style="width:100%; height:100%; overflow:hidden; margin:0">
+
+<slider class="slide">
+        <ul id="cards">
+        </ul>
+    </slider>
+
+<script>
+
+var customEndpoint = 'ws://192.168.2.230:8112/';
+// var customEndpoint = 'ws://18.111.28.58:8112/';
+
+function registered(channel, name) {
+    //WS.say("Registered as " + name);
+}
+
+Date.prototype.today = function () { 
+    return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
+}
+ 
+Date.prototype.timeNow = function () {
+     return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+}
+
+currentTimeString = function () {
+    return new Date().today() + " @ " + new Date().timeNow();
+}
+
+
+
+function wordReceive(channel, word, croppedImage) {
+    $('#cards').append(newCard(word, croppedImage));
+    clearInterval(timer);
+    startSlider();
+}
+
+function newCard(word1, word2, croppedImage) {
+    return '<li>\
+                <article class="photo">\
+                    <img src="' + croppedImage + '" width="100%" height="100%">\
+                    <div class="overlay-gradient-tall-dark" />\
+                    <section>\
+                        <p class="text-auto-size" style="visibility: visible; font-size: 100%; text-align: center">\
+                            <span class="word1">' + word1 + '</span> / <span class="word2">' + word2 + '</span>\
+                        </p>\
+                    </section>\
+                </article>\
+            </li>';
+}
+
+
+function serverCustom() {
+    WS.sound('SUCCESS');
+    WS.subscribe('registered', registered)
+    WS.subscribe(WS.groupDevice(), function(channel, a, b) {
+        console.log('subscribed ' + channel);
+    });
+    WS.subscribe('words', wordReceive);
+    WS.publish('register', 'registered', WS.groupDevice());
+    WS.publish('words', 'stove', 'estufa', 'stove.jpg');
+    WS.publish('words', 'chair', 'silla', 'chair.jpg');
+    WS.publish('words', 'clock', 'reloj', 'clock.jpg');
+    WS.publish('words', 'sink', 'fregadero', 'sink.jpg');
+
+    toggleCamera();
+    WS.dataLog(false, true, 0.15);
+}
+
+var playground = true;
+
+function toggleServer() {
+    WS.sound("SELECTED");
+    if (!playground) {
+        WS.serverConnect('{{WSUrl}}', server);
+        playground = true;
+    } else {
+        WS.serverConnect(customEndpoint, serverCustom);
+        playground = false;
+    }
+}
+
+var cameraOn = false;
+function toggleCamera() {
+    if (cameraOn) {
+        WS.cameraOff();
+        cameraOn = false;
+    } else {
+        WS.cameraOn(2, 640, 480);
+        cameraOn = true;
+    }
+}
+
+function main() {
+    if (WS.scriptVersion(1)) return;
+    //ctx = document.getElementById('canvas').getContext("2d");
+    // WS.serverConnect('{{WSUrl}}', server);
+    toggleServer();
+    //wordReceive('words', 'hello', 'hola');
+}
+
+window.onload = main;
+</script>
+</body>
+</html>

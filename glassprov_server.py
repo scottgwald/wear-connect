@@ -15,7 +15,7 @@ def ws_parse(parser):
 
 def ws_send(ws, *argv):
     # global ws_dict
-    print "Sending to socket " + ws_dict[ws] + " with args " + str(argv)
+    print "Sending to socket " + ws_dict[ws] + " with args " + str(len(str(argv)))
     try:
         ws.send(*argv)
     except geventwebsocket.exceptions.WebSocketError:
@@ -104,9 +104,25 @@ def callback(ws, **kw):
         print "Server: Got blob %s %s" % (title,body)
         broadcast(ws, chan, title, body)
 
+    def get_image(channel, timestamp, image_content):
+        print('got image: ' + str(timestamp))
+        broadcast(ws, channel, timestamp, image_content)
+
+    def words(channel, word, image):
+        print("client says it's ready for tags")
+        print("channel: %s" % channel)
+        broadcast(ws, channel, word1, word2, image)
+        print("broadcasted")
+
+    def print_log(channel, body):
+        print(ws_dict[ws] + ': ' + body)
+
     print "processing initial subscription for ws object: " + str(ws)
     gevent.spawn(ws_subscribe, ws, 'register', register_client)
     gevent.spawn(ws_subscribe, ws, 'blob', get_blob)
+    gevent.spawn(ws_subscribe, ws, 'words', words)
+    gevent.spawn(ws_subscribe, ws, 'image:android:glass:fc4dd4cd7998', get_image)
+    gevent.spawn(ws_subscribe, ws, 'log', print_log)
     # ws_subscribe(ws, 'register', register_client)
     # ws_subscribe(ws, 'blob', get_blob)
 
