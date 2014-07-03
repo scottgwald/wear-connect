@@ -22,6 +22,9 @@ var scene;
 	init();
 	var c;
 	var nextListPosition;
+	var text = 'Tag';
+	var tagNum = 1;
+	var itemList = [];
 	
 	function submit() {
 		console.log($("input[name=user]").val());
@@ -39,6 +42,7 @@ var scene;
 	    var dataURL = c.toDataURL();
 	    console.log(dataURL);
 	    console.log('done');
+	    
 	    
 	}
 	function init() {
@@ -143,19 +147,103 @@ var scene;
     renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
    	renderer.domElement.addEventListener('mouseup',onDocumentMouseUp,false);
+   	
+   	document.addEventListener( 'keypress', onDocumentKeyPress, false );
+	document.addEventListener( 'keydown', onDocumentKeyDown, false );
+	
+	function onDocumentKeyPress(event) {
+		var keyCode = event.which;
+
+				// backspace
+				if ( keyCode == 8 ) {
+					event.preventDefault();
+				} else {
+					var ch = String.fromCharCode( keyCode );
+					text += ch;
+					refreshText();
+				}
+		
+	}
+	function onDocumentKeyDown(event) {
+		
+	}
     
     function onDocumentMouseUp(event) {
     	isClicked = false;
     	
-    	var listItem = new THREE.BoxGeometry( .25 * window.innerWidth-30, window.innerHeight/6,10);
+    	c.width  = width; // in pixels
+		c.height = height;
+		var cutX= (currentMousePosition.x-200-20)
+		var cutY = (currentMousePosition.y+(480-window.innerHeight)/2);
+		console.log(cutX);
+		console.log(cutY);
+		//var cutXF = cutX*(image.width/640);
+		//var cutYF = cutY*(image.height/480);
+		
+
+    	ctx.drawImage(image,cutX,cutY,width,height,0,0,width,height);
+	    var dataURL = c.toDataURL();
+    	
+    	var listWidth =.25 * window.innerWidth-30;
+    	var listHeight = window.innerHeight/6;
+    	var listItem = new THREE.BoxGeometry( listWidth, listHeight,10);
     	var listMaterial = new THREE.MeshBasicMaterial({opacity:.7,transparent:true, color: 0x000000});
     	var item = new THREE.Mesh(listItem,listMaterial);
-    	item.position.x = 750 - (.25 * window.innerWidth+10)/2;
+    	var itemPosX = 750 - (.25 * window.innerWidth+10)/2;
+    	item.position.x = itemPosX;
     	item.position.y = nextListPosition;
-    	item.position.z =1;
+    	item.position.z =0;
     	scene.add(item);
+    	item.selected = false;
+    	itemList.push(item);
+    	
+    	var thumbWidth = .33 * listWidth;
+    	var thumbHeight = listHeight;
+    	
+    	
+    	var img = new THREE.MeshBasicMaterial({ 
+        map:THREE.ImageUtils.loadTexture(dataURL) });
+    	
+    	
+
+    	var thumbGeometry = new THREE.PlaneGeometry(thumbWidth,thumbHeight);
+    	var thumb = new THREE.Mesh(thumbGeometry,img);
+    	thumb.position.x = itemPosX - thumbWidth;
+    	thumb.position.y = nextListPosition;
+    	thumb.position.z =40;
+    	
+    	scene.add(thumb);
+
+    	
+    	
+    	// var currentTagText = text + ' ' + tagNum;
+    	// var textGeo = new THREE.TextGeometry( currentTagText, {
+					// size: 14,
+					// height: 100,
+					// font: "optimer", 
+					// weight: "normal", 
+					// style: "normal"
+				// });
+		// var textMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, overdraw: true });
+    	// var textMesh = new THREE.Mesh(textGeo,textMaterial);
+    	// textGeo.computeBoundingBox();
+		// textGeo.computeVertexNormals();
+    	// textMesh.position.y = nextListPosition + thumbHeight/6;
+    	// textMesh.position.x = itemPosX - listWidth/7;
+    	
+    	
+    	
+    	
+    	//scene.add(textMesh);
+    	tagNum++;
+    	
+    	
     	
     	nextListPosition = nextListPosition - window.innerHeight/6 -10;
+    	
+    	
+    	
+	  
     	
     	
     	//currentPreview = undefined;
@@ -167,8 +255,8 @@ var scene;
     			scene.remove(currentPreview);
     		}
     		
-    		var x = (event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
-       		var y = (event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
+    		var x = event.clientX;//(event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
+       		var y = event.clientY;//(event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
        		
        		width = x - mouseDownPosition.x;
     		height = y - mouseDownPosition.y ;
@@ -190,22 +278,55 @@ var scene;
     
     function onDocumentMouseDown(event) {
     	
-    	mouseDownPosition.x = (event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
-    	mouseDownPosition.y = (event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
+    	mouseDownPosition.x = event.clientX;//(event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
+    	mouseDownPosition.y = event.clientY;//(event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
     	console.log(mouseDownPosition.x);
+    	
     	if (mouseDownPosition.x < .75* window.innerWidth) {
     	isClicked = true ;
     	
 	
-    	currentMousePosition.x = (event.clientX - boundingRect.left) * (renderer.domElement.width / boundingRect.width);
-    	currentMousePosition.y = (boundingRect.top -window.innerHeight + event.clientY) * (renderer.domElement.height / boundingRect.height);
+    	currentMousePosition.x = event.clientX;//(event.clientX - boundingRect.left) * (renderer.domElement.width / boundingRect.width);
+    	currentMousePosition.y = event.clientY;//(boundingRect.top -window.innerHeight + event.clientY) * (renderer.domElement.height / boundingRect.height);
     
     	mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (window.innerWidth) ) * 2 - 1, - ( event.clientY / window.innerHeight) * 2 + 1, 1 ), camera );
     	mouse3D.sub(camera.position);
     	//mouse3D.normalize();
     	lastX = mouse3D.x;
     	lastY = mouse3D.y;
-    	
+    	} else {
+    		var mouse = new THREE.Vector2();
+    		mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+			mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+			var vector = new THREE.Vector3( mouse.x, mouse.y, .5);
+			
+   			projector.unprojectVector( vector, camera );
+   			var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+   			var intersects = ray.intersectObjects( scene.children );
+   			console.log(intersects[0].object);
+			
     	}
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
+    	
     }
    }
