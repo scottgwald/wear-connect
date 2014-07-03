@@ -12,6 +12,53 @@
 		<script src = "js/helvetiker_regular.typeface.js"></script>
 		<script src ="js/cropper.js">
 		</script>
+		<script>
+    $(document).ready(function () {
+      Date.prototype.today = function () {
+        return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
+      }
+
+      Date.prototype.timeNow = function () {
+         return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
+      }
+
+      function padInt(_int, len) {
+          paddingNeeded = len - _int.toString().length;
+          if (paddingNeeded < 0) {
+            return _int;
+          } else {
+            paddingArr = [];
+            for (var k = 0; k < paddingNeeded; k++) {
+              paddingArr.push('0');
+            }
+            return paddingArr.join("") + _int.toString();
+          }
+      }
+
+      Date.prototype.timeNowMilli = function () {
+         return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds() + "." + padInt(this.getMilliseconds(), 3);
+      }
+
+      currentTimeString = function () {
+        return new Date().today() + " @ " + new Date().timeNowMilli();
+      }
+
+
+      var ws = new WearScriptConnection(new WebSocket('ws://192.168.2.230:8112'), "client", "demo");
+      setTimeout(function () {
+        ws.subscribe('registered', function(channel, name) {
+          console.log('registered as ' + name);
+        });
+        ws.subscribe('image', function (chan, timestamp, image) {
+          console.log('got image');
+          console.log(JSON.stringify({chan: chan, timestamp: timestamp,
+                                                             image: btoa(image)}));
+          $('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
+        });
+        ws.send('register', 'registered', 'worker:' + currentTimeString());
+      }, 2000);
+    }); 
+  	</script>
 		
 	</body>
 </html>
