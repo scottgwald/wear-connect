@@ -7,11 +7,13 @@
 		<canvas id="myCanvas" width="1300" height="1300"></canvas> 
 		<div id="cropper"></div>
 		<script src="js/three.min.js"></script>
-		<script src="js/TrackBallControl.js" </script>
+		<script src="js/TrackBallControl.js"> </script>
 		<script src="js/pixastic.custom.js"></script>
 		<script src = "js/helvetiker_regular.typeface.js"></script>
-		<script src ="js/cropper.js">
-		</script>
+		<script src="msgpack.js"></script>
+   		<script src="wearscript-client.js"></script>
+   		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script src ="js/cropper.js"></script>
 		<script>
     $(document).ready(function () {
       Date.prototype.today = function () {
@@ -44,7 +46,8 @@
       }
 
 
-      var ws = new WearScriptConnection(new WebSocket('ws://192.168.2.230:8112'), "client", "demo");
+      ws = new WearScriptConnection(new WebSocket('ws://192.168.2.230:8112'), "client", "demo");
+      
       setTimeout(function () {
         ws.subscribe('registered', function(channel, name) {
           console.log('registered as ' + name);
@@ -53,7 +56,12 @@
           console.log('got image');
           console.log(JSON.stringify({chan: chan, timestamp: timestamp,
                                                              image: btoa(image)}));
-          $('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
+                                                             
+          //$('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
+          if(!isTagging)
+          placePicture('data:image/jpg;base64,' + btoa(image));
+          //ws.publish('words',,)
+          
         });
         ws.send('register', 'registered', 'worker:' + currentTimeString());
       }, 2000);

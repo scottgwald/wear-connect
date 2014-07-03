@@ -27,6 +27,8 @@ var scene;
 	var itemList = [];
 	var selectedItem;
 	var selector;
+	var isTagging = false;
+	var dataURL;
 	
 	function submit() {
 		// c.width  = width; // in pixels
@@ -38,41 +40,56 @@ var scene;
    		currentPreview2.position.y = lastY-height/2;
    		scene.remove(currentPreview);
    		scene.add(currentPreview2);
+		
+
+   		ws.publish('words',selectedItem.tagText,dataURL);
    		
-    	// ctx.drawImage(image,currentMousePosition.x,mouseDownPosition.y, width,height,0,0,width,height);
 	    // var dataURL = c.toDataURL();
 	    // console.log(dataURL);
 	    // console.log('done');
 // 	    
 	    
 	}
+	function placePicture(imageData) {
+		
+		if (image) 
+			scene.remove(plane);
+		image = new Image();
+		image.src = imageData;
+		
+		var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
+        map:THREE.ImageUtils.loadTexture(imageData)
+    	});
+    
+ 
+    	img.map.needsUpdate = true; //ADDED
+
+   		// plane
+   		planeG = new THREE.PlaneGeometry(640, 480);
+   	 	plane = new THREE.Mesh(planeG,img);
+    	plane.position.x = 0- 200;
+   
+    	plane.overdraw = true;
+    	scene.add(plane);
+		
+	}
 	function init() {
-	image = new Image();
-	image.src = 'kitchen.png'
+	
 	var renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-   // var container = document.getElementById('cropper');
-    //container.appendChild(renderer.domElement);
     document.body.appendChild( renderer.domElement );
     elem = renderer.domElement;
-    boundingRect = elem.getBoundingClientRect();
-    
-
-    // camera 
-    
-	
-	
+    boundingRect = elem.getBoundingClientRect();	
 	camera = new THREE.OrthographicCamera( -750, 750, window.innerHeight / 2, window.innerHeight / - 2, 1,5000 );
-	//camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 5000 );   
-	 camera.position.y = 0; 
+	
+	camera.position.y = 0; 
     camera.position.z = 400; 
     camera.rotation.x = 0; 
     camera.rotation.y =0;
     camera.position.x =0;
     camera.rotation.z = 0;
 
-    // scene 
-     scene = new THREE.Scene();
+    scene = new THREE.Scene();
 
     scene.add(camera); //ADDED
 
@@ -83,20 +100,7 @@ var scene;
 	c.style.display = 'none';
 	ctx=c.getContext("2d");
 
-    var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
-        map:THREE.ImageUtils.loadTexture('kitchen.png')
-    });
     
- 
-    img.map.needsUpdate = true; //ADDED
-
-    // plane
-    planeG = new THREE.PlaneGeometry(640, 480);
-    plane = new THREE.Mesh(planeG,img);
-    plane.position.x = 0- 200;
-   
-    plane.overdraw = true;
-    scene.add(plane);
     
     controls = new THREE.TrackballControls( camera );
 
@@ -112,37 +116,30 @@ var scene;
 
 	controls.addEventListener( 'change', render );
 	
-			var menuWidth  = .25 * window.innerWidth;
+	var menuWidth  = .25 * window.innerWidth;
 			
-   			var menuGeometry = new THREE.BoxGeometry( menuWidth, window.innerHeight, 1 );
+   	var menuGeometry = new THREE.BoxGeometry( menuWidth, window.innerHeight, 1 );
    			
-   			var menuMaterial = new THREE.MeshBasicMaterial( {  opacity: .75,transparent: true} );
-   			var menu = new THREE.Mesh( menuGeometry, menuMaterial );
-   			menu.position.x = 750 -menuWidth/2;
-   			
-   			
-   			scene.add(menu);
-   			
-   			nextListPosition = window.innerHeight/2 - (window.innerHeight/12) - 10; 
+   	var menuMaterial = new THREE.MeshBasicMaterial( {  opacity: .75,transparent: true} );
+   	var menu = new THREE.Mesh( menuGeometry, menuMaterial );
+   	menu.position.x = 750 -menuWidth/2;
    			
    			
-
-
-    
-//     
+   	scene.add(menu);
+   			
+   	nextListPosition = window.innerHeight/2 - (window.innerHeight/12) - 10; 
+   			
+   		    
 	function render() { 
 		requestAnimationFrame(render);
-		 renderer.render(scene, camera);
+		renderer.render(scene, camera);
 	} 
-	//render();
 	animate();
 	
-			function animate() {
-
-			       requestAnimationFrame( animate );
-			       controls.update();
-
-			}
+	function animate() {
+		requestAnimationFrame( animate );
+		controls.update();
+	}
    
     renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -155,8 +152,11 @@ var scene;
 		var keyCode = event.which;
 		console.log(keyCode);
 				// backspace
+				if (keyCode == 47) {
+					event.preventDefault();
+				}
 				if ( keyCode == 8 ) {
-					
+					event.preventDefault();
 					if (selectedItem.tagText){
 						if (selectedItem.tagText.length-1 >=0)
 								selectedItem.tagText= selectedItem.tagText.substring(0, selectedItem.tagText.length-1);
@@ -185,7 +185,7 @@ var scene;
 			scene.remove(selectedItem.tagTextGeo);
 		 
     	var textGeo = new THREE.TextGeometry( selectedItem.tagText, {
-					 size: 18,
+					 size: 14,
 					 height: 100,
 					 font: "optimer", 
 					 weight: "normal", 
@@ -231,7 +231,7 @@ var scene;
 		
 
     	ctx.drawImage(image,cutX,cutY,width,height,0,0,width,height);
-	    var dataURL = c.toDataURL();
+	    dataURL = c.toDataURL();
     	
     	var listWidth =.25 * window.innerWidth-30;
     	var listHeight = window.innerHeight/6;
@@ -328,7 +328,7 @@ var scene;
     }
     
     function onDocumentMouseDown(event) {
-    	
+    	isTagging = true;
     	mouseDownPosition.x = (event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
     	mouseDownPosition.y = (event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
     	
