@@ -26,6 +26,7 @@ var scene;
 	var tagNum = 1;
 	var itemList = [];
 	var selectedItem;
+	var selector;
 	
 	function submit() {
 		// c.width  = width; // in pixels
@@ -361,6 +362,14 @@ var scene;
     			}
     		}
     		selectedItem = target;
+    		
+    		if (selectedItem) {
+    			
+    			var selectorGeo = new THREE.BoxGeometry (listWidth,listHeight);
+    			var selectorMaterial = new THREE.MeshBasicMaterial({ color:0xEDED25,opacity: .5,transparent: true});
+    			selector = THREE.Mesh(selectorGeo,selectorMaterial);
+    			
+    		}
     		
     	}
     	
