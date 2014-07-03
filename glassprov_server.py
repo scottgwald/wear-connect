@@ -108,10 +108,10 @@ def callback(ws, **kw):
         print('got image: ' + str(timestamp))
         broadcast(ws, channel, timestamp, image_content)
 
-    def words(channel, word1, word2):
+    def words(channel, word1, word2, image):
         print("client says it's ready for tags")
         print("channel: %s" % channel)
-        broadcast(ws, channel, "water", "agua")
+        broadcast(ws, channel, word1, word2, image)
         print("broadcasted")
 
     def print_log(channel, body):
