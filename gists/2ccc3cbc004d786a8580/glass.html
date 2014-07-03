@@ -17,7 +17,7 @@
             return this.length !== 0;
         }
         
-        $(document).on("ready", function(){
+        function startSlider() {
             var slide = $('.slide').unslider({
                 delay: false,
                 dots: false,
@@ -29,7 +29,9 @@
             });
             data = slide.data('unslider');
             timer = setInterval(data.next, 3000);
-        });
+        }
+
+        $(document).ready(startSlider);
 
     </script>
 </head>
@@ -94,17 +96,7 @@ currentTimeString = function () {
 function wordReceive(channel, word1, word2, croppedImage) {
     $('#cards').append(newCard(word1, word2, croppedImage));
     clearInterval(timer);
-    var slide = $('.slide').unslider({
-                delay: false,
-                dots: false,
-                complete: function() {
-                    var cards = document.getElementById("cards");
-                    var left = cards.style.left;
-                    var index = parseInt(left.substr(left, left.length-1))/(-100);
-                }
-            });
-    data = slide.data('unslider');
-    timer = setInterval(data.next, 3000);
+    startSlider();
 }
 
 function newCard(word1, word2, croppedImage) {
