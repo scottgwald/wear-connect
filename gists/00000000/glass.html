@@ -18,18 +18,20 @@
         }
         
         cardIndex = 0;
+        previousWord = '';
 
         function startSlider() {
             var slide = $('.slide').unslider({
                 delay: false,
                 dots: false,
-                speed: 0,
+                speed: 500,
                 complete: function(x) {
                     var cards = document.getElementById("cards");
                     var left = cards.style.left;
                     var index = parseInt(left.substr(left, left.length-1))/(-100);
                     console.log(x);
                     console.log('num cards: ' + $('#cards li .word1').length);
+
                     var word = $($('#cards li .word1')[cardIndex]).text();
                     console.log('word: ' + word);
                     setTimeout(function() {
@@ -116,7 +118,7 @@ function serverCustom() {
     WS.publish('words', 'clock', 'reloj', 'clock.jpg');
     WS.publish('words', 'sink', 'fregadero', 'sink.jpg');
 
-    toggleCamera();
+    //toggleCamera();
     WS.dataLog(false, true, 0.15);
 }
 
