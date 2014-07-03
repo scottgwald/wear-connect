@@ -25,11 +25,11 @@ var scene;
 	var text = 'Tag';
 	var tagNum = 1;
 	var itemList = [];
+	var selectedItem;
 	
 	function submit() {
-		console.log($("input[name=user]").val());
-		c.width  = width; // in pixels
-		c.height = height;
+		// c.width  = width; // in pixels
+		// c.height = height;
 		var geometry = new THREE.BoxGeometry( width, height, 10 );
    		var material = new THREE.MeshBasicMaterial( {  color:0x78AB46,opacity: .5,transparent: true} );
    		var currentPreview2 = new THREE.Mesh( geometry, material );
@@ -38,11 +38,11 @@ var scene;
    		scene.remove(currentPreview);
    		scene.add(currentPreview2);
    		
-    	ctx.drawImage(image,currentMousePosition.x,mouseDownPosition.y, width,height,0,0,width,height);
-	    var dataURL = c.toDataURL();
-	    console.log(dataURL);
-	    console.log('done');
-	    
+    	// ctx.drawImage(image,currentMousePosition.x,mouseDownPosition.y, width,height,0,0,width,height);
+	    // var dataURL = c.toDataURL();
+	    // console.log(dataURL);
+	    // console.log('done');
+// 	    
 	    
 	}
 	function init() {
@@ -123,7 +123,6 @@ var scene;
    			scene.add(menu);
    			
    			nextListPosition = window.innerHeight/2 - (window.innerHeight/12) - 10; 
-   			console.log(nextListPosition);//some padding here
    			
    			
 
@@ -153,30 +152,79 @@ var scene;
 	
 	function onDocumentKeyPress(event) {
 		var keyCode = event.which;
-
+		console.log(keyCode);
 				// backspace
 				if ( keyCode == 8 ) {
-					event.preventDefault();
+					
+					if (selectedItem.tagText){
+						if (selectedItem.tagText.length-1 >=0)
+								selectedItem.tagText= selectedItem.tagText.substring(0, selectedItem.tagText.length-1);
+								createTextForItem();
+					
+					}
+					
+				} else if (keyCode==13){
+					console.log('Enter');
+					submit();
 				} else {
-					var ch = String.fromCharCode( keyCode );
-					text += ch;
-					refreshText();
+					if (selectedItem) {
+						var ch = String.fromCharCode( keyCode );
+						if (!selectedItem.tagText)
+							selectedItem.tagText='';
+						selectedItem.tagText += ch;
+						createTextForItem();
+					}
 				}
+// 		
+	}
+	
+	function createTextForItem() {
+		
+		if(selectedItem.tagTextGeo)
+			scene.remove(selectedItem.tagTextGeo);
+		 
+    	var textGeo = new THREE.TextGeometry( selectedItem.tagText, {
+					 size: 18,
+					 height: 100,
+					 font: "optimer", 
+					 weight: "normal", 
+					 style: "normal"
+				 });
+				 
+		 var listWidth =.25 * window.innerWidth-30;
+    	 var itemPosX = 750 - (.25 * window.innerWidth+10)/2;
+    	 var thumbHeight = window.innerHeight/6;
+
+		 var textMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, overdraw: true });
+    	 var textMesh = new THREE.Mesh(textGeo,textMaterial);
+    	 	 textMesh.position.y = selectedItem.start + thumbHeight/6;
+    	     textMesh.position.x = itemPosX - listWidth/7;
+    	 selectedItem.tagTextGeo= textMesh;
+    	
+    	
+    	
+    	
+    	scene.add(textMesh);
+		
+		
 		
 	}
+	
 	function onDocumentKeyDown(event) {
 		
 	}
     
     function onDocumentMouseUp(event) {
+    	
+    	if (event.clientX < .75* window.innerWidth) {
     	isClicked = false;
     	
     	c.width  = width; // in pixels
 		c.height = height;
 		var cutX= (currentMousePosition.x-200-20)
 		var cutY = (currentMousePosition.y+(480-window.innerHeight)/2);
-		console.log(cutX);
-		console.log(cutY);
+		// console.log(cutX);
+		// console.log(cutY);
 		//var cutXF = cutX*(image.width/640);
 		//var cutYF = cutY*(image.height/480);
 		
@@ -195,8 +243,11 @@ var scene;
     	item.position.z =0;
     	scene.add(item);
     	item.selected = false;
+    	item.start = nextListPosition;
+    	item.tagName = text+tagNum;
+    	tagNum++;
     	itemList.push(item);
-    	
+    	//console.log(item.selected);
     	var thumbWidth = .33 * listWidth;
     	var thumbHeight = listHeight;
     	
@@ -235,7 +286,6 @@ var scene;
     	
     	
     	//scene.add(textMesh);
-    	tagNum++;
     	
     	
     	
@@ -243,7 +293,7 @@ var scene;
     	
     	
     	
-	  
+	  }
     	
     	
     	//currentPreview = undefined;
@@ -255,8 +305,8 @@ var scene;
     			scene.remove(currentPreview);
     		}
     		
-    		var x = event.clientX;//(event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
-       		var y = event.clientY;//(event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
+    		var x = (event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
+       		var y = (event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
        		
        		width = x - mouseDownPosition.x;
     		height = y - mouseDownPosition.y ;
@@ -278,9 +328,8 @@ var scene;
     
     function onDocumentMouseDown(event) {
     	
-    	mouseDownPosition.x = event.clientX;//(event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
-    	mouseDownPosition.y = event.clientY;//(event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
-    	console.log(mouseDownPosition.x);
+    	mouseDownPosition.x = (event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
+    	mouseDownPosition.y = (event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
     	
     	if (mouseDownPosition.x < .75* window.innerWidth) {
     	isClicked = true ;
@@ -295,18 +344,25 @@ var scene;
     	lastX = mouse3D.x;
     	lastY = mouse3D.y;
     	} else {
-    		var mouse = new THREE.Vector2();
-    		mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-			mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-			var vector = new THREE.Vector3( mouse.x, mouse.y, .5);
-			
-   			projector.unprojectVector( vector, camera );
-   			var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
-   			var intersects = ray.intersectObjects( scene.children );
-   			console.log(intersects[0].object);
-			
+    		var listWidth =.25 * window.innerWidth-30;
+    		var listHeight = window.innerHeight/6;
+    		mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (window.innerWidth) ) * 2 - 1, - ( event.clientY / window.innerHeight) * 2 + 1, 1 ), camera );
+    		mouse3D.sub(camera.position);
+    		
+    		var target;
+    		for (var i =0; i< itemList.length; i++) {
+    				
+
+    			if (mouseDownPosition.x >.75* window.innerWidth + 40 && mouse3D.y < itemList[i].start+listHeight/2 && mouse3D.y > itemList[i].start -listHeight/2 ){
+    				target = itemList[i];
+    				target.selected = true;
+    			} else {
+    				itemList[i].selected = false;
+    			}
+    		}
+    		selectedItem = target;
+    		
     	}
-    	
     	
     	
     	
