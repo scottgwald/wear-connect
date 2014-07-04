@@ -343,7 +343,9 @@ function init() {
     				target.selected = true;
 
                     console.log('a box was clicked');
-                    $('input').val('').focus();
+                    $('input').val('').focus().change(function() {
+                        console.log($('input').val());
+                    });
     			} else {
     				itemList[i].selected = false;
     			}
