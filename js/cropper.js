@@ -19,6 +19,14 @@ var ctx;
 var image;
 var planeG;
 var control;
+
+// SPATIAL DIMENSIONS
+var virtualImageWidth = 640;
+var virtualImageHeight = 480;
+var virtualPlaneOffset = -200;
+var virtualCanvasWidth = 1500;
+var virtualCanvasHeight = window.innerHeight;
+
 init();
 var c;
 var nextListPosition;
@@ -64,10 +72,10 @@ function placePicture(imageData) {
 
 	img.map.needsUpdate = true; //ADDED
 
-		// plane
-		planeG = new THREE.PlaneGeometry(640, 480);
-	 	plane = new THREE.Mesh(planeG, img);
-	plane.position.x = 0 - 200;
+	// plane
+	planeG = new THREE.PlaneGeometry(virtualImageWidth, virtualImageHeight);
+ 	plane = new THREE.Mesh(planeG, img);
+	plane.position.x = virtualPlaneOffset;
 
 	plane.overdraw = true;
 	scene.add(plane);
@@ -81,7 +89,7 @@ function init() {
     document.body.appendChild( renderer.domElement );
     elem = renderer.domElement;
     boundingRect = elem.getBoundingClientRect();	
-    camera = new THREE.OrthographicCamera( -750, 750, window.innerHeight / 2, window.innerHeight / - 2, 1,5000 );
+    camera = new THREE.OrthographicCamera( - virtualCanvasWidth / 2, virtualCanvasWidth / 2, virtualCanvasHeight / 2, - virtualCanvasHeight / 2, 1, 5000 );
 
     camera.position.y = 0; 
     camera.position.z = 400; 
