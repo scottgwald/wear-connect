@@ -114,9 +114,13 @@ function serverCustom() {
     });
     WS.subscribe('words', wordReceive);
     WS.publish('register', 'registered', WS.groupDevice());
-    WS.publish('words', 'cup / カップ', 'cup.jpg');
+    /*WS.publish('words', 'cup / カップ', 'cup.jpg');
     WS.publish('words', 'grapefruit / グレープフルーツ', 'grapefruit.jpg');
-    WS.publish('words', 'knife / ナイフ', 'knife.jpg');
+    WS.publish('words', 'knife / ナイフ', 'knife.jpg');*/
+
+    wordReceive('words', 'cup / カップ', 'cup.jpg');
+    wordReceive('words', 'grapefruit / グレープフルーツ', 'grapefruit.jpg');
+    wordReceive('words', 'knife / ナイフ', 'knife.jpg');
 
     toggleCamera();
     WS.dataLog(false, true, 0.15);
