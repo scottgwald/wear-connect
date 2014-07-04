@@ -114,10 +114,9 @@ function serverCustom() {
     });
     WS.subscribe('words', wordReceive);
     WS.publish('register', 'registered', WS.groupDevice());
-    /*WS.publish('words', 'stove', 'estufa', 'stove.jpg');
-    WS.publish('words', 'chair', 'silla', 'chair.jpg');
-    WS.publish('words', 'clock', 'reloj', 'clock.jpg');
-    WS.publish('words', 'sink', 'fregadero', 'sink.jpg');*/
+    WS.publish('words', 'cup / カップ', 'cup.jpg');
+    WS.publish('words', 'grapefruit / グレープフルーツ', 'grapefruit.jpg');
+    WS.publish('words', 'knife / ナイフ', 'knife.jpg');
 
     toggleCamera();
     WS.dataLog(false, true, 0.15);

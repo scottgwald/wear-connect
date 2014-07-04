@@ -188,7 +188,7 @@ function init() {
     	var textGeo = new THREE.TextGeometry( selectedItem.tagText, {
     			size: 14,
     			height: 100,
-    			font: "optimer", 
+    			font: "arial", 
     			weight: "normal", 
     			style: "normal"
     	});
@@ -344,7 +344,8 @@ function init() {
 
                     console.log('a box was clicked');
                     $('input').val('').focus().change(function() {
-                        console.log($('input').val());
+                        selectedItem.tagText = $('input').val();;
+                        createTextForItem();
                     });
     			} else {
     				itemList[i].selected = false;
