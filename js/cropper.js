@@ -341,6 +341,9 @@ function init() {
     			if (mouseDownPosition.x >.75* window.innerWidth + 40 && mouse3D.y < itemList[i].start+listHeight/2 && mouse3D.y > itemList[i].start -listHeight/2 ){
     				target = itemList[i];
     				target.selected = true;
+
+                    console.log('a box was clicked');
+                    $('input').val('').focus();
     			} else {
     				itemList[i].selected = false;
     			}
@@ -352,7 +355,7 @@ function init() {
     			var selectorGeo = new THREE.BoxGeometry (listWidth,listHeight);
     			var selectorMaterial = new THREE.MeshBasicMaterial({ color:0xEDED25,opacity: .5,transparent: true});
     			selector = THREE.Mesh(selectorGeo,selectorMaterial);
-    			
+
     		}		
     	}
     }
