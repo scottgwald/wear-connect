@@ -72,6 +72,10 @@ var listItemMaterial;
 
 var thumbGeometry = new THREE.PlaneGeometry( thumbWidth, thumbHeight);
 
+var textMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: true } );
+
+// COORDINATE MAPPINGS
+
 function actualToVirtualScale( coord ) {
     return new THREE.Vector2( coord.x * virtualCanvasWidth / actualCanvasWidth,
             coord.y * virtualCanvasHeight / actualCanvasHeight);
@@ -195,7 +199,7 @@ function init() {
     list.position.y = virtualListHeight / 2;
     listItemGeometry = new THREE.BoxGeometry( listWidth - 2 * listItemPadding,
                 listItemHeight - listItemPadding, 1 );
-    listItemMaterial = new THREE.MeshBasicMaterial();
+    listItemMaterial = new THREE.MeshBasicMaterial( {  opacity: .75,transparent: true } );
 
     listItemY = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
     scene.add( list );
@@ -217,10 +221,9 @@ function init() {
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     renderer.domElement.addEventListener('mouseup',onDocumentMouseUp,false);
 
-    document.addEventListener( 'keypress', onDocumentKeyPress, false );
-    document.addEventListener( 'keydown', onDocumentKeyDown, false );
+    document.addEventListener( 'keydown', onDocumentKeyDown, true );
 
-    function onDocumentKeyPress(event) {
+    function onDocumentKeyDown(event) {
         var keyCode = event.which;
         console.log(keyCode);
         // backspace
@@ -252,34 +255,28 @@ function init() {
 
     function createTextForItem() {
 
-        if(selectedItem.tagTextGeo)
-            scene.remove(selectedItem.tagTextGeo);
+        if ( selectedItem.tagTextMesh ) {
+            scene.remove( selectedItem.tagTextMesh );
+        }
+
+        if ( DBG ) console.log( "Found text: " + selectedItem.tagText );
 
         var textGeo = new THREE.TextGeometry( selectedItem.tagText, {
                 size: 14,
                 height: 100,
-                font: "arial",
+                font: "optimer",
                 weight: "normal",
                 style: "normal"
         });
 
-        var listWidth =.25 * window.innerWidth - 30;
-        var itemPosX = 750 - ( .25 * window.innerWidth + 10) / 2;
-        var thumbHeight = window.innerHeight / 6;
-        var textMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, overdraw: true });
-        var textMesh = new THREE.Mesh(textGeo,textMaterial);
-        textMesh.position.y = selectedItem.start + thumbHeight / 6;
-        textMesh.position.x = itemPosX - listWidth / 7;
-        selectedItem.tagTextGeo= textMesh;
-        scene.add(textMesh);
-    }
+        var textMesh = new THREE.Mesh( textGeo, textMaterial );
 
-    function onDocumentKeyDown(event) {
+        textMesh.position.y = 0;
+        textMesh.position.x = 0;
+        textMesh.position.z = 50;
 
-    }
-
-    function generateListItem( index ) {
-
+        selectedItem.tagTextMesh = textMesh;
+        selectedItem.add( textMesh );
     }
 
     // mouse events are in "actual" coordinates
@@ -343,6 +340,8 @@ function init() {
 
             listItem.add( thumb );
             list.add( listItem );
+
+            selectedItem = listItem;
 
             // var currentTagText = text + ' ' + tagNum;
             // var textGeo = new THREE.TextGeometry( currentTagText, {
