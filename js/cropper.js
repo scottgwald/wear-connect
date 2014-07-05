@@ -77,6 +77,14 @@ function actualToVirtual( coord ) {
             coord.y * virtualCanvasHeight / actualCanvasHeight);
 }
 
+function actualToVirtualScale( dims ) {
+    return actualToVirtual( dims );
+}
+
+function actualToVirtualPos( coord ) {
+    return actualToVirtual( new THREE.Vector2( coord.x, actualCanvasHeight - coord.y ) );
+}
+
 function virtualToPixel( coord ) {
     return new THREE.Vector2( coord.x * pixelImageWidth / virtualImageWidth,
             coord.y * pixelImageHeight / virtualImageHeight );
@@ -345,18 +353,26 @@ function init() {
                 scene.remove(currentPreview);
             }
 
-            var x = (event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
-            var y = (event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
+            var x = event.clientX;
+            var y = event.clientY;
 
-            width = x - mouseDownPosition.x;
-            height = y - mouseDownPosition.y ;
+            // will need to handle different +/- cases
+            var actualTagWidth = x - mouseDownPosition.x;
+            var actualTagHeight = y - mouseDownPosition.y;
+            var actualTagDims = new THREE.Vector2( actualTagWidth, actualTagHeight );
 
+            var virtualTagDims = actualToVirtualScale( actualTagDims );
 
-            var geometry = new THREE.BoxGeometry( width, height, 100 );
-            var material = new THREE.MeshBasicMaterial( {  opacity: .5,transparent: true} );
+            var geometry = new THREE.BoxGeometry( virtualTagDims.x, virtualTagDims.y, 100 );
+            var material = new THREE.MeshBasicMaterial( {  opacity: .5, transparent: true} );
             currentPreview = new THREE.Mesh( geometry, material );
-            currentPreview.position.x = lastX + width/2;
-            currentPreview.position.y = lastY - height/2;
+
+            actualTagPos = new THREE.Vector2( ( x + mouseDownPosition.x ) / 2,
+                    ( y + mouseDownPosition.y ) / 2 );
+            virtualTagPos = actualToVirtualPos( actualTagPos );
+
+            currentPreview.position.x = virtualTagPos.x;
+            currentPreview.position.y = virtualTagPos.y;
             currentPreview.position.z = 0;
 
             scene.add(currentPreview);
@@ -365,12 +381,11 @@ function init() {
 
     function onDocumentMouseDown(event) {
         isTagging = true;
-        mouseDownPosition.x = (event.clientX - boundingRect.left) * (elem.width / boundingRect.width);
-        mouseDownPosition.y = (event.clientY - boundingRect.top) * (elem.height / boundingRect.height);
+        mouseDownPosition.x = event.clientX;
+        mouseDownPosition.y = event.clientY;
         
-        if (mouseDownPosition.x < .75* window.innerWidth) {
+        if (mouseDownPosition.x < actualImageWidth) {
             isClicked = true ;
-
 
             currentMousePosition.x = event.clientX;//(event.clientX - boundingRect.left) * (renderer.domElement.width / boundingRect.width);
             currentMousePosition.y = event.clientY;//(boundingRect.top -window.innerHeight + event.clientY) * (renderer.domElement.height / boundingRect.height);
