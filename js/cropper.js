@@ -1,7 +1,7 @@
 /**
  * @author Christian Vazquez
  */
-
+var DBG = false;
 var scene;
 var currentPreview;
 var currentTag;
@@ -72,22 +72,30 @@ var listItemMaterial;
 
 var thumbGeometry = new THREE.PlaneGeometry( thumbWidth, thumbHeight);
 
-function actualToVirtual( coord ) {
+function actualToVirtualScale( coord ) {
     return new THREE.Vector2( coord.x * virtualCanvasWidth / actualCanvasWidth,
             coord.y * virtualCanvasHeight / actualCanvasHeight);
 }
 
-function actualToVirtualScale( dims ) {
-    return actualToVirtual( dims );
-}
-
 function actualToVirtualPos( coord ) {
-    return actualToVirtual( new THREE.Vector2( coord.x, actualCanvasHeight - coord.y ) );
+    return actualToVirtualScale( new THREE.Vector2( coord.x, actualCanvasHeight - coord.y ) );
 }
 
-function virtualToPixel( coord ) {
-    return new THREE.Vector2( coord.x * pixelImageWidth / virtualImageWidth,
-            coord.y * pixelImageHeight / virtualImageHeight );
+function virtualToPixelScale( dims ) {
+    return new THREE.Vector2( dims.x * pixelImageWidth / virtualImageWidth,
+            dims.y * pixelImageHeight / virtualImageHeight );
+}
+
+function virtualToPixelPos( coord ) {
+    return virtualToPixelScale( new THREE.Vector2( coord.x, virtualImageHeight - coord.y ) );
+}
+
+function actualToPixelScale( dims ) {
+    return virtualToPixelScale( actualToVirtualScale( dims ) );
+}
+
+function actualToPixelPos( coord ) {
+    return virtualToPixelPos( actualToVirtualPos( coord ) );
 }
 
 function submit() {
@@ -279,18 +287,29 @@ function init() {
 
         if (event.clientX < actualImageWidth) {
 
+            var pixelTagDims = actualToPixelScale( new THREE.Vector2(
+                    Math.abs( mouseDownPosition.x - event.clientX ),
+                    Math.abs( mouseDownPosition.y - event.clientY )
+            ));
+
+            if (DBG) console.log( "Mouse down position was " + mouseDownPosition.x + ", "
+                    + mouseDownPosition.y );
+            if (DBG) console.log( "Mouse up position is " + event.clientX + ", " + event.clientY );
+
             isClicked = false;
 
-            c.width  = width; // in pixels
-            c.height = height;
-            var cutX = (currentMousePosition.x - virtualImageOffset - 20)
-            var cutY = (currentMousePosition.y + ( virtualImageHeight - virtualCanvasHeight ) / 2);
-            // console.log(cutX);
-            // console.log(cutY);
-            //var cutXF = cutX*(image.width/640);
-            //var cutYF = cutY*(image.height/480);
+            c.width  = pixelTagDims.x;
+            c.height = pixelTagDims.y;
 
-            ctx.drawImage(image, cutX, cutY, width, height, 0, 0, width, height);
+            var cutPoint = actualToPixelPos( new THREE.Vector2( mouseDownPosition.x,
+                    mouseDownPosition.y ) );
+
+            ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
+                    0, 0, pixelTagDims.x, pixelTagDims.y);
+
+            if (DBG) console.log( "Grabbing region of size " + pixelTagDims.x + ", "
+                    + pixelTagDims.y + " from location "  + cutPoint.x + ", " + cutPoint.y );
+
             dataURL = c.toDataURL();
 
             var listWidth = .25 * window.innerWidth - 30;
@@ -312,7 +331,8 @@ function init() {
 
 
             var img = new THREE.MeshBasicMaterial({
-            map: THREE.ImageUtils.loadTexture(dataURL) });
+                    map: THREE.ImageUtils.loadTexture( dataURL )
+            });
 
             var thumb = new THREE.Mesh( thumbGeometry, img);
             thumb.position.x = ( thumbWidth - virtualListWidth ) / 2 + listItemPadding;
