@@ -48,6 +48,9 @@ var listItemPadding = 15;
 
 var thumbWidthProportion = 0.33;
 
+var thumbWidth = listItemHeight - listItemPadding;
+var thumbHeight = thumbWidth;
+
 init();
 var c;
 var nextListPosition;
@@ -59,6 +62,15 @@ var selector;
 var isTagging = false;
 var dataURL;
 var list;
+
+var listItemY;
+
+// GEOMETRY / MATERIAL / MESH
+
+var listItemGeometry;
+var listItemMaterial;
+
+var thumbGeometry = new THREE.PlaneGeometry( thumbWidth, thumbHeight);
 
 function actualToVirtual( coord ) {
     return new THREE.Vector2( coord.x * virtualCanvasWidth / actualCanvasWidth,
@@ -165,11 +177,11 @@ function init() {
     list = new THREE.Mesh( listGeometry, listMaterial );
     list.position.x = virtualImageWidth + virtualListWidth / 2;
     list.position.y = virtualListHeight / 2;
-    listItemGeometry = new THREE.BoxGeometry( listWidth - 2 * listItemPadding, listItemHeight, 1 );
+    listItemGeometry = new THREE.BoxGeometry( listWidth - 2 * listItemPadding,
+                listItemHeight - listItemPadding, 1 );
     listItemMaterial = new THREE.MeshBasicMaterial();
-    listItem = new THREE.Mesh( listItemGeometry, listItemMaterial );
-    listItem.position.y = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
-    list.add( listItem );
+
+    listItemY = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
     scene.add( list );
 
     nextListPosition = virtualCanvasHeight / 2 - (virtualCanvasHeight * listItemProportion) - 10;
@@ -277,31 +289,32 @@ function init() {
             var listHeight = window.innerHeight / 6;
             var listItem = new THREE.BoxGeometry( listWidth, listHeight,10);
             var listMaterial = new THREE.MeshBasicMaterial({opacity:.7,transparent:true, color: 0x000000});
-            var item = new THREE.Mesh(listItem,listMaterial);
-            var itemPosX = virtualCanvasWidth / 2 - ( actualListWidth + 10 ) / 2;
-            item.position.x = itemPosX;
-            item.position.y = nextListPosition;
-            item.position.z = 0;
-            scene.add(item);
-            item.selected = false;
-            item.start = nextListPosition;
-            item.tagName = text+tagNum;
+
+            var listItem = new THREE.Mesh( listItemGeometry, listItemMaterial );
+            listItem.position.y = listItemY;
+            listItemY -= listItemHeight;
+
+            listItem.selected = false;
+            listItem.start = nextListPosition;
+            listItem.tagName = text+tagNum;
+
             tagNum++;
-            itemList.push(item);
+
             //console.log(item.selected);
-            var thumbWidth = .33 * listWidth;
-            var thumbHeight = listHeight;
+
 
             var img = new THREE.MeshBasicMaterial({
             map: THREE.ImageUtils.loadTexture(dataURL) });
 
-            var thumbGeometry = new THREE.PlaneGeometry(thumbWidth,thumbHeight);
-            var thumb = new THREE.Mesh(thumbGeometry,img);
-            thumb.position.x = itemPosX - thumbWidth;
-            thumb.position.y = nextListPosition;
+            var thumb = new THREE.Mesh( thumbGeometry, img);
+            thumb.position.x = ( thumbWidth - virtualListWidth ) / 2 + listItemPadding;
             thumb.position.z = 40;
+            listItem.thumb = thumb;
 
-            scene.add(thumb);
+            itemList.push( listItem );
+
+            listItem.add( thumb );
+            list.add( listItem );
 
             // var currentTagText = text + ' ' + tagNum;
             // var textGeo = new THREE.TextGeometry( currentTagText, {
@@ -320,7 +333,6 @@ function init() {
 
             //scene.add(textMesh);
 
-            nextListPosition = nextListPosition - window.innerHeight/6 -10;
         }
 
         //currentPreview = undefined;
