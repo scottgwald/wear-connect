@@ -85,6 +85,15 @@ function actualToVirtualPos( coord ) {
     return actualToVirtualScale( new THREE.Vector2( coord.x, actualCanvasHeight - coord.y ) );
 }
 
+function virtualToActualScale( coord ) {
+    return new THREE.Vector2( coord.x * actualCanvasWidth / virtualCanvasWidth,
+            coord.y * actualCanvasHeight / virtualCanvasHeight);
+}
+
+function virtualToActualPos( coord ) {
+    return virtualToActualScale( new THREE.Vector2( coord.x, coord.y - actualCanvasHeight) );
+}
+
 function virtualToPixelScale( dims ) {
     return new THREE.Vector2( dims.x * pixelImageWidth / virtualImageWidth,
             dims.y * pixelImageHeight / virtualImageHeight );
@@ -256,17 +265,17 @@ function init() {
     function createTextForItem() {
 
         if ( selectedItem.tagTextMesh ) {
-            scene.remove( selectedItem.tagTextMesh );
+            selectedItem.remove( selectedItem.tagTextMesh );
         }
 
         if ( DBG ) console.log( "Found text: " + selectedItem.tagText );
 
         var textGeo = new THREE.TextGeometry( selectedItem.tagText, {
-                size: 14,
+                size: 32,
                 height: 100,
-                font: "optimer",
-                weight: "normal",
-                style: "normal"
+                font: "ms pgothic",
+                //weight: "normal",
+                //style: "normal"
         });
 
         var textMesh = new THREE.Mesh( textGeo, textMaterial );
@@ -324,9 +333,7 @@ function init() {
 
             tagNum++;
 
-            //console.log(item.selected);
-
-
+            //console.log(item.selected)
             var img = new THREE.MeshBasicMaterial({
                     map: THREE.ImageUtils.loadTexture( dataURL )
             });
@@ -342,6 +349,14 @@ function init() {
             list.add( listItem );
 
             selectedItem = listItem;
+
+            $('input').val('').focus().change(function() {
+                var text = $('input').val();
+                selectedItem.tagText = text;
+                var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
+                $('body').append('<div style="position: absolute; left: ' + vec.x + '; top: ' + vec.y + ';">' + text + '</div>');
+                createTextForItem();
+            });
 
             // var currentTagText = text + ' ' + tagNum;
             // var textGeo = new THREE.TextGeometry( currentTagText, {
@@ -428,11 +443,6 @@ function init() {
                     target = itemList[i];
                     target.selected = true;
 
-                    console.log('a box was clicked');
-                    $('input').val('').focus().change(function() {
-                        selectedItem.tagText = $('input').val();;
-                        createTextForItem();
-                    });
                 } else {
                     itemList[i].selected = false;
                 }
