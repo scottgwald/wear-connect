@@ -50,9 +50,11 @@ var thumbWidthProportion = 0.33;
 
 var thumbWidth = listItemHeight - listItemPadding;
 var thumbHeight = thumbWidth;
+var textWidth = virtualListWidth - 2 * listItemPadding - thumbWidth;
 
 init();
 var c;
+var textCanvas;
 var nextListPosition;
 var text = 'Tag';
 var tagNum = 1;
@@ -71,8 +73,8 @@ var listItemGeometry;
 var listItemMaterial;
 
 var thumbGeometry = new THREE.PlaneGeometry( thumbWidth, thumbHeight);
-
-var textMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, overdraw: true } );
+var textGeometry = new THREE.PlaneGeometry( textWidth, thumbHeight );
+var textMaterial = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, overdraw: true } );
 
 // COORDINATE MAPPINGS
 
@@ -159,9 +161,14 @@ function placePicture(imageData) {
 function makeTextDataURL( text ) {
 
     textContext.font = 'normal 80px foo';
+    textContext.fillStyle = "blue";
     console.log("String measurements: " + JSON.stringify( textContext.measureText( text )));
+
+    textContext.clearRect( 0, 0, 500, 80 );
     textContext.fillText( text, 0, 80, 500 );
-    return textCanvas.toDataURL();
+    var durl = textCanvas.toDataURL();
+    console.log(durl);
+    return durl;
 
 }
 
@@ -195,7 +202,7 @@ function init() {
     ctx = c.getContext("2d");
 
     textCanvas = document.getElementById("textCanvas");
-    textCanvas.display = 'none';
+    textCanvas.style.display = 'none';
     textCanvas.width = 500;
     textCanvas.height = 80;
     textContext = textCanvas.getContext("2d");
@@ -285,22 +292,36 @@ function init() {
 
         if ( DBG ) console.log( "Found text: " + selectedItem.tagText );
 
-        var textGeo = new THREE.TextGeometry( selectedItem.tagText, {
-                size: 32,
-                height: 100,
-                font: "ms pgothic",
-                //weight: "normal",
-                //style: "normal"
+        // var textGeo = new THREE.TextGeometry( selectedItem.tagText, {
+        //         size: 32,
+        //         height: 100,
+        //         font: "ms pgothic",
+        //         //weight: "normal",
+        //         //style: "normal"
+        // });
+
+        // var textMesh = new THREE.Mesh( textGeo, textMaterial );
+
+        // textMesh.position.y = 0;
+        // textMesh.position.x = 0;
+        // textMesh.position.z = 50;
+
+        // selectedItem.tagTextMesh = textMesh;
+        // selectedItem.add( textMesh );
+
+        var textDataURL = makeTextDataURL( selectedItem.tagText );
+
+        //console.log(item.selected)
+        var img = new THREE.MeshBasicMaterial({
+                map: THREE.ImageUtils.loadTexture( textDataURL )
         });
 
-        var textMesh = new THREE.Mesh( textGeo, textMaterial );
-
-        textMesh.position.y = 0;
-        textMesh.position.x = 0;
-        textMesh.position.z = 50;
-
+        var textMesh = new THREE.Mesh( textGeometry, img );
+        textMesh.position.x = ( textWidth - thumbWidth ) / 2 ;
+        textMesh.position.z = 40;
         selectedItem.tagTextMesh = textMesh;
         selectedItem.add( textMesh );
+
     }
 
     // mouse events are in "actual" coordinates
@@ -332,6 +353,7 @@ function init() {
                     + pixelTagDims.y + " from location "  + cutPoint.x + ", " + cutPoint.y );
 
             dataURL = c.toDataURL();
+            console.log( "dataURL " + dataURL );
 
             var listWidth = .25 * window.innerWidth - 30;
             var listHeight = window.innerHeight / 6;
@@ -368,8 +390,8 @@ function init() {
             $('input').val('').focus().change(function() {
                 var text = $('input').val();
                 selectedItem.tagText = text;
-                var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
-                $('body').append('<div style="position: absolute; left: ' + vec.x + '; top: ' + vec.y + ';">' + text + '</div>');
+                // var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
+                // $('body').append('<div style="position: absolute; left: ' + vec.x + '; top: ' + vec.y + ';">' + text + '</div>');
                 createTextForItem();
             });
 
