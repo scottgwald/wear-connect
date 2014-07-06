@@ -254,8 +254,6 @@ function init() {
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     renderer.domElement.addEventListener('mouseup',onDocumentMouseUp,false);
 
-    document.addEventListener( 'keydown', onDocumentKeyDown, true );
-
     function createTextForItem() {
 
         if ( selectedItem.tagTextMesh ) {
