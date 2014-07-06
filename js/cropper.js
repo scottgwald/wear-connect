@@ -114,6 +114,8 @@ function actualToPixelPos( coord ) {
 }
 
 function submit() {
+    console.log('submitting');
+
     // c.width  = width; // in pixels
     // c.height = height;
     var geometry = new THREE.BoxGeometry( width, height, 10 );
@@ -254,36 +256,6 @@ function init() {
 
     document.addEventListener( 'keydown', onDocumentKeyDown, true );
 
-    function onDocumentKeyDown(event) {
-        var keyCode = event.which;
-        console.log(keyCode);
-        // backspace
-        if (keyCode == 47) {
-            event.preventDefault();
-        }
-        if ( keyCode == 8 ) {
-            event.preventDefault();
-            if (selectedItem.tagText){
-                if (selectedItem.tagText.length-1 >=0) {
-                    selectedItem.tagText = selectedItem.tagText.substring(0, selectedItem.tagText.length-1);
-                    createTextForItem();
-                }
-            }
-        } else if (keyCode == 13) {
-            console.log('Enter');
-            submit();
-        } else {
-            if (selectedItem) {
-                var ch = String.fromCharCode( keyCode );
-                if (!selectedItem.tagText)
-                    selectedItem.tagText='';
-                selectedItem.tagText += ch;
-                createTextForItem();
-            }
-        }
-    //
-    }
-
     function createTextForItem() {
 
         if ( selectedItem.tagTextMesh ) {
@@ -387,7 +359,7 @@ function init() {
 
             selectedItem = listItem;
 
-            $('input').val('').focus().keyup(function() {
+            $('#textform #field').val('').focus().keyup(function() {
                 var text = $('input').val();
                 selectedItem.tagText = text;
                 // var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
@@ -495,4 +467,10 @@ function init() {
             }
         }
     }
+
+    $(document).ready(function() {
+        $('#textform').submit(submit);
+        console.log('set form submission function');
+    })
+    
 }
