@@ -156,6 +156,15 @@ function placePicture(imageData) {
     scene.add(plane);
 }
 
+function makeTextDataURL( text ) {
+
+    textContext.font = 'normal 80px foo';
+    console.log("String measurements: " + JSON.stringify( textContext.measureText( text )));
+    textContext.fillText( text, 0, 80, 500 );
+    return textCanvas.toDataURL();
+
+}
+
 function init() {
 
     var renderer = new THREE.WebGLRenderer();
@@ -184,6 +193,12 @@ function init() {
     c = document.getElementById("myCanvas");
     c.style.display = 'none';
     ctx = c.getContext("2d");
+
+    textCanvas = document.getElementById("textCanvas");
+    textCanvas.display = 'none';
+    textCanvas.width = 500;
+    textCanvas.height = 80;
+    textContext = textCanvas.getContext("2d");
 
     controls = new THREE.TrackballControls( camera );
 
