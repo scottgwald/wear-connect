@@ -166,8 +166,8 @@ function makeTextDataURL( text ) {
     textContext.fillStyle = "blue";
     console.log("String measurements: " + JSON.stringify( textContext.measureText( text )));
 
-    textContext.clearRect( 0, 0, 500, 80 );
-    textContext.fillText( text, 0, 80, 500 );
+    textContext.clearRect( 0, 0, 500, 90 );
+    textContext.fillText( text, 8, 70, 484 );
     var durl = textCanvas.toDataURL();
     console.log(durl);
     return durl;
@@ -206,7 +206,7 @@ function init() {
     textCanvas = document.getElementById("textCanvas");
     textCanvas.style.display = 'none';
     textCanvas.width = 500;
-    textCanvas.height = 80;
+    textCanvas.height = 90;
     textContext = textCanvas.getContext("2d");
 
     controls = new THREE.TrackballControls( camera );
