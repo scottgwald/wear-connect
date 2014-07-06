@@ -88,6 +88,9 @@ currentTimeString = function () {
 
 
 function wordReceive(channel, word, croppedImage) {
+    console.log('word: ' + word);
+    word = decodeURIComponent(escape(word));
+    console.log('un-fucked word: ' + word);
     $('#cards').append(newCard(word, croppedImage));
     clearInterval(timer);
     startSlider();
