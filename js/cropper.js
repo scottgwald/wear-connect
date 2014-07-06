@@ -387,7 +387,7 @@ function init() {
 
             selectedItem = listItem;
 
-            $('input').val('').focus().change(function() {
+            $('input').val('').focus().keyup(function() {
                 var text = $('input').val();
                 selectedItem.tagText = text;
                 // var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
