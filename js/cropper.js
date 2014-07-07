@@ -20,7 +20,9 @@ var image;
 var planeG;
 var control;
 
+
 // SPATIAL DIMENSIONS
+var glassAspectRatio = 16.0/9.0;
 
 var virtualImageOffset = -200;
 var virtualCanvasWidth = 1500;
@@ -53,6 +55,9 @@ var thumbHeight = thumbWidth;
 var textWidth = virtualListWidth - 2 * listItemPadding - thumbWidth;
 var c;
 var textCanvas;
+var textCanvasWidth = 500;
+var textCanvasHeight = 90;
+var textCanvasPadding = 8;
 var nextListPosition;
 var text = 'Tag';
 var tagNum = 1;
@@ -74,7 +79,7 @@ var listItemGeometry;
 var listItemMaterial;
 
 var thumbGeometry = new THREE.PlaneGeometry( thumbWidth, thumbHeight);
-var textGeometry = new THREE.PlaneGeometry( textWidth, thumbHeight );
+var textGeometry = new THREE.PlaneGeometry( textWidth, textWidth * textCanvasHeight / textCanvasWidth );
 var textMaterial = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, overdraw: true } );
 
 // COORDINATE MAPPINGS
@@ -173,11 +178,12 @@ function makeTextDataURL( text ) {
 
     //textContext.clearRect( 0, 0, 500, 90 );
     
-    textContext.fillStyle = "#939393";
-   	textContext.fillRect( 0, 0, textWidth, thumbHeight );
+    textContext.fillStyle = "#bdbdbd";
+   	textContext.fillRect( 0, 0, textCanvasWidth, textCanvasHeight );
+   	//textContext.fillRect(0,0,500,90);
    	textContext.fillStyle = "black";
 
-    textContext.fillText( text, 8, 70, textWidth-16 );
+    textContext.fillText( text, textCanvasPadding, 70, textCanvasWidth - 2 * textCanvasPadding );
     var durl = textCanvas.toDataURL( 'image/jpeg' );
     console.log(durl);
     return durl;
@@ -214,10 +220,10 @@ function init() {
     ctx = c.getContext("2d");
 
     textCanvas = document.getElementById("textCanvas");
-    //textCanvas.style.display = 'none';
+    textCanvas.style.display = 'none';
   
-    textCanvas.width = textWidth;
-    textCanvas.height = thumbHeight;
+    textCanvas.width = textCanvasWidth; //textWidth*2;
+    textCanvas.height = textCanvasHeight; //thumbHeight*2;
     //textCanvas.width = 500;
     //textCanvas.height = 90;
     textContext = textCanvas.getContext("2d");
@@ -239,7 +245,7 @@ function init() {
     var listWidth  = virtualListWidth;
 
     var listGeometry = new THREE.BoxGeometry( listWidth, virtualCanvasHeight, 1 );
-    var listMaterial = new THREE.MeshBasicMaterial( {  opacity: .75,transparent: true} );
+    var listMaterial = new THREE.MeshBasicMaterial( {  color:"#bdbdbd",transparent: true} );
     list = new THREE.Mesh( listGeometry, listMaterial );
     list.position.x = virtualImageWidth + virtualListWidth / 2;
     list.position.y = virtualListHeight / 2;
