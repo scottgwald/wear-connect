@@ -91,6 +91,7 @@ function wordReceive(channel, word, croppedImage) {
     console.log('word: ' + word);
     word = decodeURIComponent(escape(word));
     console.log('un-fucked word: ' + word);
+    console.log('trying 1');
     $('#cards').append(newCard(word, croppedImage));
     clearInterval(timer);
     startSlider();
