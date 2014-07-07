@@ -65,8 +65,13 @@ $(document).ready(function () {
       console.log(JSON.stringify({chan: chan, timestamp: timestamp}));
                                                    
       //$('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
-      if(!isTagging)
-      placePicture('data:image/jpg;base64,' + btoa(image));
+      if(!isTagging) {
+        placePicture('data:image/jpg;base64,' + btoa(image));
+        console.log('in if (!isTagging)');
+      } else {
+        console.log('if(!isTagging) else ');
+      }
+      
       //ws.publish('words',,)
       
     });

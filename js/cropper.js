@@ -256,8 +256,6 @@ function init() {
     listItemY = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
     scene.add( list );
     
-    placePicture('cup.jpg');
-
     nextListPosition = virtualCanvasHeight / 2 - (virtualCanvasHeight * listItemProportion) - 10;
 
     function render() { 

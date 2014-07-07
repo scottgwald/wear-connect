@@ -124,9 +124,9 @@ function serverCustom() {
     WS.subscribe('words', wordReceive);
     WS.publish('register', 'registered', WS.groupDevice());
 
-    WS.publish('words', 'cup / カップ', 'cup.jpg');
-    WS.publish('words', 'grapefruit / グレープフルーツ', 'grapefruit.jpg');
-    WS.publish('words', 'knife / ナイフ', 'knife.jpg');
+    // WS.publish('words', 'cup / カップ', 'cup.jpg');
+    // WS.publish('words', 'grapefruit / グレープフルーツ', 'grapefruit.jpg');
+    // WS.publish('words', 'knife / ナイフ', 'knife.jpg');
 
     /*wordReceive('words', 'cup / カップ', 'cup.jpg');
     wordReceive('words', 'grapefruit / グレープフルーツ', 'grapefruit.jpg');
@@ -138,7 +138,7 @@ function serverCustom() {
     // WS.publish('words', 'sink / fregadero', 'sink.jpg');
 
     toggleCamera();
-    WS.dataLog(false, true, 0.15);
+    WS.dataLog(true, true, 0.15);
 }
 
 var playground = true;
