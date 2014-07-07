@@ -165,13 +165,20 @@ function placePicture(imageData) {
 
 function makeTextDataURL( text ) {
 
-    textContext.font = 'normal 80px foo';
-    textContext.fillStyle = "blue";
+	
+    textContext.font = 'normal 80px "Times New Roman"';  
+   
+
     console.log("String measurements: " + JSON.stringify( textContext.measureText( text )));
 
-    textContext.clearRect( 0, 0, 500, 90 );
+    //textContext.clearRect( 0, 0, 500, 90 );
+    
+    textContext.fillStyle = "#939393";
+   	textContext.fillRect( 0, 0, 500, 90 );
+   	textContext.fillStyle = "black";
+
     textContext.fillText( text, 8, 70, 484 );
-    var durl = textCanvas.toDataURL();
+    var durl = textCanvas.toDataURL( 'image/jpeg' );
     console.log(durl);
     return durl;
 
@@ -207,8 +214,9 @@ function init() {
     ctx = c.getContext("2d");
 
     textCanvas = document.getElementById("textCanvas");
-    textCanvas.style.display = 'none';
-    textCanvas.width = 500;
+    //textCanvas.style.display = 'none';
+    textCanvas.width = 484;
+    //textCanvas.width = 500;
     textCanvas.height = 90;
     textContext = textCanvas.getContext("2d");
 
