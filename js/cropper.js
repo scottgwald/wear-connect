@@ -51,8 +51,6 @@ var thumbWidthProportion = 0.33;
 var thumbWidth = listItemHeight - listItemPadding;
 var thumbHeight = thumbWidth;
 var textWidth = virtualListWidth - 2 * listItemPadding - thumbWidth;
-
-init();
 var c;
 var textCanvas;
 var nextListPosition;
@@ -66,6 +64,9 @@ var dataURL;
 var list;
 
 var listItemY;
+
+init();
+
 
 // GEOMETRY / MATERIAL / MESH
 
@@ -310,14 +311,16 @@ function init() {
 
             isClicked = false;
 
-            c.width  = pixelTagDims.x;
-            c.height = pixelTagDims.y;
+            c.width  = 100;//pixelTagDims.x;
+            c.height = 100;//pixelTagDims.y;
 
             var cutPoint = actualToPixelPos( new THREE.Vector2( mouseDownPosition.x,
                     mouseDownPosition.y ) );
 
-            ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
-                    0, 0, pixelTagDims.x, pixelTagDims.y);
+ 			ctx.fillStyle   = '#000000'; // set canvas background color
+   			ctx.fillRect  (0,   0, 100, 100);  // now fill the canvas 
+            // ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
+             //        0, 0, pixelTagDims.x, pixelTagDims.y);
 
             if (DBG) console.log( "Grabbing region of size " + pixelTagDims.x + ", "
                     + pixelTagDims.y + " from location "  + cutPoint.x + ", " + cutPoint.y );
@@ -332,10 +335,11 @@ function init() {
 
             var listItem = new THREE.Mesh( listItemGeometry, listItemMaterial );
             listItem.position.y = listItemY;
+            listItem.start = listItemY;
+
             listItemY -= listItemHeight;
 
             listItem.selected = false;
-            listItem.start = nextListPosition;
             listItem.tagName = text+tagNum;
 
             tagNum++;
@@ -437,16 +441,18 @@ function init() {
             lastX = mouse3D.x;
             lastY = mouse3D.y;
         } else {
-            var listWidth =.25 * window.innerWidth-30;
-            var listHeight = window.innerHeight/6;
-            mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (window.innerWidth) ) * 2 - 1, - ( event.clientY / window.innerHeight) * 2 + 1, 1 ), camera );
+           
+            mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (virtualCanvasWidth) ) * 2 - 1, - ( event.clientY / virtualCanvasHeight) * 2 + 1, 1 ), camera );
             mouse3D.sub(camera.position);
 
             var target;
             for (var i =0; i< itemList.length; i++) {
-
-
-                if (mouseDownPosition.x >.75* window.innerWidth + 40 && mouse3D.y < itemList[i].start+listHeight/2 && mouse3D.y > itemList[i].start -listHeight/2 ){
+				
+				console.log(itemList[i].start+listItemHeight);
+				
+				console.log(mouse3D.y);
+                if (mouseDownPosition.x >actualImageWidth + listItemPadding && mouse3D.y < itemList[i].start+virtualListHeight/2 && mouse3D.y > itemList[i].start -virtualListHeight/2 ){
+                	console.log('click');
                     target = itemList[i];
                     target.selected = true;
 
