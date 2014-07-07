@@ -119,11 +119,13 @@ function submit() {
 
     // c.width  = width; // in pixels
     // c.height = height;
-    var geometry = new THREE.BoxGeometry( width, height, 10 );
+    console.log(currentPreview);
+    var geometry = new THREE.BoxGeometry( currentPreview.width, currentPreview.height, 10 );
     var material = new THREE.MeshBasicMaterial( {  color:0x78AB46, opacity: .5, transparent: true} );
     var currentPreview2 = new THREE.Mesh( geometry, material );
-    currentPreview2.position.x = lastX + width / 2;
-    currentPreview2.position.y = lastY - height/2;
+    currentPreview2.position.x = currentPreview.position.x ;//+ width / 2;
+    currentPreview2.position.y = currentPreview.position.y;// - height/2;
+    currentPreview2.position.z = currentPreview.position.z;
     scene.remove(currentPreview);
     scene.add(currentPreview2);
 
@@ -233,10 +235,12 @@ function init() {
     list.position.y = virtualListHeight / 2;
     listItemGeometry = new THREE.BoxGeometry( listWidth - 2 * listItemPadding,
                 listItemHeight - listItemPadding, 1 );
-    listItemMaterial = new THREE.MeshBasicMaterial( {  opacity: .75,transparent: true } );
+    listItemMaterial = new THREE.MeshBasicMaterial( {  opacity: 0,transparent: true } );
 
     listItemY = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
     scene.add( list );
+    
+    placePicture('cup.jpg');
 
     nextListPosition = virtualCanvasHeight / 2 - (virtualCanvasHeight * listItemProportion) - 10;
 
@@ -311,16 +315,16 @@ function init() {
 
             isClicked = false;
 
-            c.width  = 100;//pixelTagDims.x;
-            c.height = 100;//pixelTagDims.y;
+            c.width  = pixelTagDims.x;
+            c.height = pixelTagDims.y;
 
             var cutPoint = actualToPixelPos( new THREE.Vector2( mouseDownPosition.x,
                     mouseDownPosition.y ) );
 
- 			ctx.fillStyle   = '#000000'; // set canvas background color
-   			ctx.fillRect  (0,   0, 100, 100);  // now fill the canvas 
-            // ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
-             //        0, 0, pixelTagDims.x, pixelTagDims.y);
+ 			//ctx.fillStyle   = '#000000'; // set canvas background color
+   			//ctx.fillRect  (0,   0, 100, 100);  // now fill the canvas 
+            ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
+                   0, 0, pixelTagDims.x, pixelTagDims.y);
 
             if (DBG) console.log( "Grabbing region of size " + pixelTagDims.x + ", "
                     + pixelTagDims.y + " from location "  + cutPoint.x + ", " + cutPoint.y );
@@ -419,6 +423,8 @@ function init() {
             currentPreview.position.x = virtualTagPos.x;
             currentPreview.position.y = virtualTagPos.y;
             currentPreview.position.z = 0;
+            currentPreview.width = virtualTagDims.x;
+            currentPreview.height = virtualTagDims.y;
 
             scene.add(currentPreview);
         }
@@ -448,8 +454,7 @@ function init() {
             var target;
             for (var i =0; i< itemList.length; i++) {
 				
-				console.log(itemList[i].start+listItemHeight);
-				
+				console.log(itemList[i].start + virtualListHeight - listItemHeight);
 				console.log(mouse3D.y);
                 if (mouseDownPosition.x >actualImageWidth + listItemPadding && mouse3D.y < itemList[i].start+virtualListHeight/2 && mouse3D.y > itemList[i].start -virtualListHeight/2 ){
                 	console.log('click');
