@@ -124,6 +124,7 @@ def callback(ws, **kw):
     gevent.spawn(ws_subscribe, ws, 'image:android:glass:fc4dd4cd7998', get_image)
     gevent.spawn(ws_subscribe, ws, 'image:android:glass:fc4dd4cbdbe2', get_image)
     gevent.spawn(ws_subscribe, ws, 'image:android:glass:fc4dd4cd59e8', get_image)
+    gevent.spawn(ws_subscribe, ws, 'image:android:glass:fc4dd4ea130a', get_image)
     gevent.spawn(ws_subscribe, ws, 'log', print_log)
     # ws_subscribe(ws, 'register', register_client)
     # ws_subscribe(ws, 'blob', get_blob)
