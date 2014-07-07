@@ -174,10 +174,10 @@ function makeTextDataURL( text ) {
     //textContext.clearRect( 0, 0, 500, 90 );
     
     textContext.fillStyle = "#939393";
-   	textContext.fillRect( 0, 0, 500, 90 );
+   	textContext.fillRect( 0, 0, textWidth, thumbHeight );
    	textContext.fillStyle = "black";
 
-    textContext.fillText( text, 8, 70, 484 );
+    textContext.fillText( text, 8, 70, textWidth-16 );
     var durl = textCanvas.toDataURL( 'image/jpeg' );
     console.log(durl);
     return durl;
@@ -215,9 +215,11 @@ function init() {
 
     textCanvas = document.getElementById("textCanvas");
     //textCanvas.style.display = 'none';
-    textCanvas.width = 484;
+  
+    textCanvas.width = textWidth;
+    textCanvas.height = thumbHeight;
     //textCanvas.width = 500;
-    textCanvas.height = 90;
+    //textCanvas.height = 90;
     textContext = textCanvas.getContext("2d");
 
     controls = new THREE.TrackballControls( camera );
