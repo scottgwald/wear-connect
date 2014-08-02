@@ -32,25 +32,26 @@
                     var cards = document.getElementById("cards");
                     var left = cards.style.left;
                     var index = parseInt(left.substr(left, left.length-1))/(-100);
-                    console.log(x);
-                    console.log('num cards: ' + $('#cards li .word').length);
+                    WS.log(x);
+                    WS.log('num cards: ' + $('#cards li .word').length);
                     var word = $($('#cards li .word')[cardIndex]).text();
                     word = word.slice(0, word.indexOf('/'));
-                    console.log('word: ' + word);
+                    WS.log('word: ' + word);
                     // setTimeout(function() {
                     //     WS.say(word);
                     // }, 500);
                 }
             });
             data = slide.data('unslider');
-            timer = setInterval(function () {
+            data.move($('.slide').children.length - 1);
+            /*timer = setInterval(function () {
                 data.next();
                 cardIndex++;
                 var length = $('#cards').children().length;
                 if (length > 0) {
                     cardIndex %= length;
                 }
-            }, 3000);
+            }, 3000);*/
         }
 
         $(document).ready(startSlider);
@@ -66,7 +67,7 @@
 
 <script>
 
-var customEndpoint = 'ws://glassprov.media.mit.edu:8112/';
+var customEndpoint = 'ws://192.168.2.230:8112/';
 // var customEndpoint = 'ws://18.111.28.58:8112/';
 
 function registered(channel, name) {
@@ -88,15 +89,15 @@ currentTimeString = function () {
 
 
 function wordReceive(channel, word, croppedImage) {
-    console.log('word: ' + word);
+    WS.log('word: ' + word);
     try {
         word = decodeURIComponent(escape(word));
     } catch (err) {}
     
-    console.log('un-fucked word: ' + word);
-    console.log('trying 1');
+    WS.log('un-fucked word: ' + word);
+    WS.log('trying 1');
     $('#cards').append(newCard(word, croppedImage));
-    clearInterval(timer);
+    // clearInterval(timer);
     startSlider();
 }
 
@@ -160,7 +161,7 @@ function toggleCamera() {
         WS.cameraOff();
         cameraOn = false;
     } else {
-        WS.cameraOn(2, 640, 480);
+        WS.cameraOn(0.5, 640, 480);
         cameraOn = true;
     }
 }
