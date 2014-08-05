@@ -6,141 +6,159 @@ import argparse
 import time
 import sys
 
-ws_dict = {}
-ws_dict_chan = {}
+class WearConnectServer(object):
 
-def ws_parse(parser):
-    print "running ws_parse"
-    wearscript.parse(callback, parser)
+    def __init__(self):
+        self.ws_dict = {}
+        self.ws_dict_chan = {}
+        self.uber_client_ws_client = ""
+        self.uber_client_ws_server = ""
+        self.WS_PORT = 8112
+        self.ws_server_greenlet = gevent.spawn(self.start_ws_server)
+        self.uber_client_greenlet = gevent.spawn(self.start_uber_client)
+        gevent.joinall([self.ws_server_greenlet, self.uber_client_greenlet])
 
-def ws_send(ws, *argv):
-    # global ws_dict
-    print "Sending to socket " + ws_dict[ws] + " with args " + str(len(str(argv)))
-    try:
-        ws.send(*argv)
-    except geventwebsocket.exceptions.WebSocketError:
-        print "Sending failed, unregistering ws: " + ws_dict[ws], sys.exc_info()[0]
-        unregister(ws)
-    except:
-        print "Unexpected exception while sending, unregistering: " + ws_dict[ws], sys.exc_info()[0]
-        unregister(ws)
+    @property
+    def ws_port(self):
+        return self.WS_PORT
 
-def ws_subscribe(ws, chan, callback):
-    try:
-        ws.subscribe(chan, callback)
-    except geventwebsocket.exceptions.WebSocketError:
-        print "Subscribe failed, unregistering ws: " + ws_dict[ws], sys.exc_info()[0]
-        unregister(ws)
-    except KeyError:
-        print "KeyError while subscribing. Ignoring."
-    except:
-        print "Unexpected exception while subscribing. Ignoring." + ws_dict[ws], sys.exc_info()[0]
+    def ws_parse(self, parser):
+        print "running ws_parse"
+        wearscript.parse(self.callback, parser)
 
-def ws_unsubscribe(ws, chan):
-    try:
-        ws.unsubscribe(chan)
-    except geventwebsocket.exceptions.WebSocketError:
-        print "Unsubscribe failed, unregistering ws: " + ws_dict[ws], sys.exc_info()[0]
-        unregister(ws)
-    except KeyError:
-        print "KeyError while unsubscribing. Ignoring"
-    except:
-        print "Unexpected exception while unsubscribing. Ignoring." + ws_dict[ws], sys.exc_info()[0]
+    def ws_send(self, ws, *argv):
+        # global ws_dict
+        try:
+            print "Sending to socket " + self.ws_dict[ws] + " with args " + str(len(str(argv)))
+        except KeyError:
+            print "Sending to unregistered socket with args " + str(len(str(argv)))
+        try:
+            ws.send(*argv)
+        except geventwebsocket.exceptions.WebSocketError:
+            print "Sending failed, unregistering ws: " + self.ws_dict[ws], sys.exc_info()[0]
+            self.unregister(ws)
+        except:
+            print "Unexpected exception while sending, unregistering: " + self.ws_dict[ws], sys.exc_info()[0]
+            self.unregister(ws)
 
-def unregister(ws):
-    global ws_dict
-    client_name = ws_dict[ws]
-    print "Unregistering client " + client_name
-    del ws_dict[ws]
-    del ws_dict_chan[client_name]
-    for ws in ws_dict.keys():
-        # ws_unsubscribe(ws, client_name)
-        gevent.spawn(ws_unsubscribe, ws, client_name)
+    def ws_subscribe(self, ws, chan, callback):
+        try:
+            print "Subscribing socket " + self.ws_dict[ws] + " to channel " + chan
+        except KeyError:
+            print "Subscribing unregistered socket to " + chan
+        try:
+            ws.subscribe(chan, callback)
+        except geventwebsocket.exceptions.WebSocketError:
+            print "Subscribe failed, unregistering ws: " + self.ws_dict[ws], sys.exc_info()[0]
+            self.unregister(ws)
+        except KeyError:
+            print "KeyError while subscribing. Ignoring."
+        except:
+            print "Unexpected exception while subscribing. Ignoring." + self.ws_dict[ws], sys.exc_info()[0]
 
-# broadcasts to all but the sender
-def broadcast(ws_src, *argv):
-    # global ws_dict
-    for ws in ws_dict.keys():
-        # don't send it back to the source websocket
-        if ws is not ws_src:
-            gevent.spawn(ws_send, ws, *argv)
+    def ws_unsubscribe(self, ws, chan):
+        try:
+            ws.unsubscribe(chan)
+        except geventwebsocket.exceptions.WebSocketError:
+            print "Unsubscribe failed, unregistering ws: " + self.ws_dict[ws], sys.exc_info()[0]
+            self.unregister(ws)
+        except KeyError:
+            print "KeyError while unsubscribing. Ignoring"
+        except:
+            print "Unexpected exception while unsubscribing. Ignoring." + self.ws_dict[ws], sys.exc_info()[0]
 
-def narrowcastRegister(ws_self, client_name):
-    print "narrowcastRegister"
+    def unregister(self, ws):
+        global ws_dict
+        client_name = self.ws_dict[ws]
+        print "Unregistering client " + client_name
+        del self.ws_dict[ws]
+        del self.ws_dict_chan[client_name]
+        for ws in self.ws_dict.keys():
+            # self.ws_unsubscribe(ws, client_name)
+            gevent.spawn(self.ws_unsubscribe, ws, client_name)
 
-    # make everyone else process messages for me
-    for ws in ws_dict.keys():
-        print "Registering client " + ws_dict[ws] + " to listen on channel " + client_name
-        # ws_subscribe(ws, client_name, narrowcast)
-        gevent.spawn(ws_subscribe, ws, client_name, narrowcast)
-    # prepare me to process messages for everybody else
-    for client_chan in ws_dict_chan.keys():
-        print "Registering client " + ws_dict[ws_self] + " to listen on channel " + client_chan
-        # ws_subscribe(ws_self, client_chan, narrowcast)
-        gevent.spawn(ws_subscribe, ws_self, client_chan, narrowcast)
+    # broadcasts to all but the sender
+    def broadcast(self, ws_src, *argv):
+        # global ws_dict
+        for ws in self.ws_dict.keys():
+            # don't send it back to the source websocket
+            if ws is not ws_src:
+                gevent.spawn(self.ws_send, ws, *argv)
 
-def narrowcast(client_name, *argv):
-    print "narrowcasting"
-    # might want to catch the keyerror here
-    try: 
-        ws = ws_dict_chan[client_name]
-        gevent.spawn(ws_send, ws, client_name, *argv)
-    except exceptions.KeyError:
-        print "Didn't find client " + client_name + " in ws_dict_chan"
+    def narrowcast(self, client_name, *argv):
+        print "narrowcasting"
+        # might want to catch the keyerror here
+        try: 
+            ws = self.ws_dict_chan[client_name]
+            gevent.spawn(self.ws_send, ws, client_name, *argv)
+        except exceptions.KeyError:
+            print "Didn't find client " + client_name + " in ws_dict_chan"
 
-def callback(ws, **kw):
-    global ws_dict
-    def register_client(chan, resultChan, client_name):
-        if ws not in ws_dict.itervalues():
-            print "Registering websocket: |" + client_name +"|"
-            ws_dict[ws] = client_name
-            ws_dict_chan[client_name] = ws
-            narrowcastRegister(ws, client_name)
-        else:
-            print "Got a registration ping from the same websocket"
-        gevent.spawn(ws_send, ws, resultChan, client_name)
+    def forward_cb(self, channel, groupDevice, *argv):
+        self.uber_client_ws_server.send(channel, groupDevice, *argv)
 
-    def get_blob(chan, title, body):
-        print "Server: Got blob %s %s" % (title,body)
-        broadcast(ws, chan, title, body)
+    def uber_client_callback(self, ws, **kw):
+        # global uber_client_ws
+        self.uber_client_ws_client = ws
+        print "I AM THE UBER CLIENT " + ws.group_device
+        # set_device_channels happens first, so now just need to look through them
+        # an alternative would be to make a "forward" channel 
+        def subscriptions_cb(chan, groupDevice, channels):
+            for channel in channels:
+                gevent.spawn(self.ws_subscribe, ws, channel, forward_message)
+        def forward_message(chan, *argv):
+            # need to forward if the channel is contained in external_channels
+            if chan in self.uber_client_ws_client.external_channels:
+                # todo: replace with hashtable from channels to websockets
+                for device in self.uber_client_ws_client.device_to_channels.keys():
+                    if chan in self.uber_client_ws_client.device_to_channels[device]:
+                        print "Forwarding message on channel %s to client %s" %(chan, device)
+                        ws = self.ws_dict_chan[device];
+                        ws.send(chan, *argv)
+        gevent.spawn(self.ws_subscribe, ws, 'subscriptions', subscriptions_cb)
+        gevent.spawn(self.ws_send, ws, 'is_uber_client')
+        ws.handler_loop() #gevent.spawn this??
 
-    def get_image(channel, timestamp, image_content):
-        print('got image: ' + str(timestamp))
-        broadcast(ws, channel, timestamp, image_content)
+    def callback(self, ws, **kw):
+        # global ws_dict
+        print ws.group_device
+        def subscriptions_cb(chan, groupDevice, channels):
+            # tell the uber_client about the device's subscriptions
+            # THIS MIGHT BE THE CULPRIT
+            if ws not in self.ws_dict.itervalues():
+                print "Registering websocket: |" + groupDevice + "|"
+                self.ws_dict[ws] = groupDevice
+                self.ws_dict_chan[groupDevice] = ws
+            else:
+                print "Got a registration ping from the same websocket"
 
-    def words(channel, word, image):
-        print("client says it's ready for tags")
-        print("channel: %s" % channel)
-        broadcast(ws, channel, word, image)
-        print("broadcasted")
+            if not self.uber_client_ws_server == "":
+                self.uber_client_ws_server.send(chan, groupDevice, channels)
+            # make sure uber_client will forward to me the channels I have subscribed to
+            for channel in channels:
+                gevent.spawn(self.ws_subscribe, ws, channel, self.forward_cb)
 
-    def print_log(channel, body):
-        print(ws_dict[ws] + ': ' + body)
+        def is_uber_client_cb(chan, **kw):
+            self.uber_client_ws_server = ws
 
-    def register_channel(channel, channel_to_register, *argv):
-        print('registering server to broadcast from ' + ws_dict[ws] + ' on channel ' + channel_to_register)
-        gevent.spawn(ws_subscribe, ws, channel_to_register, channel_broadcast)
+        # def print_log(channel, body):
+        #     print(ws_dict[ws] + ': ' + body)
 
-    def channel_broadcast(channel, *argv):
-        print('doing channel_broadcast from ' + ws_dict[ws] + ' on channel ' + channel)
-        broadcast(ws, channel, *argv)
+        gevent.spawn(self.ws_subscribe, ws, 'subscriptions', subscriptions_cb );
+        gevent.spawn(self.ws_subscribe, ws, 'is_uber_client', is_uber_client_cb );
 
-    print "processing initial subscription for ws object: " + str(ws)
-    gevent.spawn(ws_subscribe, ws, 'register', register_client)
-    gevent.spawn(ws_subscribe, ws, 'blob', get_blob)
-    gevent.spawn(ws_subscribe, ws, 'words', words)
-    gevent.spawn(ws_subscribe, ws, 'register_channel', register_channel)
+        # gevent.spawn(ws_subscribe, ws, 'log', print_log)
+        ws.handler_loop()
 
-    gevent.spawn(ws_subscribe, ws, 'log', print_log)
-    # ws_subscribe(ws, 'register', register_client)
-    # ws_subscribe(ws, 'blob', get_blob)
+    def start_uber_client(self):
+        wearscript.websocket_client_factory( self.uber_client_callback, 'ws://localhost:' + str(self.WS_PORT) + '/' )
 
-    # ws.subscribe('android:glass:f88fca2619bd', narrowcast)
-    ws.handler_loop()
+    def start_ws_server(self):
+        wearscript.websocket_server(self.callback, self.WS_PORT)
+
+def main():
+    wc_server = WearConnectServer()
+    print "WearConnectServer initialized"
 
 if __name__ == '__main__':
-    serverThread = gevent.spawn(ws_parse, argparse.ArgumentParser())
-    print "And I made it past"
-    gevent.joinall([serverThread])
-
-# wearscript.parse(callback, argparse.ArgumentParser())
+    main()
