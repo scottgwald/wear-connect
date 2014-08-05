@@ -22,49 +22,25 @@
         
         cardIndex = 1;
         previousWord = '';
+        images = [];
 
-        function startSlider() {
-            slide = $('.slide').unslider({
-                delay: false,
-                dots: false,
-                speed: 0,
-                complete: function(x) {
-                    var cards = document.getElementById("cards");
-                    var left = cards.style.left;
-                    var index = parseInt(left.substr(left, left.length-1))/(-100);
-                    WS.log(x);
-                    WS.log('num cards: ' + $('#cards li .word').length);
-                    var word = $($('#cards li .word')[cardIndex]).text();
-                    word = word.slice(0, word.indexOf('/'));
-                    WS.log('word: ' + word);
-                    // setTimeout(function() {
-                    //     WS.say(word);
-                    // }, 500);
-                }
-            });
-            data = slide.data('unslider');
-            data.move($('.slide').children.length - 1);
-            /*timer = setInterval(function () {
-                data.next();
-                cardIndex++;
-                var length = $('#cards').children().length;
-                if (length > 0) {
-                    cardIndex %= length;
-                }
-            }, 3000);*/
-        }
-
-        $(document).ready(startSlider);
+        $(document).ready(function() {
+            console.log('in $(document).ready 23423234');
+            //$("#cards").bind("DOMSubtreeModified", startSlider);
+        });
 
     </script>
 </head>
 <body style="width:100%; height:100%; overflow:hidden; margin:0">
-
-<slider class="slide">
-        <ul id="cards">
-        </ul>
-    </slider>
-
+    <article id="card">
+        <img src="" width="100%" height="100%">
+        <div class="overlay-gradient-tall-dark" />
+        <section>
+            <p class="text-auto-size" style="visibility: visible; font-size: 100%; text-align: center">
+                <span class="word"></span>
+            </p>
+        </section>
+    </article>
 <script>
 
 var customEndpoint = 'ws://192.168.2.230:8112/';
@@ -89,32 +65,20 @@ currentTimeString = function () {
 
 
 function wordReceive(channel, word, croppedImage) {
-    WS.log('word: ' + word);
+    console.log('word: ' + word);
     try {
         word = decodeURIComponent(escape(word));
     } catch (err) {}
     
-    WS.log('un-fucked word: ' + word);
-    WS.log('trying 1');
-    $('#cards').append(newCard(word, croppedImage));
-    // clearInterval(timer);
-    startSlider();
+    console.log('un-fucked word: ' + word);
+    images.push({'word': word, 'image': croppedImage});
+    showLastImage(images);
 }
 
-function newCard(word, croppedImage) {
-    return '<li>\
-                <article class="photo">\
-                    <img src="' + croppedImage + '" width="100%" height="100%">\
-                    <div class="overlay-gradient-tall-dark" />\
-                    <section>\
-                        <p class="text-auto-size" style="visibility: visible; font-size: 100%; text-align: center">\
-                            <span class="word">' + word + '</span>\
-                        </p>\
-                    </section>\
-                </article>\
-            </li>';
+function showLastImage(images) {
+    $('#card img').src = images[images.length - 1]['image'];
+    $('#card .word').text(images[images.length - 1]['word']);
 }
-
 
 function serverCustom() {
     WS.sound('SUCCESS');
