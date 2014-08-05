@@ -1,6 +1,4 @@
-/**
- * @author Christian Vazquez
- */
+
 var DBG = false;
 var scene;
 var currentPreview;
@@ -20,6 +18,8 @@ var image;
 var planeG;
 var control;
 
+var actualTagWidth;
+var actualTagHeight;
 
 // SPATIAL DIMENSIONS
 var glassAspectRatio = 16.0/9.0;
@@ -256,9 +256,11 @@ function init() {
     listItemY = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
     scene.add( list );
     
-    placePicture('cup.jpg');
+    placePicture('yogurt.jpg');
 
     nextListPosition = virtualCanvasHeight / 2 - (virtualCanvasHeight * listItemProportion) - 10;
+    
+    placePicture
 
     function render() { 
         requestAnimationFrame(render);
@@ -318,12 +320,23 @@ function init() {
     // mouse events are in "actual" coordinates
     function onDocumentMouseUp(event) {
 
+            console.log('here man');
         if (event.clientX < actualImageWidth) {
 
+  			if (actualTagWidth / actualTagHeight > glassAspectRatio) {
+            	actualTagHeight = actualTagWidth / glassAspectRatio;
+            } else {
+            	actualTagWidth = actualTagHeight * glassAspectRatio;
+            }
+            
             var pixelTagDims = actualToPixelScale( new THREE.Vector2(
-                    Math.abs( mouseDownPosition.x - event.clientX ),
-                    Math.abs( mouseDownPosition.y - event.clientY )
-            ));
+                    actualTagWidth,
+                    actualTagHeight));
+
+            //     var pixelTagDims = actualToPixelScale( new THREE.Vector2(
+            //         Math.abs( mouseDownPosition.x - event.clientX ),
+            //         Math.abs( mouseDownPosition.y - event.clientY )
+            // ));
 
             if (DBG) console.log( "Mouse down position was " + mouseDownPosition.x + ", "
                     + mouseDownPosition.y );
@@ -422,18 +435,30 @@ function init() {
             var y = event.clientY;
 
             // will need to handle different +/- cases
-            var actualTagWidth = x - mouseDownPosition.x;
-            var actualTagHeight = y - mouseDownPosition.y;
+            actualTagWidth = x - mouseDownPosition.x;
+            actualTagHeight = y - mouseDownPosition.y;
+            
+            var aspectWidth = actualTagWidth;
+            var aspectHeight = actualTagHeight;
+            
+            if (actualTagWidth / actualTagHeight > glassAspectRatio) {
+            	actualTagHeight = actualTagWidth / glassAspectRatio;
+            } else {
+            	actualTagWidth = actualTagHeight * glassAspectRatio;
+            }
+            
             var actualTagDims = new THREE.Vector2( actualTagWidth, actualTagHeight );
+			var actual = new THREE.Vector2( aspectWidth, aspectHeight );
 
+			var vactual = actualToVirtualScale(actual);
             var virtualTagDims = actualToVirtualScale( actualTagDims );
 
             var geometry = new THREE.BoxGeometry( virtualTagDims.x, virtualTagDims.y, 100 );
             var material = new THREE.MeshBasicMaterial( {  opacity: .5, transparent: true} );
             currentPreview = new THREE.Mesh( geometry, material );
 
-            actualTagPos = new THREE.Vector2( ( x + mouseDownPosition.x ) / 2,
-                    ( y + mouseDownPosition.y ) / 2 );
+            actualTagPos = new THREE.Vector2(  mouseDownPosition.x + actualTagDims.x / 2,
+                   mouseDownPosition.y + actualTagDims.y/ 2 );
             virtualTagPos = actualToVirtualPos( actualTagPos );
 
             currentPreview.position.x = virtualTagPos.x;
