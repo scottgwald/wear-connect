@@ -71,6 +71,9 @@ $(document).ready(function () {
       
     });
     ws.send('register', 'registered', 'worker:' + currentTimeString());
+    $("body").bind("touchstart", function(e) {
+    e.preventDefault();
+})
   }
 }); 
 
