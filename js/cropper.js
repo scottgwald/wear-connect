@@ -71,6 +71,9 @@ var list;
 var listItemY;
 
 var addTags =0;
+var ctrlPressed = false;
+var spacePressed = false;
+var greenList= [];
 
 init();
 
@@ -132,8 +135,7 @@ function submit() {
     currentPreview2.position.z = currentPreview.position.z;
     scene.remove(currentPreview);
     scene.add(currentPreview2);
-
-
+    greenList.push(currentPreview2);
     ws.publish('words', selectedItem.tagText, dataURL);
 
    
@@ -271,7 +273,8 @@ function init() {
     renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     renderer.domElement.addEventListener('mouseup',onDocumentMouseUp,false);
-    renderer.domElement.addEventListener('keydown',onDocumentKeyDown,false);
+    document.addEventListener('keydown',onDocumentKeyDown,false);
+    document.addEventListener('keyup',onDocumentKeyUp,false);
     renderer.domElement.addEventListener('DOMMouseScroll', scrollTags, false);
 
     function scrollTags(event) {
@@ -296,13 +299,38 @@ function init() {
 
     }
 
-    function onDocumentKeyDown(event){
-                    console.log('finished');
+    function onDocumentKeyUp(event){
+        var keycode = event.which;
+        if (keycode == 16){
+            event.preventDefault();
+            shiftPressed = false;
+        } else if (keycode == 17) {
+            event.preventDefault();
+            ctrlPressed = false;
+        }
+    }
 
-        // var keycode = event.which;
-        // if (keycode == 70) {
-        //     console.log('finished');
-        // }
+    function onDocumentKeyDown(event){
+        var keycode = event.which;
+
+         if (keycode == 16){
+            console.log('shift');
+            event.preventDefault();
+            shiftPressed = true;
+        } else if (keycode == 17) {
+            console.log('space');
+            event.preventDefault();
+            ctrlPressed = true;
+        }
+       
+        if (ctrlPressed &&  shiftPressed) {
+            isTagging = false;
+            for (var i =0; i< greenList.length ; i ++){
+                scene.remove(greenList[i]);
+            }
+
+            scene.clear();
+        }
     }
 
     function createTextForItem() {
@@ -332,7 +360,6 @@ function init() {
     // mouse events are in "actual" coordinates
     function onDocumentMouseUp(event) {
 
-            console.log('here man');
         if (event.clientX < actualImageWidth) {
 
   			if (actualTagWidth / actualTagHeight > glassAspectRatio) {
