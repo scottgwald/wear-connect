@@ -113,7 +113,11 @@ class WearConnectServer(object):
                 for device in self.uber_client_ws_client.device_to_channels.keys():
                     if chan in self.uber_client_ws_client.device_to_channels[device]:
                         print "Forwarding message on channel %s to client %s" %(chan, device)
-                        ws = self.ws_dict_chan[device];
+                        print "The known devices are " + str(self.ws_dict_chan.keys())
+                        try:
+                            ws = self.ws_dict_chan[device];
+                        except KeyError:
+                            print "Unknown client: Couldn't send message on channel %s to client %s" %(chan,device)
                         ws.send(chan, *argv)
         gevent.spawn(self.ws_subscribe, ws, 'subscriptions', subscriptions_cb)
         gevent.spawn(self.ws_send, ws, 'is_uber_client')

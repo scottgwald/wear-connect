@@ -82,12 +82,12 @@ def scheduler_main(arg):
     print "Queued jobs"
 
 def start_ws_client_alice():
-    # wearscript.websocket_client_factory( callback_alice, 'ws://localhost:' + str(WS_PORT) + '/', group = clientGroup, device = aliceDevice )
-    wearscript.websocket_client_factory( callback_alice, 'ws://localhost:' + str(WS_PORT) + '/')
+    wearscript.websocket_client_factory( callback_alice, 'ws://localhost:' + str(WS_PORT) + '/', group = clientGroup, device = aliceDevice )
+    # wearscript.websocket_client_factory( callback_alice, 'ws://localhost:' + str(WS_PORT) + '/')
 
 def start_ws_client_bob():
-    # wearscript.websocket_client_factory( callback_bob, 'ws://localhost:' + str(WS_PORT) + '/', group = clientGroup, device = bobDevice )
-    wearscript.websocket_client_factory( callback_bob, 'ws://localhost:' + str(WS_PORT) + '/')
+    wearscript.websocket_client_factory( callback_bob, 'ws://localhost:' + str(WS_PORT) + '/', group = clientGroup, device = bobDevice )
+    # wearscript.websocket_client_factory( callback_bob, 'ws://localhost:' + str(WS_PORT) + '/')
 
 def start_ws_server():
     glassprov_server_new.main()
