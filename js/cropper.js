@@ -276,6 +276,16 @@ function init() {
     renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     renderer.domElement.addEventListener('mouseup',onDocumentMouseUp,false);
+    renderer.domElement.addEventListener('keydown',onDocumentKeyDown,false);
+
+    function onDocumentKeyDown(event){
+                    console.log('finished');
+
+        // var keycode = event.which;
+        // if (keycode == 70) {
+        //     console.log('finished');
+        // }
+    }
 
     function createTextForItem() {
 
@@ -358,8 +368,17 @@ function init() {
             if (DBG) console.log( "Grabbing region of size " + pixelTagDims.x + ", "
                     + pixelTagDims.y + " from location "  + cutPoint.x + ", " + cutPoint.y );
 
+            var thumP = new Image();
             dataURL = c.toDataURL();
-            console.log( "dataURL " + dataURL );
+            thumP.src = dataURL;
+
+            console.log( dataURL );
+            c.width = pixelTagDims.y;
+            c.height = pixelTagDims.y;
+            var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*pixelTagDims.x ;
+            
+
+            ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y)
 
             var listWidth = .25 * window.innerWidth - 30;
             var listHeight = window.innerHeight / 6;
@@ -377,9 +396,13 @@ function init() {
 
             tagNum++;
 
+            var thumbData = c.toDataURL();
+            console.log( thumbData );
+
+
             //console.log(item.selected)
             var img = new THREE.MeshBasicMaterial({
-                    map: THREE.ImageUtils.loadTexture( dataURL )
+                    map: THREE.ImageUtils.loadTexture( thumbData )
             });
 
             var thumb = new THREE.Mesh( thumbGeometry, img);
@@ -437,6 +460,10 @@ function init() {
             // will need to handle different +/- cases
             actualTagWidth = x - mouseDownPosition.x;
             actualTagHeight = y - mouseDownPosition.y;
+
+            // if (actualTagWidth <= 0) {
+            //     mouseDownPosition.x = x;
+            // }
             
             var aspectWidth = actualTagWidth;
             var aspectHeight = actualTagHeight;
