@@ -2,7 +2,7 @@ import gevent.monkey
 gevent.monkey.patch_all()
 import wearscript
 import argparse
-import glassprov_server_new
+import wear_connect_server
 import time
 from apscheduler.scheduler import Scheduler
 import logging
@@ -92,7 +92,7 @@ def start_ws_client_bob():
     # wearscript.websocket_client_factory( callback_bob, 'ws://localhost:' + str(WS_PORT) + '/')
 
 def start_ws_server():
-    glassprov_server_new.main()
+    wear_connect_server.main()
 
 if __name__ == '__main__':
     # fire up wear-connect server
