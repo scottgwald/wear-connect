@@ -7,7 +7,6 @@
     <!-- use Glass font -->
     <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script src="http://unslider.com/unslider.min.js"></script>
     <!-- add fit text js to fit text to screen -->
     <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/shrig94/UROP/master/glass.css" />
     <link rel="stylesheet" type="text/css" href="https://raw.githubusercontent.com/shrig94/UROP/master/animate.css" />
@@ -76,7 +75,7 @@ function wordReceive(channel, word, croppedImage) {
 }
 
 function showLastImage(images) {
-    $('#card img').src = images[images.length - 1]['image'];
+    $('#card img').attr('src', images[images.length - 1]['image']);
     $('#card .word').text(images[images.length - 1]['word']);
 }
 
@@ -111,7 +110,7 @@ var playground = true;
 function toggleServer() {
     WS.sound("SELECTED");
     if (!playground) {
-        WS.serverConnect('{{WSUrl}}', server);
+        WS.serverConnect('{{WSUrl}}', function() {});
         playground = true;
     } else {
         WS.serverConnect(customEndpoint, serverCustom);
@@ -136,6 +135,10 @@ WS.gestureCallback('onGestureSWIPE_RIGHT', function ( gesture ) {
 
 WS.gestureCallback('onGestureSWIPE_LEFT', function ( gesture ) {
     data.prev();
+});
+
+WS.gestureCallback('onGestureTAP', function ( gesture ) {
+    toggleServer();
 });
 
 function main() {
