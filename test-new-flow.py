@@ -20,6 +20,7 @@ clientGroup = 'python_client'
 aliceDevice = 'alice'
 bobDevice = 'bob'
 ws_alice = ""
+test_channel = 'test_channel'
 
 def callback_alice(ws, **kw):
     global ws_alice
@@ -34,6 +35,7 @@ def callback_alice(ws, **kw):
     # print ws.group_device
     print "I'm Alice and my group_device is " + ws.group_device
     ws.subscribe( ws.group_device, narrowcast_cb )
+    ws.subscribe( test_channel, narrowcast_cb )
     ws.handler_loop()
 
 def callback_bob(ws, **kw):
@@ -62,8 +64,8 @@ def scheduler_loop(arg):
 
 def send_test_message(time):
     time_here = str(time)
-    print "Sending blob to test_channel " + time_here
-    ws_alice.send('test_channel', 'test_message yay 23423423', time_here)
+    print "Sending message to test channel %s at %s" %(test_channel, time_here)
+    ws_alice.send(test_channel, 'test_message yay 23423423', time_here)
 
 def scheduler_main(arg):
 

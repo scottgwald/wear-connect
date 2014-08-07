@@ -1,0 +1,3 @@
+[submodule "src/wearscript"]
+	path = src/wearscript
+	url = ./src/wearscript.git
