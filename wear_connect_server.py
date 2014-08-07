@@ -66,29 +66,6 @@ class WearConnectServer(object):
             print "KeyError while subscribing. Ignoring."
         except:
             print "Unexpected exception while subscribing. Ignoring." + self.ws_dict[ws], sys.exc_info()[0]
-        # subscribed = False
-        # while not subscribed:
-        #     if ws in self.ws_dict:
-        #         try:
-        #             ws.subscribe(chan, callback)
-        #             subscribed = True
-        #         except geventwebsocket.exceptions.WebSocketError:
-        #             print "Subscribe failed, unregistering ws: " + self.ws_dict[ws], sys.exc_info()[0]
-        #             self.unregister(ws)
-        #         except KeyError:
-        #             print "KeyError while subscribing. Ignoring."
-        #         except:
-        #             print "Unexpected exception while subscribing. Ignoring." + self.ws_dict[ws], sys.exc_info()[0]
-        #     else:
-        #         print "ws_subscribe: The known devices are " + str(self.ws_dict_chan.keys())
-        #         print "Retrying subscribe on channel " + chan
-        #         gevent.sleep(retry_period)
-
-
-        # try:
-        #     print "Subscribing socket " + self.ws_dict[ws] + " to channel " + chan
-        # except KeyError:
-        #     print "Subscribing unregistered socket to " + chan
 
     #
     # A SERVER-SIDE WS ENDPONT IS
@@ -196,9 +173,6 @@ class WearConnectServer(object):
                     ws_server_socket.send(chan, groupDevice, channels)
 
             print "uber client knows: " + str(ws.device_to_channels)
-        # def subscriptions_cb(chan, groupDevice, channels):
-        #     for channel in channels:
-        #         gevent.spawn(self.ws_subscribe, ws, channel, forward_message)
 
         def forward_message(chan, *argv):
             print "forward_message"
@@ -207,21 +181,6 @@ class WearConnectServer(object):
                 for ws_server_socket in self.channels_to_sockets[chan]:
                     ws_server_socket.send(chan, *argv)
 
-        # def forward_message(chan, *argv):
-        #     # need to forward if the channel is contained in external_channels
-        #     if chan in self.uber_client_ws_client.external_channels:
-        #         # todo: replace with hashtable from channels to websockets
-        #         print "Subscriptions known in uber client: " + str(self.uber_client_ws_client.device_to_channels)
-        #         for device in self.uber_client_ws_client.device_to_channels.keys():
-        #             if chan in self.uber_client_ws_client.device_to_channels[device]:
-        #                 print "Forwarding message on channel %s to client %s" %(chan, device)
-        #                 print "The known devices are " + str(self.ws_dict_chan.keys())
-        #                 try:
-        #                     ws = self.ws_dict_chan[device];
-        #                 except KeyError:
-        #                     print "Unknown client: Couldn't send message on channel %s to client %s" %(chan,device)
-        #                 ws.send(chan, *argv)
-
         gevent.spawn(self.ws_subscribe, ws, ws.group_device, narrowcast_cb )
         ws.subscribe('subscriptions', subscriptions_cb)
         ws.subscribe('default', forward_message)
@@ -229,28 +188,6 @@ class WearConnectServer(object):
         gevent.spawn(self.ws_subscribe, ws, 'subscriptions', subscriptions_cb)
         gevent.spawn(self.ws_send, ws, 'is_uber_client')
         ws.handler_loop() #gevent.spawn this??
-
-
-
-            # # tell the uber_client about the device's subscriptions
-            # # THIS MIGHT BE THE CULPRIT: ws_dict should contain the name of the
-            # # other endpoint, I believe...
-            # if ws not in self.ws_dict.itervalues():
-            #     print "Registering websocket: |" + groupDevice + "|"
-            #     self.ws_dict[ws] = groupDevice
-            #     self.ws_dict_chan[groupDevice] = ws
-            # else:
-            #     print "Got a registration ping from the same websocket"
-
-            # # make sure uber_client will forward to me the channels I have subscribed to
-            # for channel in channels:
-            #     gevent.spawn(self.ws_subscribe, ws, channel, self.forward_cb)
-
-
-
-
-
-
 
     def callback(self, ws, **kw):
         ws.registered = False
@@ -262,8 +199,6 @@ class WearConnectServer(object):
                 if groupDevice not in self.ws_dict_chan.keys():
                     # might want to synchronize this ...
                     self.ws_dict_chan[groupDevice] = ws
-                    # this probably won't be much use -- what matters is the one-to-many
-                    # mapping of sockets to channels
                     self.ws_dict[ws] = groupDevice
                     ws.registered = True
                     print "registered is now " + str(ws.registered)
