@@ -210,6 +210,9 @@ class WearConnectServer(object):
                     self.ws_dict[ws] = groupDevice
                     ws.registered = True
                     print "registered is now " + str(ws.registered)
+                    # send out all existing subscriptions
+                    for device in self.uber_client_ws_client.device_to_channels.keys():
+                        ws.send('subscriptions', device, self.uber_client_ws_client.device_to_channels[device])
 
             if not self.uber_client_ws_server == "":
                 self.uber_client_ws_server.send(chan, groupDevice, channels)
