@@ -176,10 +176,18 @@ class WearConnectServer(object):
 
         def forward_message(chan, *argv):
             print "forward_message"
-            if chan in self.channels_to_sockets.keys():
-                print "forwarding on channel " + chan
-                for ws_server_socket in self.channels_to_sockets[chan]:
-                    ws_server_socket.send(chan, *argv)
+            channel_cur = None
+            parts = chan.split(':')
+            for x in parts:
+                if channel_cur is None:
+                    channel_cur = x
+                else:
+                    channel_cur += ':' + x
+                if channel_cur in self.channels_to_sockets.keys():
+                    print "forwarding " + chan + " on channel " + channel_cur
+                    for ws_server_socket in self.channels_to_sockets[channel_cur]:
+                        # important: never change the channel mid-flight
+                        ws_server_socket.send(chan, *argv)
 
         gevent.spawn(self.ws_subscribe, ws, ws.group_device, narrowcast_cb )
         ws.subscribe('subscriptions', subscriptions_cb)
