@@ -130,7 +130,6 @@ def callback(ws, **kw):
     gevent.spawn(ws_subscribe, ws, 'blob', get_blob)
     gevent.spawn(ws_subscribe, ws, 'words', words)
     gevent.spawn(ws_subscribe, ws, 'register_channel', register_channel)
-
     gevent.spawn(ws_subscribe, ws, 'log', print_log)
     # ws_subscribe(ws, 'register', register_client)
     # ws_subscribe(ws, 'blob', get_blob)
