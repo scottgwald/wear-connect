@@ -37,12 +37,16 @@ def callback_alice(ws, **kw):
     def narrowcast_cb(chan, *argv):
         print "Narrowcast callback " + chan
 
+    def subscriptions_cb(chan, groupDevice, channels):
+        print "Alice knows: " + str(ws.device_to_channels)
+
     # print "I'm Alice and my websocket might not look right: " + str(ws)
     # print dir(ws)
     # print ws.group_device
     print "I'm Alice and my group_device is " + ws.group_device
     ws.subscribe( ws.group_device, narrowcast_cb )
     ws.subscribe( test_channel, narrowcast_cb )
+    ws.subscribe( 'subscriptions', subscriptions_cb )
     ws.handler_loop()
 
 def callback_bob(ws, **kw):
@@ -72,8 +76,8 @@ def scheduler_loop(arg):
 def send_test_message(time):
     time_here = str(time)
     print "Sending message to test channel %s at %s" %(test_channel, time_here)
-    ws_alice.send(test_channel, 'test_message yay 23423423', time_here)
-    ws_alice.send(test_subsubchannel, 'test_message subsubsub', time_here)
+    ws_alice.publish(test_channel, 'test_message yay 23423423', time_here)
+    ws_alice.publish(test_subsubchannel, 'test_message subsubsub', time_here)
 
 def scheduler_main(arg):
 
