@@ -173,6 +173,7 @@ function makeTextDataURL( text ) {
    
 
     console.log("String measurements: " + JSON.stringify( textContext.measureText( text )));
+    console.log("text: " + text);
 
     //textContext.clearRect( 0, 0, 500, 90 );
     
