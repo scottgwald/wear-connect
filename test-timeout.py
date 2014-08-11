@@ -14,7 +14,7 @@ from datetime import timedelta
 image_name_templ = 'img/test/text-wear-connect-test-%s.jpg' 
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
-number_of_messages = 5
+number_of_messages = 10
 delta_to_start = 1
 delta_between_messages = 2
 clientGroup = 'python_client'
@@ -23,6 +23,7 @@ bobDevice = 'bob'
 ws_alice = ""
 test_channel = 'image'
 test_subchannel = test_channel + ':alice'
+time_format_string = "%Y-%m-%d %H:%M:%S.%f"
 
 def image_name(i):
     return image_name_templ % (str(i).zfill(3))
@@ -76,8 +77,11 @@ def callback_bob(ws, **kw):
     def narrowcast_cb(chan, *argv):
         print "Narrowcast callback " + chan
 
-    def get_test_channel(chan, arg1):
-        print "Bob got message on channel %s of length %s at time %s" % (chan, str(len(arg1)), str(datetime.today()))
+    def get_test_channel(chan, arg1, arg2):
+        send_time = datetime.strptime(arg2, time_format_string)
+        recv_time = datetime.today()
+        transit_time = recv_time - send_time
+        print "Transit time: %s. Bob got message on channel %s of length %s at time %s" % (str(transit_time), chan, str(len(arg1)), str(datetime.today()))
 
     print "I'm Bob and my group_device is " + ws.group_device
     ws.subscribe( ws.group_device, narrowcast_cb )
@@ -99,7 +103,7 @@ def send_test_message(i):
     time_here = str(datetime.today())
     msgBytes = load_image_data(i)
     print "Sending message to test channel %s at %s" %(test_channel, time_here)
-    ws_alice.publish(test_subchannel, msgBytes)
+    ws_alice.publish(test_subchannel, msgBytes, time_here)
 
 def scheduler_main(arg):
 
