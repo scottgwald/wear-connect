@@ -17,6 +17,7 @@
 <script src = "js/ms_mincho_regular.typeface.js"></script>
 <script src="msgpack.js"></script>
 <script src="wearscript-client.js"></script>
+<script type="text/javascript" src="js/reconnecting-websocket.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script src ="js/cropper.js"></script>
 <script>
@@ -53,7 +54,7 @@ $(document).ready(function () {
   }
 
 
-  ws = new WearScriptConnection(new WebSocket(WSEndpoint),  "wc-webapp", Math.floor(Math.random() * 100000), onopen);
+  ws = new WearScriptConnection(new ReconnectingWebSocket(WSEndpoint),  "wc-webapp", Math.floor(Math.random() * 100000), onopen);
   
   function onopen() {
     console.log("WearScriptConnection onopen");
