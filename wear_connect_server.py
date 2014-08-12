@@ -5,6 +5,7 @@ import wearscript
 import argparse
 import time
 import sys
+import msgpack
 
 retry_period = 1
 server_client_prefix = "server"
@@ -228,7 +229,13 @@ class WearConnectServer(object):
         gevent.spawn(self.ws_subscribe, ws, 'is_uber_client', is_uber_client_cb );
 
         # gevent.spawn(ws_subscribe, ws, 'log', print_log)
-        ws.handler_loop()
+
+        try:
+            ws.handler_loop()
+        except msgpack.exceptions.ExtraData:
+            print "ExtraData exception oh nosssssss 2342093. May need to reconnect!!"
+        except msgpack.exception.UnpackValueError:
+            print "UnpackValue exception blahhhhhh. May need to reconnect!!"
 
     def start_uber_client(self):
         wearscript.websocket_client_factory( self.uber_client_callback, 'ws://localhost:' + str(self.WS_PORT) + '/', group = uber_client_group, device = uber_client_device )

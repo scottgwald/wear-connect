@@ -2,21 +2,23 @@ import gevent.monkey
 gevent.monkey.patch_all()
 import wearscript
 import argparse
-import wear_connect_server
+from .. import wear_connect_server
 import time
-from apscheduler.scheduler import Scheduler
+from apscheduler.schedulers.gevent import GeventScheduler as Scheduler
 import logging
 from time import sleep
 import sys
 from datetime import datetime
 from datetime import timedelta
 
-image_name_templ = 'img/test/text-wear-connect-test-%s.jpg' 
+image_name_templ = 'wear-connect/test/img/text-wear-connect-test-%s.jpg'
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
-number_of_messages = 10
+number_of_messages = 100
+number_of_test_images = 10
 delta_to_start = 1
-delta_between_messages = 2
+delta_between_messages = 0.1
+final_wait = 5
 clientGroup = 'python_client'
 aliceDevice = 'alice'
 bobDevice = 'bob'
@@ -24,7 +26,10 @@ ws_alice = ""
 test_channel = 'image'
 test_subchannel = test_channel + ':alice'
 time_format_string = "%Y-%m-%d %H:%M:%S.%f"
-the_greenlets = [];
+the_greenlets = []
+finish_called = False
+messages_sent = 0
+messages_received = 0
 
 def image_name(i):
     return image_name_templ % (str(i).zfill(3))
@@ -71,7 +76,11 @@ def callback_alice(ws, **kw):
     ws.subscribe( ws.group_device, narrowcast_cb )
     ws.subscribe( test_channel, narrowcast_cb )
     ws.subscribe( 'subscriptions', subscriptions_cb )
-    ws.handler_loop()
+    try:
+        ws.handler_loop()
+    except Exception:
+        print "Looks like Alice's websocket broke! Sad face. Finishing"
+        finish()
 
 def callback_bob(ws, **kw):
 
@@ -79,10 +88,12 @@ def callback_bob(ws, **kw):
         print "Narrowcast callback " + chan
 
     def get_test_channel(chan, arg1, arg2):
+        global messages_received
         send_time = datetime.strptime(arg2, time_format_string)
         recv_time = datetime.today()
         transit_time = recv_time - send_time
         print "Transit time: %s. Bob got message on channel %s of length %s at time %s" % (str(transit_time), chan, str(len(arg1)), str(datetime.today()))
+        messages_received += 1
 
     print "I'm Bob and my group_device is " + ws.group_device
     ws.subscribe( ws.group_device, narrowcast_cb )
@@ -100,16 +111,60 @@ def scheduler_loop(arg):
         sys.stdout.write( '.' )
         sys.stdout.flush()
 
-def send_test_message(i):
+def send_test_message(i_orig):
+    global messages_sent
     time_here = str(datetime.today())
+    i = i_orig % number_of_test_images
     msgBytes = load_image_data(i)
     print "Sending message to test channel %s at %s" %(test_channel, time_here)
-    ws_alice.publish(test_subchannel, msgBytes, time_here)
+    if i_orig == number_of_messages - 1:
+        print "Sending the last message!!"
+        finish()
+    try:
+        ws_alice.publish(test_subchannel, msgBytes, time_here)
+        messages_sent += 1
+    except AssertionError:
+        print "AssertionError: skipping publish."
+    except Exception:
+        print "Exception raised in ws_alice publish"
 
 def finish():
+    global finish_called
+    if finish_called:
+        print "Finished called multiple times."
+        return
+
     print "Finishing."
+    finish_called = True
+
+    # shut down the scheduler right away
+    sched.shutdown(wait=False)
+
+    # wait a few seconds for running jobs to finish
+    delayed_finish()
+
+def delayed_finish():
+    final_sched = Scheduler()
+    final_sched.start()
+    now = datetime.today()
+    deltaFinal = timedelta( seconds = final_wait )
+    starttime = now + deltaFinal
+    final_sched.add_job( final_finish, 'date', run_date = starttime, args= [ ] )
+    # final_sched.shutdown()
+
+def final_finish():
+    kill_greenlets()
+    final_report()
+
+def kill_greenlets():
+    cnt = 0
     for greenlet in the_greenlets:
-        greenlet.kill()
+        print "Trying to kill a greenlet " + str(cnt)
+        gevent.kill(greenlet)
+        cnt += 1
+
+def final_report():
+    print "Final report: messages sent %s, messages received %s" % (str(messages_sent), str(messages_received))
 
 def scheduler_main(arg):
 
@@ -117,16 +172,15 @@ def scheduler_main(arg):
     print "Now it's " + str( now )
     starttime = now + timedelta( seconds = delta_to_start )
     delta5sec = timedelta( seconds = delta_between_messages )
+    # deltaFinal = timedelta( seconds = final_wait )
     thistime = starttime
 
     jobs = []
     print "Queueing jobs"
     for i in range( number_of_messages ):
         print "Queueing job at " + str( thistime )
-        jobs.append( sched.add_date_job( send_test_message, thistime, [ i ] ))
+        jobs.append( sched.add_job( send_test_message, 'date', run_date = thistime, args= [ i ] ))
         thistime += delta5sec
-    jobs.append( sched.add_date_job( finish, thistime, []))
-    print "Queued jobs"
 
 def start_ws_client_alice():
     wearscript.websocket_client_factory( callback_alice, 'ws://localhost:' + str(WS_PORT) + '/', 
@@ -152,5 +206,5 @@ if __name__ == '__main__':
 
     print "Spawned Greenlets: ws_server_greenlet, ws_client_greenlet_alice, " \
         +  "ws_client_greenlet_bob, scheduler_loop_greenlet"
-    the_greenlets = [ws_server_greenlet, ws_client_greenlet_alice, ws_client_greenlet_bob]
+    the_greenlets = [ws_server_greenlet, ws_client_greenlet_alice, ws_client_greenlet_bob, scheduler_loop_greenlet]
     gevent.joinall(the_greenlets)
