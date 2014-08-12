@@ -90,7 +90,7 @@ function showNextImage() {
 function showPreviousImage() {
     if (images.length > 0) {
         index -= 1;
-        index %= images.length;
+        index = (index + images.length) % images.length;
         showCard(images, index);
     }
 }
