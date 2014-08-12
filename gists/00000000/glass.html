@@ -74,9 +74,30 @@ function wordReceive(channel, word, croppedImage) {
     showLastImage(images);
 }
 
-function showLastImage(images) {
-    $('#card img').attr('src', images[images.length - 1]['image']);
-    $('#card .word').text(images[images.length - 1]['word']);
+function showLastImage() {
+    index = images.length - 1;
+    showCard(images, index);
+}
+
+function showNextImage() {
+    if (images.length > 0) {
+        index += 1;
+        index %= images.length;
+        showCard(images, index);
+    }
+}
+
+function showPreviousImage() {
+    if (images.length > 0) {
+        index -= 1;
+        index %= images.length;
+        showCard(images, index);
+    }
+}
+
+function showCard(images, index) {
+    $('#card img').attr('src', images[index]['image']);
+    $('#card .word').text(images[index]['word']);
 }
 
 function serverCustom() {
@@ -87,6 +108,14 @@ function serverCustom() {
     });
     WS.subscribe('words', wordReceive);
     WS.publish('register', 'registered', WS.groupDevice());
+    WS.gestureCallback('onGesture', function(action) {
+        if (action == 'SWIPE_RIGHT') {
+            showNextImage();
+        } else if (action == 'SWIPE_LEFT') {
+            showPreviousImage();
+        }
+        
+    });
 
     // WS.publish('words', 'cup / カップ', 'cup.jpg');
     // WS.publish('words', 'grapefruit / グレープフルーツ', 'grapefruit.jpg');
