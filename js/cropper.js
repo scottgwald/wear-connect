@@ -277,12 +277,20 @@ function init() {
     document.addEventListener('keydown',onDocumentKeyDown,false);
     document.addEventListener('keyup',onDocumentKeyUp,false);
     renderer.domElement.addEventListener('DOMMouseScroll', scrollTags, false);
+    renderer.domElement.addEventListener('mousewheel', scrollTags, false);
+
 
     function scrollTags(event) {
         event.preventDefault();
-        var delta = event.detail;
+        var delta;
+        if (/Firefox/i.test(navigator.userAgent)){
+             delta = event.detail;
+        } else {
+          delta = window.event.wheelDelta;
+        }
+
        
-        console.log((listItemHeight+listItemPadding)*tagNum - virtualListHeight);
+        console.log(delta);
 
 
         if (delta>0 &&list.position.y+ delta > virtualListHeight/2 + ((listItemHeight+listItemPadding)*(tagNum)- virtualListHeight) - listItemPadding* (tagNum-1)){
@@ -293,6 +301,8 @@ function init() {
         }
 
         if (delta <0 && list.position.y + delta <= virtualListHeight / 2){
+            console.log('error');
+
             return;
         }
         else
