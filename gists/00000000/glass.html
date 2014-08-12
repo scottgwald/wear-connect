@@ -111,18 +111,30 @@ function serverCustom() {
     WS.gestureCallback('onGesture', function(action) {
         if (action == 'SWIPE_RIGHT') {
             showNextImage();
+            console.log('swipe right handler');
         } else if (action == 'SWIPE_LEFT') {
             showPreviousImage();
+            console.log('swipe left handler');
         } else if (action == 'TAP') {
             console.log('tapped');
-            var tree = new WS.Cards();
-            tree.add('Body 0', 'Footer 0');
-            tree.add('Body 1', 'Footer 1');
-            WS.cardTree(tree);
-            WS.displayCardTree();
+            showCardTree();
         }
-        
     });
+
+    function showCardTree() {
+        var tree = new WS.Cards();
+        tree.add(isCameraOn ? 'Stop image stream' : 'Start image stream', undefined, undefined, function () {
+            WS.say('stream ' + (isCameraOn ? 'stopped' : 'started'));
+            toggleCamera();
+            WS.displayWebView();
+        });
+        tree.add('Body 1', 'Footer 1', undefined, function() {
+            WS.say('selected 1');
+            WS.displayWebView();
+        });
+        WS.cardTree(tree);
+        WS.displayCardTree();
+    }
 
     // WS.publish('words', 'cup / カップ', 'cup.jpg');
     // WS.publish('words', 'grapefruit / グレープフルーツ', 'grapefruit.jpg');
@@ -154,15 +166,23 @@ function toggleServer() {
     }
 }
 
-var cameraOn = false;
+var isCameraOn = false;
 function toggleCamera() {
-    if (cameraOn) {
-        WS.cameraOff();
-        cameraOn = false;
+    if (isCameraOn) {
+        cameraOff();
     } else {
-        WS.cameraOn(0.5, 640, 480);
-        cameraOn = true;
+        cameraOn();
     }
+}
+
+function cameraOff() {
+    WS.cameraOff();
+    isCameraOn = false;
+}
+
+function cameraOn() {
+    WS.cameraOn(0.5, 640, 480);
+    isCameraOn = true;
 }
 
 /*WS.gestureCallback('onGestureTAP', function ( gesture ) {
