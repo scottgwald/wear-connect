@@ -113,6 +113,13 @@ function serverCustom() {
             showNextImage();
         } else if (action == 'SWIPE_LEFT') {
             showPreviousImage();
+        } else if (action == 'TAP') {
+            console.log('tapped');
+            var tree = new WS.Cards();
+            tree.add('Body 0', 'Footer 0');
+            tree.add('Body 1', 'Footer 1');
+            WS.cardTree(tree);
+            WS.displayCardTree();
         }
         
     });
@@ -158,17 +165,9 @@ function toggleCamera() {
     }
 }
 
-WS.gestureCallback('onGestureSWIPE_RIGHT', function ( gesture ) {
-    data.next();
-});
-
-WS.gestureCallback('onGestureSWIPE_LEFT', function ( gesture ) {
-    data.prev();
-});
-
-WS.gestureCallback('onGestureTAP', function ( gesture ) {
+/*WS.gestureCallback('onGestureTAP', function ( gesture ) {
     toggleServer();
-});
+});*/
 
 function main() {
     if (WS.scriptVersion(1)) return;
