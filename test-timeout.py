@@ -24,6 +24,7 @@ ws_alice = ""
 test_channel = 'image'
 test_subchannel = test_channel + ':alice'
 time_format_string = "%Y-%m-%d %H:%M:%S.%f"
+the_greenlets = [];
 
 def image_name(i):
     return image_name_templ % (str(i).zfill(3))
@@ -105,6 +106,11 @@ def send_test_message(i):
     print "Sending message to test channel %s at %s" %(test_channel, time_here)
     ws_alice.publish(test_subchannel, msgBytes, time_here)
 
+def finish():
+    print "Finishing."
+    for greenlet in the_greenlets:
+        greenlet.kill()
+
 def scheduler_main(arg):
 
     now = datetime.today()
@@ -119,6 +125,7 @@ def scheduler_main(arg):
         print "Queueing job at " + str( thistime )
         jobs.append( sched.add_date_job( send_test_message, thistime, [ i ] ))
         thistime += delta5sec
+    jobs.append( sched.add_date_job( finish, thistime, []))
     print "Queued jobs"
 
 def start_ws_client_alice():
@@ -145,4 +152,5 @@ if __name__ == '__main__':
 
     print "Spawned Greenlets: ws_server_greenlet, ws_client_greenlet_alice, " \
         +  "ws_client_greenlet_bob, scheduler_loop_greenlet"
-    gevent.joinall([ws_server_greenlet, ws_client_greenlet_alice, ws_client_greenlet_bob])
+    the_greenlets = [ws_server_greenlet, ws_client_greenlet_alice, ws_client_greenlet_bob]
+    gevent.joinall(the_greenlets)
