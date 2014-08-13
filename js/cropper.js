@@ -5,6 +5,7 @@ var currentPreview;
 var currentTag;
 var isClicked;
 var mouseDownPosition = new THREE.Vector2();
+
 var currentMousePosition = new THREE.Vector2();
 var lastX, lastY;
 var projector = new THREE.Projector();
@@ -27,8 +28,8 @@ var glassAspectRatio = 16.0/9.0;
 var virtualImageOffset = -200;
 var virtualCanvasWidth = 1500;
 var virtualCanvasHeight = 750;
-var actualCanvasWidth = 1000; // later window.innerWidth?
-var actualCanvasHeight = 500; // later window.innerHeight?
+var actualCanvasWidth =  window.innerWidth-20;
+var actualCanvasHeight = window.innerHeight-20;
 var pixelImageWidth = 416;
 var pixelImageHeight = 304;
 
@@ -75,8 +76,16 @@ var ctrlPressed = false;
 var spacePressed = false;
 var greenList= [];
 
-init();
+// MOUSE EVENT VARIABLES //
 
+var windowHalfX = window.innerWidth;
+var windowHalfY = window.innerHeight;
+var touched; 
+var touchStartPosition = new THREE.Vector2();
+var currentTouchPosition = new THREE.Vector2();
+var lastTouch= new THREE.Vector2();
+
+init();
 
 // GEOMETRY / MATERIAL / MESH
 
@@ -137,11 +146,10 @@ function submit() {
     scene.add(currentPreview2);
     greenList.push(currentPreview2);
     ws.publish('words', selectedItem.tagText, dataURL);
-
-   
     
 }
 function placePicture(imageData) {
+    console.log("in place picture");
 
     if (image)
         scene.remove(plane);
@@ -166,9 +174,10 @@ function placePicture(imageData) {
     scene.add(plane);
 }
 
+
 function makeTextDataURL( text ) {
 
-	
+	console.log("in makeTextDataURL");
     textContext.font = 'normal 80px "Times New Roman"';  
    
 
@@ -189,8 +198,10 @@ function makeTextDataURL( text ) {
 
 }
 
+
 function init() {
 
+    console.log("initialize everything. test console output for android");
     var renderer = new THREE.WebGLRenderer();
     // dpr = window.devicePixelRatio;
     dpr = 1;
@@ -226,6 +237,7 @@ function init() {
     textCanvas.height = textCanvasHeight; //thumbHeight*2;
 
     textContext = textCanvas.getContext("2d");
+
 
     // controls = new THREE.TrackballControls( camera );
 
@@ -270,6 +282,14 @@ function init() {
         requestAnimationFrame( animate );
         //controls.update();
     }
+
+// START TOUCH LISTENERS : MINA//
+
+    renderer.domElement.addEventListener( 'touchstart', onDocumentTouchStart, false );
+    renderer.domElement.addEventListener( 'touchmove', onDocumentTouchMove, false );
+    renderer.domElement.addEventListener( 'touchend', onDocumentTouchEnd, false );    
+
+// END TOUCH LISTENERS : MINA//
 
     renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -395,6 +415,8 @@ function init() {
             var cutPoint = actualToPixelPos( new THREE.Vector2( mouseDownPosition.x,
                     mouseDownPosition.y ) );
 
+            console.log("In mouse up, cutPoint is "+cutPoint.x +" & y is "+ cutPoint.y);
+            console.log("In mouse up, pixelTagDims is "+pixelTagDims.x +" & y is "+ pixelTagDims.y);
             ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
                    0, 0, pixelTagDims.x, pixelTagDims.y);
 
@@ -411,7 +433,115 @@ function init() {
             var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*pixelTagDims.x ;
             
 
-            ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y)
+            ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
+
+            var listWidth = .25 * window.innerWidth - 30;
+            var listHeight = window.innerHeight / 6;
+            var listItem = new THREE.BoxGeometry( listWidth, listHeight,10);
+            var listMaterial = new THREE.MeshBasicMaterial({opacity:.7,transparent:true, color: 0x000000});
+
+            var listItem = new THREE.Mesh( listItemGeometry, listItemMaterial );
+            listItem.position.y = listItemY;
+            listItem.start = listItemY;
+
+            listItemY -= listItemHeight;
+
+            listItem.selected = false;
+            listItem.tagName = text+tagNum;
+            
+            tagNum++;
+
+
+             if ((listItemHeight+listItemPadding)*tagNum > virtualListHeight){
+                addTags++;
+            }
+
+            var thumbData = c.toDataURL();
+            console.log( thumbData );
+
+            var img = new THREE.MeshBasicMaterial({
+                    map: THREE.ImageUtils.loadTexture( thumbData )
+            });
+
+            console.log("img selected in mouse up is "+img);
+
+            var thumb = new THREE.Mesh( thumbGeometry, img);
+            thumb.position.x = ( thumbWidth - virtualListWidth ) / 2 + listItemPadding;
+            thumb.position.z = 40;
+            listItem.thumb = thumb;
+
+            itemList.push( listItem );
+
+            listItem.add( thumb );
+            list.add( listItem );
+
+            selectedItem = listItem;
+
+
+            $('#textform #field').val('').focus().keyup(function() {
+                var text = $('input').val();
+                selectedItem.tagText = text;
+                // var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
+                // $('body').append('<div style="position: absolute; left: ' + vec.x + '; top: ' + vec.y + ';">' + text + '</div>');
+                createTextForItem();
+            });  
+
+        }
+
+    }
+
+    function onDocumentTouchEnd(event) {
+
+        if (touched and event.toclientX < actualImageWidth){
+            
+            touched=false;
+            console.log("touchend here here here");
+
+            event.preventDefault();
+
+            if (actualTagWidth / actualTagHeight > glassAspectRatio) {
+                actualTagHeight = actualTagWidth / glassAspectRatio;
+            } else {
+                actualTagWidth = actualTagHeight * glassAspectRatio;
+            }
+            
+            console.log("In touch end, actualTag is "+actualTagWidth +" & y is "+ actualTagHeight);
+
+            var pixelTagDims = actualToPixelScale( new THREE.Vector2(
+                    actualTagWidth,
+                    actualTagHeight));
+
+            if (DBG) console.log( "Touch down position was " + touchStartPosition.x + ", "
+                    + touchStartPosition.y );
+            if (DBG) console.log( "Touch up position is " + event.clientX + ", " + event.clientY );
+
+            c.width  = pixelTagDims.x;
+            c.height = pixelTagDims.y;
+
+            var cutPoint = actualToPixelPos( new THREE.Vector2( touchStartPosition.x,
+                    touchStartPosition.y ) );
+
+            console.log("In touch end, touchStartPosition is "+touchStartPosition.x +" & y is "+ touchStartPosition.y);
+            console.log("In touch end, cutPoint is "+cutPoint.x +" & y is "+ cutPoint.y);
+            console.log("In touch end, pixelTagDims is "+pixelTagDims.x +" & y is "+ pixelTagDims.y);            
+            
+            ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
+                   0, 0, pixelTagDims.x, pixelTagDims.y);
+
+            if (DBG) console.log( "Grabbing region of size " + pixelTagDims.x + ", "
+                    + pixelTagDims.y + " from location "  + cutPoint.x + ", " + cutPoint.y );
+
+            var thumP = new Image();
+            dataURL = c.toDataURL();
+            thumP.src = dataURL;
+
+            console.log( dataURL );
+            c.width = pixelTagDims.y;
+            c.height = pixelTagDims.y;
+            var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*pixelTagDims.x ;
+            
+
+            ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
 
             var listWidth = .25 * window.innerWidth - 30;
             var listHeight = window.innerHeight / 6;
@@ -439,10 +569,11 @@ function init() {
             console.log( thumbData );
 
 
-            //console.log(item.selected)
             var img = new THREE.MeshBasicMaterial({
                     map: THREE.ImageUtils.loadTexture( thumbData )
             });
+
+            console.log("img selected in touch end is "+img);
 
             var thumb = new THREE.Mesh( thumbGeometry, img);
             thumb.position.x = ( thumbWidth - virtualListWidth ) / 2 + listItemPadding;
@@ -463,9 +594,110 @@ function init() {
                 // $('body').append('<div style="position: absolute; left: ' + vec.x + '; top: ' + vec.y + ';">' + text + '</div>');
                 createTextForItem();
             });
+        }
+    }    
 
-          
 
+    function onDocumentTouchStart(event) {
+        console.log("touchstart here here here");
+
+            event.preventDefault();
+
+        isTagging = true;
+        touchStartPosition.x = event.touches[0].clientX;
+        touchStartPosition.y = event.touches[0].clientY;
+        console.log("In touch start, touchStartPosition is "+touchStartPosition.x +" & y is "+ touchStartPosition.y);
+
+        if (touchStartPosition.x < actualImageWidth) {
+
+            touchStartPosition.x = event.touches[0].clientX;//(event.clientX - boundingRect.left) * (renderer.domElement.width / boundingRect.width);
+            touchStartPosition.y = event.touches[0].clientY;//(boundingRect.top -window.innerHeight + event.clientY) * (renderer.domElement.height / boundingRect.height);
+
+            mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (window.innerWidth) ) * 2 - 1, - ( event.clientY / window.innerHeight) * 2 + 1, 1 ), camera );
+            mouse3D.sub(camera.position);
+            //mouse3D.normalize();
+            lastTouch.x = mouse3D.x;
+            lastTouch.y = mouse3D.y;
+        } else {
+           
+            mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (virtualCanvasWidth) ) * 2 - 1, - ( event.clientY / virtualCanvasHeight) * 2 + 1, 1 ), camera );
+            mouse3D.sub(camera.position);
+
+            var target;
+            for (var i =0; i< itemList.length; i++) {
+                
+                console.log(itemList[i].start + virtualListHeight - listItemHeight);
+                console.log(mouse3D.y);
+                if (touchStartPosition.x >actualImageWidth + listItemPadding && mouse3D.y < itemList[i].start+virtualListHeight/2 && mouse3D.y > itemList[i].start -virtualListHeight/2 ){
+                    console.log('touch touch touch touch touch');
+                    target = itemList[i];
+                    target.selected = true;
+
+                } else {
+                    itemList[i].selected = false;
+                }
+            }
+            selectedItem = target;
+
+            if (selectedItem) {
+
+                var selectorGeo = new THREE.BoxGeometry (listWidth,listHeight);
+                var selectorMaterial = new THREE.MeshBasicMaterial({ color:0xEDED25,opacity: .5,transparent: true});
+                selector = THREE.Mesh(selectorGeo,selectorMaterial);
+
+            }
+        }
+
+    }
+
+    function onDocumentTouchMove(event) {
+        if (touchStartPosition.x < actualImageWidth) {
+        touched=true;
+        console.log("touchmove here here here");
+
+            event.preventDefault(event);
+
+            if (currentPreview) {
+            scene.remove(currentPreview);
+            }
+
+            var x = event.touches[0].pageX;
+            var y = event.touches[0].pageY;
+
+            // will need to handle different +/- cases
+            actualTagWidth = x - touchStartPosition.x;
+            actualTagHeight = y - touchStartPosition.y;
+            
+            var aspectWidth = actualTagWidth;
+            var aspectHeight = actualTagHeight;
+            
+            if (actualTagWidth / actualTagHeight > glassAspectRatio) {
+                actualTagHeight = actualTagWidth / glassAspectRatio;
+            } else {
+                actualTagWidth = actualTagHeight * glassAspectRatio;
+            }
+            
+            var actualTagDims = new THREE.Vector2( actualTagWidth, actualTagHeight );
+            var actual = new THREE.Vector2( aspectWidth, aspectHeight );
+
+            var vactual = actualToVirtualScale(actual);
+            var virtualTagDims = actualToVirtualScale( actualTagDims );
+
+            var geometry = new THREE.BoxGeometry( virtualTagDims.x, virtualTagDims.y, 100 );
+            var material = new THREE.MeshBasicMaterial( {  opacity: .5, transparent: true} );
+            currentPreview = new THREE.Mesh( geometry, material );
+
+            actualTagPos = new THREE.Vector2(  touchStartPosition.x + actualTagDims.x / 2,
+                   touchStartPosition.y + actualTagDims.y/ 2 );
+            virtualTagPos = actualToVirtualPos( actualTagPos );
+
+            currentPreview.position.x = virtualTagPos.x;
+            currentPreview.position.y = virtualTagPos.y;
+            currentPreview.position.z = 0;
+            currentPreview.width = virtualTagDims.x;
+            currentPreview.height = virtualTagDims.y;
+
+            scene.add(currentPreview);
         }
 
     }
