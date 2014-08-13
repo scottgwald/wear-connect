@@ -15,7 +15,7 @@ from Queue import Queue
 image_name_templ = 'wear-connect/test/img/text-wear-connect-test-%s.jpg'
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
-number_of_messages = 200
+number_of_messages = 15
 number_of_test_images = 10
 delta_to_start = 1
 delta_between_messages = 0.01
@@ -34,6 +34,9 @@ messages_queued = 0
 messages_published = 0
 messages_received = 0
 last_queue_time = ""
+total_transit_time = timedelta( seconds = 0 )
+giant_message = True
+giant_message_doubling_exponent = 7
 
 def image_name(i):
     return image_name_templ % (str(i).zfill(3))
@@ -44,6 +47,10 @@ def load_image_data(i):
     img.seek(0)
     imgBytes = img.read()
     img.close()
+    if giant_message and i % number_of_test_images == number_of_test_images - 1:
+        print("Prepping a giant message")
+        for i in range(giant_message_doubling_exponent):
+            imgBytes += imgBytes
     return imgBytes
 
 print("Bytes in image: " + str(len(load_image_data(0))))
@@ -79,15 +86,16 @@ def callback_alice(ws, **kw):
         finish()
 
 def callback_bob(ws, **kw):
-
     def narrowcast_cb(chan, *argv):
         print "Narrowcast callback " + chan
 
     def get_test_channel(chan, arg1, arg2):
         global messages_received
+        global total_transit_time
         send_time = datetime.strptime(arg2, time_format_string)
         recv_time = datetime.today()
         transit_time = recv_time - send_time
+        total_transit_time += transit_time
         print "Transit time: %s. Bob got message on channel %s of length %s at time %s" % (str(transit_time), chan, str(len(arg1)), str(datetime.today()))
         messages_received += 1
 
@@ -184,7 +192,9 @@ def kill_greenlets():
         cnt += 1
 
 def final_report():
-    print "Final report: messages queued %i, messages published %i, messages received %i" % (messages_queued, messages_published, messages_received)
+    print """
+    Final report: messages queued %i, messages published %i, messages received %i, average transit time %s
+    """ % (messages_queued, messages_published, messages_received, str(total_transit_time / messages_received))
 
 def scheduler_main(arg):
 
