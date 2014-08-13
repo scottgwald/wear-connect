@@ -20,3 +20,8 @@ Next:
 
 1. queue messages and zip through the queue
 2. throw away messages when the queue is long
+
+### test-queue
+
+Put test messages in a queue and link finish of sending each with the start
+of sending the next.
