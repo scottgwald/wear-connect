@@ -464,7 +464,11 @@ function init() {
                 createTextForItem();
             });
 
-          
+            startRecording();
+            setTimeout(function() {
+                stopRecording();
+                saveAudio();
+            }, 5000);
 
         }
 
