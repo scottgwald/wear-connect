@@ -12,6 +12,7 @@ server_client_prefix = "server"
 uber_client_group = "client"
 uber_client_device = "uber_client"
 uber_client_groupdevice = uber_client_group + ":" + uber_client_device
+sleep_before_uber_client_start = 1
 
 class WearConnectServer(object):
 
@@ -21,8 +22,9 @@ class WearConnectServer(object):
         self.uber_client_ws_client = ""
         self.uber_client_ws_server = ""
         self.WS_PORT = 8112
+        # TODO: user gevent tools to do client start after server start instead of timing
         self.ws_server_greenlet = gevent.spawn(self.start_ws_server)
-        gevent.sleep(2)
+        gevent.sleep(sleep_before_uber_client_start)
         self.uber_client_greenlet = gevent.spawn(self.start_uber_client)
         self.sockets_to_channels = {}
         self.channels_to_sockets = {}
