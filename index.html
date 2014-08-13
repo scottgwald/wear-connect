@@ -5,7 +5,6 @@
   <title>WordConnect</title>
   <link href="css/cropper.css" rel="stylesheet" type="text/css">
   <script src="AudioRecorder/js/recorderjs/recorder.js"></script>
-  <script src="AudioRecorder/js/main.js"></script>
 </head>
 <body>
 <canvas id="myCanvas" width="1300" height="1300"></canvas> 
@@ -76,16 +75,16 @@ $(document).ready(function () {
       }
       
       //ws.publish('words',,)
-      
     });
     ws.send('register', 'registered', 'worker:' + currentTimeString());
   }
-}); 
+});
 
 </script>
 
 <form id="textform" action="javascript:void(0);" >
 <input type="text" id="field" />
+<a id="save">save audio</a>
 </form>
 
 </body>
