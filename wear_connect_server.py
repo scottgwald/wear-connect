@@ -40,15 +40,20 @@ class WearConnectServer(object):
 
     def ws_send(self, ws, *argv):
         # global ws_dict
+        registered = True;
         try:
             print "Sending to socket " + self.ws_dict[ws] + " with args " + str(len(str(argv)))
         except KeyError:
+            registered = False;
             print "Sending to unregistered socket with args " + str(len(str(argv)))
         try:
             ws.send(*argv)
         except geventwebsocket.exceptions.WebSocketError:
-            print "Sending failed, unregistering ws: " + self.ws_dict[ws], sys.exc_info()[0]
-            self.unregister(ws)
+            if registered and ws in self.ws_dict:
+                print "Sending failed, unregistering ws: " + self.ws_dict[ws], sys.exc_info()[0]
+                self.unregister(ws)
+            else:
+                print "Sending to unregistered websocket failed with WebSocketError ", sys.exc_info()[0]
         except:
             print "Unexpected exception while sending, unregistering: " + self.ws_dict[ws], sys.exc_info()[0]
             self.unregister(ws)
