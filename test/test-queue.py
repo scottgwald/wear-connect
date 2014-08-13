@@ -111,10 +111,12 @@ def do_process_queue():
     global messages_published
     global msg_queue
     msg_queue = Queue()
-
     print "Starting queue processing yay 8987987"
     while True:
         msg_args = msg_queue.get()
+        is_last_message = msg_args[-1] == last_queue_time
+        time_here = str(datetime.today())
+        msg_args[-1] = time_here
         try:
             ws_alice.publish(*msg_args)
             messages_published += 1
@@ -123,7 +125,7 @@ def do_process_queue():
         except Exception:
             print "Exception raised in ws_alice publish"
         msg_queue.task_done()
-        if msg_args[2] == last_queue_time:
+        if is_last_message:
             "Processing the last message."
             finish()
 
