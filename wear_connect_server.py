@@ -173,7 +173,8 @@ class WearConnectServer(object):
             for ws_server_socket in self.ws_dict.keys():
                 # don't bounce subscriptions back to same client
                 if not self.ws_dict[ws_server_socket] == groupDevice and not self.ws_dict[ws_server_socket] == uber_client_groupdevice:
-                    ws_server_socket.send(chan, groupDevice, channels)
+                    # ws_server_socket.send(chan, groupDevice, channels)
+                    gevent.spawn(self.ws_send, ws_server_socket, chan, groupDevice, channels)
 
             print "uber client knows: " + str(ws.device_to_channels)
 
@@ -215,7 +216,8 @@ class WearConnectServer(object):
                     print "registered is now " + str(ws.registered)
                     # send out all existing subscriptions
                     for device in self.uber_client_ws_client.device_to_channels.keys():
-                        ws.send('subscriptions', device, self.uber_client_ws_client.device_to_channels[device])
+                        # ws.send('subscriptions', device, self.uber_client_ws_client.device_to_channels[device])
+                        gevent.spawn(self.ws_send, ws, 'subscriptions', device, self.uber_client_ws_client.device_to_channels[device])
 
             if not self.uber_client_ws_server == "":
                 self.uber_client_ws_server.send(chan, groupDevice, channels)
