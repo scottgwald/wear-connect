@@ -29,7 +29,7 @@ var virtualImageOffset = -200;
 var virtualCanvasWidth = 1500;
 var virtualCanvasHeight = 750;
 var actualCanvasWidth =  window.innerWidth-20;
-var actualCanvasHeight = window.innerHeight-20;
+var actualCanvasHeight = actualCanvasWidth/1.6;
 var pixelImageWidth = 416;
 var pixelImageHeight = 304;
 
@@ -267,7 +267,7 @@ function init() {
     listItemY = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
     scene.add( list );
     
-    // placePicture('yogurt.jpg');
+    placePicture('glass.jpg');
 
     nextListPosition = virtualCanvasHeight / 2 - (virtualCanvasHeight * listItemProportion) - 10;
     
@@ -491,8 +491,7 @@ function init() {
     }
 
     function onDocumentTouchEnd(event) {
-
-        if (touched and event.toclientX < actualImageWidth){
+        if (touched){
             
             touched=false;
             console.log("touchend here here here");
