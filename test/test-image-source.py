@@ -15,14 +15,15 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 from Queue import Queue
+import base64
 
 image_name_templ = 'wear-connect/test/img/text-wear-connect-test-%s.jpg'
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
-number_of_messages = 15
+number_of_messages = 10
 number_of_test_images = 10
 delta_to_start = 1
-delta_between_messages = 0.1
+delta_between_messages = 1
 final_wait = 3
 clientGroup = 'python_client'
 aliceDevice = 'alice'
@@ -44,6 +45,7 @@ giant_message_doubling_exponent = 7
 log_outfile_name = "playback.log"
 LOG_OUTFILE = open(log_outfile_name, 'wb')
 HTTP_PORT = 8991
+base64_encode_image = False
 
 def open_page():
     print "Opening page in Chrome"
@@ -71,6 +73,8 @@ def load_image_data(i):
         print("Prepping a giant message")
         for i in range(giant_message_doubling_exponent):
             imgBytes += imgBytes
+    if base64_encode_image:
+        imgBytes = base64.b64encode(imgBytes)
     return imgBytes
 
 print("Bytes in image: " + str(len(load_image_data(0))))
@@ -109,14 +113,14 @@ def callback_bob(ws, **kw):
     def narrowcast_cb(chan, *argv):
         print "Narrowcast callback " + chan
 
-    def get_test_channel(chan, arg1, arg2):
+    def get_test_channel(chan, timestamp, image):
         global messages_received
         global total_transit_time
-        send_time = datetime.strptime(arg2, time_format_string)
+        send_time = datetime.strptime(timestamp, time_format_string)
         recv_time = datetime.today()
         transit_time = recv_time - send_time
         total_transit_time += transit_time
-        print "Transit time: %s. Bob got message on channel %s of length %s at time %s" % (str(transit_time), chan, str(len(arg1)), str(datetime.today()))
+        print "Transit time: %s. Bob got message on channel %s of length %s at time %s" % (str(transit_time), chan, str(len(image)), str(datetime.today()))
         messages_received += 1
 
     print "I'm Bob and my group_device is " + ws.group_device
@@ -142,10 +146,10 @@ def do_process_queue():
     print "Starting queue processing yay 8987987"
     while True:
         msg_args = msg_queue.get()
-        is_last_message = msg_args[-1] == last_queue_time
+        is_last_message = msg_args[1] == last_queue_time
         time_here = datetime.today()
         time_here_str = str(time_here)
-        msg_args[-1] = time_here_str
+        msg_args[1] = time_here_str
         try:
             ws_alice.publish(*msg_args)
             messages_published += 1
@@ -171,7 +175,7 @@ def queue_test_message(i_orig):
         last_queue_time = time_here
     try:
         # add new message to the queue
-        msg_queue.put([test_subchannel, msgBytes, time_here])
+        msg_queue.put([test_subchannel, time_here, msgBytes])
         messages_queued += 1
     except AssertionError:
         print "AssertionError: skipping publish."
