@@ -50,7 +50,7 @@ base64_encode_image = False
 def open_page():
     print "Opening page in Chrome"
     # address=('http://localhost:%d/stage-displays/viewer.html' % HTTP_PORT)
-    address=('http://localhost:%d/' % HTTP_PORT)
+    address=('wearconnect.thruhere.net:%d/' % HTTP_PORT)
     p = subprocess.Popen(['chrome-cli', 'open', address, '-i'], stdout=LOG_OUTFILE)
     r = p.wait()
     if r:

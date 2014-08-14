@@ -470,7 +470,10 @@ function init() {
             thumb.position.z = 40;
             listItem.thumb = thumb;
 
-            itemList.push( listItem );
+            itemList.unshift( listItem );
+            console.log("item list here here here"+itemList.toString());
+
+            // itemList.push( listItem );
 
             listItem.add( thumb );
             list.add( listItem );
@@ -481,8 +484,6 @@ function init() {
             $('#textform #field').val('').focus().keyup(function() {
                 var text = $('input').val();
                 selectedItem.tagText = text;
-                // var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
-                // $('body').append('<div style="position: absolute; left: ' + vec.x + '; top: ' + vec.y + ';">' + text + '</div>');
                 createTextForItem();
             });  
 
@@ -491,6 +492,10 @@ function init() {
     }
 
     function onDocumentTouchEnd(event) {
+        event.preventDefault();
+        console.log("in touch end, event is: " + event+ " touch[0] is: "+event.changedTouches[event.changedTouches.length-1].clientX);
+        if (event.changedTouches[event.changedTouches.length-1].clientX < actualImageWidth) {
+
         if (touched){
             
             touched=false;
@@ -579,8 +584,8 @@ function init() {
             thumb.position.z = 40;
             listItem.thumb = thumb;
 
-            itemList.push( listItem );
-
+            itemList.unshift( listItem );
+            console.log(itemList);
             listItem.add( thumb );
             list.add( listItem );
 
@@ -594,6 +599,7 @@ function init() {
                 createTextForItem();
             });
         }
+    }
     }    
 
 
