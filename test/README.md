@@ -25,3 +25,15 @@ Next:
 
 Put test messages in a queue and link finish of sending each with the start
 of sending the next.
+
+### test-image-source
+
+Send images to test client periodically. Messages are queued if not
+cleared out fast enough.
+
+Discovered that with multiple clients, when one socket blocks, messages
+to all sockets are blocked
+
+### many-clients
+
+Same as image-source but open many clients
