@@ -15,18 +15,21 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 from Queue import Queue
-import base64
+from gevent.queue import Queue as GQueue
+from gevent.event import Event
 from gevent.event import AsyncResult
+# from Queue import Queue
+import base64
 import re
 
 image_name_templ = 'wear-connect/test/img/text-wear-connect-test-%s.jpg'
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
-number_of_clients = 10
+number_of_clients = 4
 number_of_messages = 100
-number_of_test_images = 10
+number_of_test_images = 5
 delta_to_start = 1
-delta_between_messages = 1
+delta_between_messages = 0.2
 final_wait = 3
 clientGroup = 'python_client'
 aliceDevice = 'alice'
@@ -49,21 +52,73 @@ log_outfile_name = "playback.log"
 LOG_OUTFILE = open(log_outfile_name, 'wb')
 HTTP_PORT = 8991
 base64_encode_image = False
-
+tile_windows = True
+tile_x = [0, 400, 800]
+tile_y = [20, 420]
+tile_number_of_rows = len(tile_y)
+tile_number_of_columns = len(tile_x)
+tile_number_of_clients = tile_number_of_rows * tile_number_of_columns # fixed for now
+TILE_WIDTH = 400
+TILE_HEIGHT = 400
 test_window_id = AsyncResult()
+windows_are_ready = Event()
+page_address = ('http://localhost:%d/' % HTTP_PORT)
+window_id_queue = GQueue()
+window_pos_queue = GQueue()
+
+def queue_window_params():
+    for x in tile_x:
+        for y in tile_y:
+            window_pos_queue.put([x, y])
 
 def open_pages():
-    for client_number in range(number_of_clients):
-        gevent.spawn(open_page, client_number)
+    if tile_windows:
+        open_tile_pages()
+    else:
+        for client_number in range(number_of_clients):
+            gevent.spawn(open_page, client_number)
+
+def open_tile_pages():
+    queue_window_params()
+    for client_number in range(tile_number_of_clients):
+        gevent.spawn(open_page_id)
+    gevent.spawn(arrange_tile_pages)
+
+def arrange_tile_pages():
+
+    windows_are_ready.wait()
+    print("Windows are ready, yay!")
+    while not window_id_queue.empty():
+        params = window_id_queue.get()
+        #
+        # SET POSITION
+        #
+        p = subprocess.Popen(['chrome-cli', 'position', params['x'], params['y'], '-w', params['id']])
+        p.wait()
+        #
+        # SET SIZE
+        #
+        p = subprocess.Popen(['chrome-cli', 'size', params['w'], params['h'], '-w', params['id']])
+        gevent.sleep(0)
+
+def open_page_id():
+    # parse tab id from command output and subtract 1 to get window id
+    chrome_cli_output = subprocess.check_output(['chrome-cli', 'open', page_address, '-i'])
+    top_line = chrome_cli_output.split("\n")[0]
+    m = re.search( '(?P<id>[0-9]+)', top_line )
+    window_id = str(int(m.group('id')) - 1 )
+    x,y = window_pos_queue.get()
+    window_id_queue.put( {'id': window_id, 'x': str(x), 'y': str(y), 'w': str(TILE_WIDTH), 'h': str(TILE_HEIGHT) } )
+    if window_id_queue.qsize() >= tile_number_of_clients:
+        windows_are_ready.set()
 
 def open_page(client_number):
-    address=('http://localhost:%d/' % HTTP_PORT)
     if client_number == 0:
         print("Opening first client")
         #
         # open in new window and grab the window id
         #
-        p = subprocess.Popen(['chrome-cli', 'open', address, '-i'])
+        p = subprocess.Popen(['chrome-cli', 'open', page_address, '-i'])
         p.wait()
         p1 = subprocess.Popen(['chrome-cli', 'list', 'windows'], stdout=subprocess.PIPE)
         #
@@ -76,7 +131,7 @@ def open_page(client_number):
         test_window_id.set(m.group('id'))
     else:
         print("Opening client %i" % client_number)
-        p = subprocess.Popen(['chrome-cli', 'open', address, '-w', test_window_id.get()])
+        p = subprocess.Popen(['chrome-cli', 'open', page_address, '-w', test_window_id.get()])
 
 def start_web_server():
     reactor.listenTCP(HTTP_PORT, Site(File("wear-connect"))); 
