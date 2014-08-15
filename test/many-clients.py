@@ -16,11 +16,14 @@ from datetime import datetime
 from datetime import timedelta
 from Queue import Queue
 import base64
+from gevent.event import AsyncResult
+import re
 
 image_name_templ = 'wear-connect/test/img/text-wear-connect-test-%s.jpg'
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
-number_of_messages = 10
+number_of_clients = 10
+number_of_messages = 100
 number_of_test_images = 10
 delta_to_start = 1
 delta_between_messages = 1
@@ -47,14 +50,33 @@ LOG_OUTFILE = open(log_outfile_name, 'wb')
 HTTP_PORT = 8991
 base64_encode_image = False
 
-def open_page():
-    print "Opening page in Chrome"
-    # address=('http://localhost:%d/stage-displays/viewer.html' % HTTP_PORT)
+test_window_id = AsyncResult()
+
+def open_pages():
+    for client_number in range(number_of_clients):
+        gevent.spawn(open_page, client_number)
+
+def open_page(client_number):
     address=('http://localhost:%d/' % HTTP_PORT)
-    p = subprocess.Popen(['chrome-cli', 'open', address, '-i'], stdout=LOG_OUTFILE)
-    r = p.wait()
-    if r:
-        raise RuntimeError('An error occurred opening the page')
+    if client_number == 0:
+        print("Opening first client")
+        #
+        # open in new window and grab the window id
+        #
+        p = subprocess.Popen(['chrome-cli', 'open', address, '-i'])
+        p.wait()
+        p1 = subprocess.Popen(['chrome-cli', 'list', 'windows'], stdout=subprocess.PIPE)
+        #
+        # 'out' contains window list. The last one is the new one.
+        #
+        out, err = p1.communicate()
+        chrome_windows = out.split("\n")
+        m = re.search('\[(?P<id>[0-9]+)\]', chrome_windows[-2])
+        print("Found id of new window: %s" % m.group('id'))
+        test_window_id.set(m.group('id'))
+    else:
+        print("Opening client %i" % client_number)
+        p = subprocess.Popen(['chrome-cli', 'open', address, '-w', test_window_id.get()])
 
 def start_web_server():
     reactor.listenTCP(HTTP_PORT, Site(File("wear-connect"))); 
@@ -263,7 +285,7 @@ if __name__ == '__main__':
     scheduler_loop_greenlet = gevent.spawn_later(6, scheduler_loop, "")
     do_process_queue_greenlet = gevent.spawn(do_process_queue)
 
-    page_greenlet = gevent.spawn_later(5, open_page)
+    page_greenlet = gevent.spawn_later(5, open_pages)
     server_greenlet = gevent.spawn(start_web_server)
 
     print "Spawned Greenlets: ws_server_greenlet, ws_client_greenlet_alice, " \
