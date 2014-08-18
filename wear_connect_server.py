@@ -137,7 +137,7 @@ class WearConnectServer(object):
             print "Didn't find client " + client_name + " in ws_dict_chan"
 
     def forward_cb(self, channel, groupDevice, *argv):
-        self.uber_client_ws_server.send(channel, groupDevice, *argv)
+        gevent.spawn(self.ws_send, self.uber_client_ws_server, channel, groupDevice, *argv)
 
     def uber_client_callback(self, ws, **kw):
         # global uber_client_ws
@@ -196,7 +196,7 @@ class WearConnectServer(object):
                     print "forwarding " + chan + " on channel " + channel_cur
                     for ws_server_socket in self.channels_to_sockets[channel_cur]:
                         # important: never change the channel mid-flight
-                        ws_server_socket.send(chan, *argv)
+                        gevent.spawn(self.ws_send, ws_server_socket, chan, *argv)
 
         gevent.spawn(self.ws_subscribe, ws, ws.group_device, narrowcast_cb )
         ws.subscribe('subscriptions', subscriptions_cb)
@@ -225,7 +225,7 @@ class WearConnectServer(object):
                         gevent.spawn(self.ws_send, ws, 'subscriptions', device, self.uber_client_ws_client.device_to_channels[device])
 
             if not self.uber_client_ws_server == "":
-                self.uber_client_ws_server.send(chan, groupDevice, channels)
+                gevent.spawn(self.ws_send, self.uber_client_ws_server, chan, groupDevice, channels)
 
         def is_uber_client_cb(chan, **kw):
             print "UBER CLIENT SET"
