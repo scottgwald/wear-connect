@@ -261,20 +261,22 @@ def queue_test_message(i_orig):
         print "Exception raised in ws_alice publish"
 
 def finish():
-    return
-    # global finish_called
-    # if finish_called:
-    #     print "Finished called multiple times."
-    #     return
+    global finish_called
+    if finish_called:
+        print "Finished called multiple times."
+        return
 
-    # print "Finishing."
-    # finish_called = True
+    print "Finishing."
+    finish_called = True
 
-    # # shut down the scheduler right away
-    # sched.shutdown(wait=False)
+    # shut down the scheduler right away
+    sched.shutdown(wait=False)
 
-    # # wait a few seconds for running jobs to finish
-    # delayed_finish()
+    # shut down the web server
+    reactor.stop()
+
+    # wait a few seconds for running jobs to finish
+    delayed_finish()
 
 def delayed_finish():
     final_sched = Scheduler()
