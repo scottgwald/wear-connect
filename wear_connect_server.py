@@ -55,8 +55,11 @@ class WearConnectServer(object):
             else:
                 print "Sending to unregistered websocket failed with WebSocketError ", sys.exc_info()[0]
         except:
-            print "Unexpected exception while sending, unregistering: " + self.ws_dict[ws], sys.exc_info()[0]
-            self.unregister(ws)
+            if registered and ws in self.ws_dict:
+                print "Unexpected exception while sending, unregistering: " + self.ws_dict[ws], sys.exc_info()[0]
+                self.unregister(ws)
+            else:
+                print "Sending to unregistered websocket failed. ", sys.exc_info()[0]
 
     #
     # A CLIENT WS ENDPOINT IS ANNOUNCING A SUBSCRIPTION
@@ -68,8 +71,10 @@ class WearConnectServer(object):
             ws.subscribe(chan, callback)
             subscribed = True
         except geventwebsocket.exceptions.WebSocketError:
-            print "Subscribe failed, unregistering ws: " + self.ws_dict[ws], sys.exc_info()[0]
-            self.unregister(ws)
+            registered = self.safe_print_ws_exception(ws, "Subscribe failed.")
+            if registered:
+                # TODO: do this with gevent??
+                self.unregister(ws)
         except KeyError:
             print "KeyError while subscribing. Ignoring."
         except:
@@ -108,6 +113,15 @@ class WearConnectServer(object):
             print "KeyError while unsubscribing. Ignoring"
         except:
             print "Unexpected exception while unsubscribing. Ignoring." + self.ws_dict[ws], sys.exc_info()[0]
+
+    def safe_print_ws_exception(self, ws, exception_text):
+        try:
+            print exception_text + self.ws_dict[ws], sys.exc_info()[0]
+            registered = True
+        except KeyError:
+            registered = False
+            print "Unknown websocket. " + exception_text, sys.exc_info()[0]
+        return registered
 
     def unregister(self, ws):
         global ws_dict
@@ -181,7 +195,10 @@ class WearConnectServer(object):
                     # ws_server_socket.send(chan, groupDevice, channels)
                     gevent.spawn(self.ws_send, ws_server_socket, chan, groupDevice, channels)
 
-            print "uber client knows: " + str(ws.device_to_channels)
+            try:
+                print "uber client knows: " + str(ws.device_to_channels)
+            except AttributeError:
+                print "uber client doesn't know any subscriptions yet."
 
         def forward_message(chan, *argv):
             print "forward_message"
@@ -220,9 +237,11 @@ class WearConnectServer(object):
                     ws.registered = True
                     print "registered is now " + str(ws.registered)
                     # send out all existing subscriptions
-                    for device in self.uber_client_ws_client.device_to_channels.keys():
-                        # ws.send('subscriptions', device, self.uber_client_ws_client.device_to_channels[device])
-                        gevent.spawn(self.ws_send, ws, 'subscriptions', device, self.uber_client_ws_client.device_to_channels[device])
+                    try:
+                        for device in self.uber_client_ws_client.device_to_channels.keys():
+                            gevent.spawn(self.ws_send, ws, 'subscriptions', device, self.uber_client_ws_client.device_to_channels[device])
+                    except AttributeError:
+                        print "Trouble forwarding subscriptions to new client", sys.exc_info()[0]
 
             if not self.uber_client_ws_server == "":
                 gevent.spawn(self.ws_send, self.uber_client_ws_server, chan, groupDevice, channels)
