@@ -3,7 +3,7 @@ gevent.monkey.patch_all()
 from twisted.web.server import Site
 from twisted.web.static import File 
 from twisted.internet import reactor 
-import subprocess
+import gevent.subprocess as subprocess
 import wearscript
 import argparse
 from .. import wear_connect_server
@@ -25,11 +25,12 @@ import re
 image_name_templ = 'wear-connect/test/img/text-wear-connect-test-%s.jpg'
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
+# this is only relevant with tile_windows = False. Else controlled by tile_x, tile_y
 number_of_clients = 4
 number_of_messages = 100
 number_of_test_images = 5
 delta_to_start = 1
-delta_between_messages = 0.2
+delta_between_messages = 0.5
 final_wait = 3
 clientGroup = 'python_client'
 aliceDevice = 'alice'
@@ -53,7 +54,8 @@ LOG_OUTFILE = open(log_outfile_name, 'wb')
 HTTP_PORT = 8991
 base64_encode_image = False
 tile_windows = True
-tile_x = [0, 400, 800]
+# tile_x = [0, 400, 800]
+tile_x = [0, 400]
 tile_y = [20, 420]
 tile_number_of_rows = len(tile_y)
 tile_number_of_columns = len(tile_x)
@@ -65,6 +67,7 @@ windows_are_ready = Event()
 page_address = ('http://localhost:%d/' % HTTP_PORT)
 window_id_queue = GQueue()
 window_pos_queue = GQueue()
+window_info = [];
 
 def queue_window_params():
     for x in tile_x:
@@ -84,8 +87,12 @@ def open_tile_pages():
         gevent.spawn(open_page_id)
     gevent.spawn(arrange_tile_pages)
 
-def arrange_tile_pages():
+def close_tile_pages():
+    for params in window_info:
+        p = subprocess.Popen(['chrome-cli', 'close', '-w', params['id']])
 
+def arrange_tile_pages():
+    global window_info
     windows_are_ready.wait()
     print("Windows are ready, yay!")
     while not window_id_queue.empty():
@@ -99,6 +106,7 @@ def arrange_tile_pages():
         # SET SIZE
         #
         p = subprocess.Popen(['chrome-cli', 'size', params['w'], params['h'], '-w', params['id']])
+        window_info.append(params)
         gevent.sleep(0)
 
 def open_page_id():
@@ -154,8 +162,6 @@ def load_image_data(i):
     if base64_encode_image:
         imgBytes = base64.b64encode(imgBytes)
     return imgBytes
-
-print("Bytes in image: " + str(len(load_image_data(0))))
 
 # Goal: Clearly demonstrate a clogged websocket by sending a bunch of images 
 # and showing that they occasionally take many seconds to arrive. Could try
@@ -274,6 +280,10 @@ def finish():
 
     # shut down the web server
     reactor.stop()
+
+    # close chrome windows
+    if tile_windows:
+        close_tile_pages()
 
     # wait a few seconds for running jobs to finish
     delayed_finish()
