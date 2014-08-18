@@ -123,8 +123,9 @@ def do_process_queue():
     while True:
         msg_args = msg_queue.get()
         is_last_message = msg_args[-1] == last_queue_time
-        time_here = str(datetime.today())
-        msg_args[-1] = time_here
+        time_here = datetime.today()
+        time_here_str = str(time_here)
+        msg_args[-1] = time_here_str
         try:
             ws_alice.publish(*msg_args)
             messages_published += 1
@@ -132,6 +133,7 @@ def do_process_queue():
             print "AssertionError: skipping publish."
         except Exception:
             print "Exception raised in ws_alice publish"
+        print("Time to process queue item: %s" % (datetime.today() - time_here))
         msg_queue.task_done()
         if is_last_message:
             "Processing the last message."
