@@ -20,6 +20,8 @@ uber_client_device = "uber_client"
 uber_client_groupdevice = uber_client_group + ":" + uber_client_device
 # TODO: GET RID OF THIS
 sleep_before_uber_client_start = 1
+DEBUG_INTERNAL = False
+DEBUG_EXTERNAL = False
 
 class WearConnectServer(object):
 
@@ -37,6 +39,8 @@ class WearConnectServer(object):
         self.uber_server_socket_ready = Event()
         self.public_ready = Event()
         self.uber_client_subscriptions_queue = Queue()
+        self.DEBUG_INTERNAL = DEBUG_INTERNAL
+        self.DEBUG_EXTERNAL = DEBUG_EXTERNAL
         print("Initialized WearConnectServer")
         # TODO: user gevent tools to do client start after server start instead of timing
 
@@ -55,28 +59,40 @@ class WearConnectServer(object):
         print "running ws_parse"
         wearscript.parse(self.callback, parser)
 
-    def ws_send(self, ws, *argv):
+    def ws_send(self, ws, *argv, **kw):
+        internal = kw.get('internal', False)
+        if internal and self.DEBUG_INTERNAL:
+            debug = True
+        elif not internal and self.DEBUG_EXTERNAL:
+            debug = True
+        else:
+            debug = False
         # global ws_dict
         registered = True;
-        try:
-            print "Sending to socket " + self.ws_dict[ws] + " with args " + str(len(str(argv)))
-        except KeyError:
-            registered = False;
-            print "Sending to unregistered socket with args " + str(len(str(argv)))
+        if debug:
+            try:
+                print "Sending to socket " + self.ws_dict[ws] + " with args " + str(len(str(argv)))
+            except KeyError:
+                registered = False;
+                print "Sending to unregistered socket with args " + str(len(str(argv)))
         try:
             ws.send(*argv)
         except geventwebsocket.exceptions.WebSocketError:
             if registered and ws in self.ws_dict:
-                print "Sending failed, unregistering ws: " + self.ws_dict[ws], sys.exc_info()[0]
+                if debug:
+                    print "Sending failed, unregistering ws: " + self.ws_dict[ws], sys.exc_info()[0]
                 self.unregister(ws)
             else:
-                print "Sending to unregistered websocket failed with WebSocketError ", sys.exc_info()[0]
+                if debug:
+                    print "Sending to unregistered websocket failed with WebSocketError ", sys.exc_info()[0]
         except:
             if registered and ws in self.ws_dict:
-                print "Unexpected exception while sending, unregistering: " + self.ws_dict[ws], sys.exc_info()[0]
+                if debug:
+                    print "Unexpected exception while sending, unregistering: " + self.ws_dict[ws], sys.exc_info()[0]
                 self.unregister(ws)
             else:
-                print "Sending to unregistered websocket failed. ", sys.exc_info()[0]
+                if debug:
+                    print "Sending to unregistered websocket failed. ", sys.exc_info()[0]
 
     #
     # A CLIENT WS ENDPOINT IS ANNOUNCING A SUBSCRIPTION
@@ -188,9 +204,9 @@ class WearConnectServer(object):
     def uber_server_callback(self, ws, **kw):
         ws.registered = False
         init_greenlets = []
-        print "registered is " + str(ws.registered)
-        # global ws_dict
-        print "server-side ws callback: " + ws.group_device
+        if self.DEBUG_INTERNAL:
+            print "registered is " + str(ws.registered)
+            print "server-side ws callback: " + ws.group_device
         def subscriptions_cb(chan, groupDevice, channels):
             if not ws.registered:
                 if groupDevice not in self.ws_dict_chan.keys():
@@ -198,7 +214,8 @@ class WearConnectServer(object):
                     self.ws_dict_chan[groupDevice] = ws
                     self.ws_dict[ws] = groupDevice
                     ws.registered = True
-                    print "registered is now " + str(ws.registered)
+                    if self.DEBUG_INTERNAL:
+                        print "registered is now " + str(ws.registered)
                     # send out all existing subscriptions
                     try:
                         for device in self.uber_client_ws_client.device_to_channels.keys():
@@ -210,7 +227,8 @@ class WearConnectServer(object):
                 gevent.spawn(self.ws_send, self.uber_client_ws_server, chan, groupDevice, channels)
 
         def is_uber_client_cb(chan, **kw):
-            print "UBER CLIENT SET"
+            if self.DEBUG_INTERNAL:
+                print "UBER CLIENT SET"
             self.uber_client_ws_server = ws
             # self.uber_client_ready.set()
 
@@ -234,16 +252,19 @@ class WearConnectServer(object):
         init_greenlets = []
         # global uber_client_ws
         self.uber_client_ws_client = ws
-        print "I AM THE UBER CLIENT " + ws.group_device
+        if self.DEBUG_INTERNAL:
+            print "I AM THE UBER CLIENT " + ws.group_device
         # set_device_channels happens first, so now just need to look through them
         # an alternative would be to make a "forward" channel 
         def narrowcast_cb(chan, *argv):
             print "Uber client narrowcast callback " + chan
 
         def subscriptions_cb(chan, groupDevice, channels):
-            print "UBER CLIENT SUBSCRIPTIONS CALLBACK " + groupDevice
+            if self.DEBUG_INTERNAL:
+                print "UBER CLIENT SUBSCRIPTIONS CALLBACK " + groupDevice
             try:
-                print("Number of items left on subscriptions queue: " + str(self.uber_client_subscriptions_queue.qsize()))
+                if self.DEBUG_INTERNAL:
+                    print("Number of items left on subscriptions queue: " + str(self.uber_client_subscriptions_queue.qsize()))
                 self.uber_client_subscriptions_queue.get_nowait()
             except Empty:
                 self.uber_client_ready.set()
@@ -259,8 +280,8 @@ class WearConnectServer(object):
 
             groupDeviceSocket = self.ws_dict_chan[groupDevice]
             # ignore channels that begin with "server:"
-
-            print "UBER CLIENT SUBSCRIPTIONS CALLBACK " + groupDevice + " adding socket to channels hash"
+            if self.DEBUG_INTERNAL:
+                print "UBER CLIENT SUBSCRIPTIONS CALLBACK " + groupDevice + " adding socket to channels hash"
 
             for channel in channels:
                 # could use "set"
@@ -269,22 +290,25 @@ class WearConnectServer(object):
                 else:
                     self.channels_to_sockets[channel] = set([groupDeviceSocket])
 
-            print "UBER CLIENT SUBSCRIPTIONS CALLBACK " + groupDevice + " forwarding subscriptions to " + str(self.ws_dict.values())
+            if self.DEBUG_INTERNAL:
+                print "UBER CLIENT SUBSCRIPTIONS CALLBACK " + groupDevice + " forwarding subscriptions to " + str(self.ws_dict.values())
 
             # forward subscriptions to other clients
             for ws_server_socket in self.ws_dict.keys():
                 # don't bounce subscriptions back to same client
                 if not self.ws_dict[ws_server_socket] == groupDevice and not self.ws_dict[ws_server_socket] == uber_client_groupdevice:
                     # ws_server_socket.send(chan, groupDevice, channels)
-                    gevent.spawn(self.ws_send, ws_server_socket, chan, groupDevice, channels)
+                    gevent.spawn(self.ws_send, ws_server_socket, chan, groupDevice, channels, internal = True )
 
-            try:
-                print "uber client knows: " + str(ws.device_to_channels)
-            except AttributeError:
-                print "uber client doesn't know any subscriptions yet."
+            if self.DEBUG_INTERNAL:
+                try:
+                    print "uber client knows: " + str(ws.device_to_channels)
+                except AttributeError:
+                    print "uber client doesn't know any subscriptions yet."
 
         def forward_message(chan, *argv):
-            print "forward_message"
+            if self.DEBUG_INTERNAL:
+                print "forward_message"
             channel_cur = None
             parts = chan.split(':')
             for x in parts:
@@ -293,7 +317,8 @@ class WearConnectServer(object):
                 else:
                     channel_cur += ':' + x
                 if channel_cur in self.channels_to_sockets.keys():
-                    print "forwarding " + chan + " on channel " + channel_cur
+                    if self.DEBUG_INTERNAL:
+                        print "forwarding " + chan + " on channel " + channel_cur
                     for ws_server_socket in self.channels_to_sockets[channel_cur]:
                         # important: never change the channel mid-flight
                         gevent.spawn(self.ws_send, ws_server_socket, chan, *argv)
@@ -348,19 +373,17 @@ class WearConnectServer(object):
         print("Initialization of WearConnectServer complete.")
 
     def start_uber_client(self):
-        wearscript.websocket_client_factory( self.uber_client_callback, 'ws://localhost:' + str(self.WS_PRIVATE_PORT) + '/', group = uber_client_group, device = uber_client_device )
-
-    def start_uber_client(self):
         self.private_server_ready.wait()
-        wearscript.websocket_client_factory( self.uber_client_callback, 'ws://localhost:' + str(self.WS_PRIVATE_PORT) + '/', group = uber_client_group, device = uber_client_device )
+        wearscript.websocket_client_factory( self.uber_client_callback, 'ws://localhost:' + str(self.WS_PRIVATE_PORT) + '/',
+            group = uber_client_group, device = uber_client_device, debug = DEBUG_INTERNAL )
 
     def start_ws_private_server(self):
-        self.websocket_server_with_ready_event(self.uber_server_callback, self.WS_PRIVATE_PORT, self.private_server_ready)
+        self.websocket_server_with_ready_event(self.uber_server_callback, self.WS_PRIVATE_PORT, self.private_server_ready, debug = self.DEBUG_INTERNAL)
 
     def start_ws_server(self):
         self.uber_client_ready.wait()
         print("STARTING PUBLIC WS SERVER")
-        self.websocket_server_with_ready_event(self.callback, self.WS_PORT, self.public_ready)
+        self.websocket_server_with_ready_event(self.callback, self.WS_PORT, self.public_ready, debug = DEBUG_EXTERNAL )
 
     def websocket_server_with_ready_event(self, callback, websocket_port, ready_event, **kw):
 
