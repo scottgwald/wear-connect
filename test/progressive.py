@@ -66,15 +66,19 @@ TILE_WIDTH = 400
 TILE_HEIGHT = 400
 test_window_id = AsyncResult()
 
+webserver_running = Event()
 windows_are_open = Event()
 windows_are_ready = Event()
 ready_for_alice = Event()
+wcs_initialized = Event()
 ready_for_bob = Event()
 ready_for_scheduler = Event()
+ready_for_queue = Event()
 page_address = ('http://localhost:%d/' % HTTP_PORT)
 window_id_queue = GQueue()
 window_pos_queue = GQueue()
-window_info = [];
+window_info = []
+wcs = ""
 
 def queue_window_params():
     for x in tile_x:
@@ -82,6 +86,7 @@ def queue_window_params():
             window_pos_queue.put([x, y])
 
 def open_pages():
+    webserver_running.wait()
     if tile_windows:
         open_tile_pages()
     else:
@@ -156,6 +161,7 @@ def open_page(client_number):
 
 def start_web_server():
     reactor.listenTCP(HTTP_PORT, Site(File("wear-connect"))); 
+    webserver_running.set()
     reactor.run()
 
 def image_name(i):
@@ -200,6 +206,7 @@ def callback_alice(ws, **kw):
     ws.subscribe( ws.group_device, narrowcast_cb )
     ws.subscribe( test_channel, narrowcast_cb )
     ws.subscribe( 'subscriptions', subscriptions_cb )
+    ready_for_scheduler.set()
     try:
         ws.handler_loop()
     except Exception:
@@ -223,26 +230,27 @@ def callback_bob(ws, **kw):
     print "I'm Bob and my group_device is " + ws.group_device
     ws.subscribe( ws.group_device, narrowcast_cb )
     ws.subscribe( test_channel, get_test_channel )
+    ready_for_alice.set()
     ws.handler_loop()
 
 def scheduler_loop(arg):
     global sched
     ready_for_scheduler.wait()
-    print("NOT STARTING SCHEDULER")
-    return
-    # print("STARTING SCHEDULER.")
-    # sched = Scheduler()
-    # sched.start()
-    # logging.basicConfig()
-    # scheduler_main("")
-    # while True:
-    #     sleep( 1 )
-    #     sys.stdout.write( '.' )
-    #     sys.stdout.flush()
+    print("STARTING SCHEDULER.")
+    sched = Scheduler()
+    sched.start()
+    logging.basicConfig()
+    scheduler_main("")
+    ready_for_queue.set()
+    while True:
+        sys.stdout.write( '.' )
+        sys.stdout.flush()
+        gevent.sleep(1)
 
 def do_process_queue():
     global messages_published
     global msg_queue
+    ready_for_queue.wait()
     msg_queue = Queue()
     print "Starting queue processing yay 8987987"
     while True:
@@ -263,6 +271,7 @@ def do_process_queue():
         if is_last_message:
             "Processing the last message."
             finish()
+        gevent.sleep(0)
 
 def queue_test_message(i_orig):
     global messages_queued
@@ -306,6 +315,7 @@ def finish():
     delayed_finish()
 
 def delayed_finish():
+    global final_sched
     final_sched = Scheduler()
     final_sched.start()
     now = datetime.today()
@@ -315,6 +325,7 @@ def delayed_finish():
     # final_sched.shutdown()
 
 def final_finish():
+    final_sched.shutdown( wait = False )
     kill_greenlets()
     final_report()
 
@@ -348,6 +359,7 @@ def scheduler_main(arg):
         print "Queueing job at " + str( thistime )
         jobs.append( sched.add_job( queue_test_message, 'date', run_date = thistime, args= [ i ] ))
         thistime += delta5sec
+        gevent.sleep(0)
 
 def start_ws_client_alice():
     ready_for_alice.wait()
@@ -357,7 +369,9 @@ def start_ws_client_alice():
     # wearscript.websocket_client_factory( callback_alice, 'ws://localhost:' + str(WS_PORT) + '/')
 
 def start_ws_client_bob():
-    ready_for_bob.wait()
+    wcs_initialized.wait()
+    wcs.public_ready.wait()
+    # ready_for_bob.wait()
     print("STARTING BOB.")
     wearscript.websocket_client_factory( callback_bob, 'ws://localhost:' + str(WS_PORT) + '/', 
         group = clientGroup, device = bobDevice )
@@ -374,6 +388,13 @@ def start_everybody_else():
     ready_for_bob.set()
     ready_for_scheduler.set()
 
+def start_wearconnect():
+    global wcs
+    windows_are_ready.wait()
+    wcs = WearConnectServer()
+    wcs_initialized.set()
+    wcs.run()
+
 def return_a_value():
     return "my badass value"
 
@@ -386,43 +407,14 @@ def moving_forward():
     print("WearConnectServer is ready for action.")
 
 if __name__ == '__main__':
-    # # fire up wear-connect server, client bob, and client alice
-    # value_greenlet = gevent.spawn(return_a_value)
-    # gevent.joinall([value_greenlet])
-    # theVal = value_greenlet.value
-    # print("Got a value from the greenlet: " + theVal)
-    wcs = WearConnectServer()
-    server_greenlet = gevent.spawn(wcs.run)
-    moving_forward_greenlet = gevent.spawn(moving_forward)
-    gevent.wait()
+    the_greenlets.append( gevent.spawn( start_web_server) )
+    the_greenlets.append( gevent.spawn( open_pages) )
+    the_greenlets.append( gevent.spawn( start_wearconnect ) )
+    the_greenlets.append( gevent.spawn( start_ws_client_bob ) )
+    the_greenlets.append( gevent.spawn( start_ws_client_alice ) )
+    the_greenlets.append( gevent.spawn( scheduler_loop, "" ) )
+    the_greenlets.append( gevent.spawn( do_process_queue ) )
 
-    # et = gevent.spawn(event_test)
-    # wcs.uber_client_ready.set()
-    # gevent.joinall([et])
-
-    # ws_server_greenlet = gevent.spawn( start_ws_server )
-    # gevent.joinall([ws_server_greenlet])
-    # ws_server = ws_server_greenlet.value
-    # event_test_greenlet = gevent.spawn(event_test);
-    # ws_server.uber_client_ready.set()
-
-    # ws_client_greenlet_bob = gevent.spawn( start_ws_client_bob )
-    # ws_client_greenlet_alice = gevent.spawn( start_ws_client_alice )
-    # # ws_client_greenlet_bob = gevent.spawn_later(2, start_ws_client_bob)
-    # # ws_client_greenlet_alice = gevent.spawn_later(3, start_ws_client_alice)
-
-    # # schedule test messages from client Alice
-    # # scheduler_loop_greenlet = gevent.spawn_later(6, scheduler_loop, "")
-    # scheduler_loop_greenlet = gevent.spawn(scheduler_loop, "")
-    # do_process_queue_greenlet = gevent.spawn(do_process_queue)
-
-    # page_greenlet = gevent.spawn_later(5, open_pages)
-    # server_greenlet = gevent.spawn(start_web_server)
-
-    # print "Spawned Greenlets: ws_server_greenlet, ws_client_greenlet_alice, " \
-    #     +  "ws_client_greenlet_bob, scheduler_loop_greenlet, and more"
-
-    # the_greenlets = [page_greenlet, server_greenlet, ws_server_greenlet, ws_client_greenlet_alice, ws_client_greenlet_bob, scheduler_loop_greenlet, do_process_queue_greenlet]
-    # gevent.joinall(the_greenlets)
-
+    gevent.joinall( the_greenlets )
+    # gevent.wait()
 
