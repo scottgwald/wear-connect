@@ -378,7 +378,8 @@ class WearConnectServer(object):
             group = uber_client_group, device = uber_client_device, debug = DEBUG_INTERNAL )
 
     def start_ws_private_server(self):
-        self.websocket_server_with_ready_event(self.uber_server_callback, self.WS_PRIVATE_PORT, self.private_server_ready, debug = self.DEBUG_INTERNAL)
+        self.websocket_server_with_ready_event(self.uber_server_callback, self.WS_PRIVATE_PORT,
+            self.private_server_ready, debug = self.DEBUG_INTERNAL, private = True)
 
     def start_ws_server(self):
         self.uber_client_ready.wait()
@@ -386,15 +387,20 @@ class WearConnectServer(object):
         self.websocket_server_with_ready_event(self.callback, self.WS_PORT, self.public_ready, debug = DEBUG_EXTERNAL )
 
     def websocket_server_with_ready_event(self, callback, websocket_port, ready_event, **kw):
-
+        private = kw.get('private', False)
         pool = Pool(1)
         kw.setdefault('group', 'serverrrr')
         def websocket_app(environ, start_response):
             if environ["PATH_INFO"] == '/':
                 ws = environ["wsgi.websocket"]
                 callback(WebSocketServerConnection(ws, **kw))
-        wsgi_server = pywsgi.WSGIServer(("", websocket_port), websocket_app,
-                                        handler_class=WebSocketHandler, spawn=pool)
+        if private:
+            wsgi_server = pywsgi.WSGIServer(("", websocket_port), websocket_app,
+                                            handler_class=WebSocketHandler, spawn=pool)
+        else:
+            wsgi_server = pywsgi.WSGIServer(("", websocket_port), websocket_app,
+                                handler_class=WebSocketHandler)
+
         wsgi_server.start()
         ready_event.set()
 
