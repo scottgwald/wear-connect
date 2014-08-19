@@ -7,7 +7,7 @@ import gevent.subprocess as subprocess
 import wearscript
 import argparse
 # from .. import wear_connect_server
-from ..wear_connect_server import WearConnectServer 
+from ..wearconnect import WearConnectServer 
 
 import time
 from apscheduler.schedulers.gevent import GeventScheduler as Scheduler
@@ -381,6 +381,10 @@ def event_test():
     wcs.uber_client_ready.wait()
     print("Got uber_client_ready event!")
 
+def moving_forward():
+    wcs.public_ready.wait()
+    print("WearConnectServer is ready for action.")
+
 if __name__ == '__main__':
     # # fire up wear-connect server, client bob, and client alice
     # value_greenlet = gevent.spawn(return_a_value)
@@ -388,9 +392,13 @@ if __name__ == '__main__':
     # theVal = value_greenlet.value
     # print("Got a value from the greenlet: " + theVal)
     wcs = WearConnectServer()
-    et = gevent.spawn(event_test)
-    wcs.uber_client_ready.set()
-    gevent.joinall([et])
+    server_greenlet = gevent.spawn(wcs.run)
+    moving_forward_greenlet = gevent.spawn(moving_forward)
+    gevent.wait()
+
+    # et = gevent.spawn(event_test)
+    # wcs.uber_client_ready.set()
+    # gevent.joinall([et])
 
     # ws_server_greenlet = gevent.spawn( start_ws_server )
     # gevent.joinall([ws_server_greenlet])
