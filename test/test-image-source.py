@@ -20,7 +20,7 @@ import base64
 image_name_templ = 'wear-connect/test/img/text-wear-connect-test-%s.jpg'
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
-number_of_messages = 10
+number_of_messages = 1000
 number_of_test_images = 10
 delta_to_start = 1
 delta_between_messages = 1
@@ -44,13 +44,14 @@ giant_message = False
 giant_message_doubling_exponent = 7
 log_outfile_name = "playback.log"
 LOG_OUTFILE = open(log_outfile_name, 'wb')
-HTTP_PORT = 8991
+HTTP_PORT = 9005
 base64_encode_image = False
 
 def open_page():
     print "Opening page in Chrome"
     # address=('http://localhost:%d/stage-displays/viewer.html' % HTTP_PORT)
-    address=('wearconnect.thruhere.net:%d/' % HTTP_PORT)
+    # address=('wearconnect.thruhere.net:%d/' % HTTP_PORT)
+    address=('localhost:%d/' % HTTP_PORT)
     p = subprocess.Popen(['chrome-cli', 'open', address, '-i'], stdout=LOG_OUTFILE)
     r = p.wait()
     if r:

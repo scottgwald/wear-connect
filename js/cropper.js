@@ -96,6 +96,9 @@ var thumbGeometry = new THREE.PlaneGeometry( thumbWidth, thumbHeight);
 var textGeometry = new THREE.PlaneGeometry( textWidth, textWidth * textCanvasHeight / textCanvasWidth );
 var textMaterial = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, overdraw: true } );
 
+//y position for MESH LIST MINA
+var fullListItemY=[];
+
 // COORDINATE MAPPINGS
 
 function actualToVirtualScale( coord ) {
@@ -134,13 +137,13 @@ function actualToPixelPos( coord ) {
 }
 
 function submit() {
-    console.log('submitting');
+    console.log('submitting in cropper.js submitting in cropper.js submitting in cropper.js');
 
     var geometry = new THREE.BoxGeometry( currentPreview.width, currentPreview.height, 10 );
     var material = new THREE.MeshBasicMaterial( {  color:0x78AB46, opacity: .5, transparent: true} );
     var currentPreview2 = new THREE.Mesh( geometry, material );
-    currentPreview2.position.x = currentPreview.position.x ;//+ width / 2;
-    currentPreview2.position.y = currentPreview.position.y;// - height/2;
+    currentPreview2.position.x = currentPreview.position.x + width / 2;
+    currentPreview2.position.y = currentPreview.position.y - height/2;
     currentPreview2.position.z = currentPreview.position.z;
     scene.remove(currentPreview);
     scene.add(currentPreview2);
@@ -265,6 +268,8 @@ function init() {
     listItemMaterial = new THREE.MeshBasicMaterial( {  opacity: 0,transparent: true } );
 
     listItemY = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
+    console.log("in init (), listItemY: "+listItemY+" virtualListHeight: "+virtualListHeight+" listItemHeight: " +listItemHeight+ " listItemPadding: "+listItemPadding);
+
     scene.add( list );
     
     placePicture('glass.jpg');
@@ -427,11 +432,10 @@ function init() {
             dataURL = c.toDataURL();
             thumP.src = dataURL;
 
-            console.log( dataURL );
+            // console.log( dataURL );
             c.width = pixelTagDims.y;
             c.height = pixelTagDims.y;
             var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*pixelTagDims.x ;
-            
 
             ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
 
@@ -439,12 +443,26 @@ function init() {
             var listHeight = window.innerHeight / 6;
             var listItem = new THREE.BoxGeometry( listWidth, listHeight,10);
             var listMaterial = new THREE.MeshBasicMaterial({opacity:.7,transparent:true, color: 0x000000});
-
+ 
             var listItem = new THREE.Mesh( listItemGeometry, listItemMaterial );
-            listItem.position.y = listItemY;
-            listItem.start = listItemY;
+            itemList.unshift( listItem );
+            fullListItemY.push(listItemY);
 
-            listItemY -= listItemHeight;
+            for (var i=0; i<itemList.length; i++){
+                console.log("in output");
+                itemList[i].position.y=fullListItemY[i];
+                itemList[i].start=fullListItemY[i];
+            }
+            
+            // CHANGE TO CHECK VALUES- MINA
+            // listItem.position.y = listItemY;
+            // listItem.start = listItemY;
+            console.log("listItemY: "+listItemY+" virtualListHeight: "+virtualListHeight+" listItemHeight: " +listItemHeight);
+            
+            listItemY -= listItemHeight; //actual line
+            console.log("SEE THE VALUES HERE");
+            // listItemY = listItemY+listItemHeight;
+            console.log("listItemY: "+listItemY+" virtualListHeight: "+virtualListHeight+" listItemHeight: " +listItemHeight);
 
             listItem.selected = false;
             listItem.tagName = text+tagNum;
@@ -463,17 +481,10 @@ function init() {
                     map: THREE.ImageUtils.loadTexture( thumbData )
             });
 
-            console.log("img selected in mouse up is "+img);
-
             var thumb = new THREE.Mesh( thumbGeometry, img);
             thumb.position.x = ( thumbWidth - virtualListWidth ) / 2 + listItemPadding;
             thumb.position.z = 40;
             listItem.thumb = thumb;
-
-            itemList.unshift( listItem );
-            console.log("item list here here here"+itemList.toString());
-
-            // itemList.push( listItem );
 
             listItem.add( thumb );
             list.add( listItem );
@@ -557,6 +568,7 @@ function init() {
             listItem.start = listItemY;
 
             listItemY -= listItemHeight;
+            fullListItemY.
 
             listItem.selected = false;
             listItem.tagName = text+tagNum;
@@ -586,6 +598,7 @@ function init() {
 
             itemList.unshift( listItem );
             console.log(itemList);
+
             listItem.add( thumb );
             list.add( listItem );
 
