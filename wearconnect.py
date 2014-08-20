@@ -383,8 +383,8 @@ class WearConnectServer(object):
 
     def start_ws_server(self):
         self.uber_client_ready.wait()
-        print("STARTING PUBLIC WS SERVER")
         self.websocket_server_with_ready_event(self.callback, self.WS_PORT, self.public_ready, debug = DEBUG_EXTERNAL )
+        print("WearConnectServer serving on port " + str(self.WS_PORT))
 
     def websocket_server_with_ready_event(self, callback, websocket_port, ready_event, **kw):
         private = kw.get('private', False)
@@ -406,8 +406,8 @@ class WearConnectServer(object):
 
 def main():
     wc_server = WearConnectServer()
-    print "WearConnectServer initialized"
-    return wc_server
+    wc_server.run()
 
 if __name__ == '__main__':
     main()
+
