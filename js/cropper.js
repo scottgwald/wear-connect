@@ -564,11 +564,16 @@ function init() {
             var listMaterial = new THREE.MeshBasicMaterial({opacity:.7,transparent:true, color: 0x000000});
 
             var listItem = new THREE.Mesh( listItemGeometry, listItemMaterial );
-            listItem.position.y = listItemY;
-            listItem.start = listItemY;
+            itemList.unshift( listItem );
+            fullListItemY.push(listItemY);
+
+            for (var i=0; i<itemList.length; i++){
+                console.log("in output");
+                itemList[i].position.y=fullListItemY[i];
+                itemList[i].start=fullListItemY[i];
+            }
 
             listItemY -= listItemHeight;
-            fullListItemY.
 
             listItem.selected = false;
             listItem.tagName = text+tagNum;
