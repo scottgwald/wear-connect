@@ -1,0 +1,23 @@
+/*
+Populate the REPLACE THIS fields below, then save this file as
+'parse.config'
+
+Go to https://www.parse.com/apps/quickstart#parse_data/web/existing
+and copy the applicationId and javaScriptKey args of the "Parse.initialize"
+example.
+
+Create an app, add a class className, add a column columnName,
+and finally create a single row where you put your endpoint url in
+columnName. Take the objectId from that row.
+
+Consider using the same className and columnName.
+
+*/
+
+{
+   "className": "REPLACE THIS",
+   "columnName": "REPLACE THIS",
+   "applicationId": "REPLACE THIS",
+   "javaScriptKey": "REPLACE THIS",
+   "objectId": "REPLACE THIS"
+}

@@ -1,0 +1,21 @@
+<html>
+<head>
+  <script src="//www.parsecdn.com/js/parse-1.2.19.min.js"></script>
+  <script src="////code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script src="js/wc-get-endpoint.js"></script>
+</head>
+<body>
+<script>
+function main() {
+  get_wc_endpoint( wc );
+}
+
+function wc( wc_endpoint ) {
+  console.log( "I got the endpoint. Rock. " + wc_endpoint )
+}
+
+$( document ).ready( main );
+
+</script>
+</body>
+</html>
