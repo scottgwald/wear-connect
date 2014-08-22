@@ -18,12 +18,20 @@
 <script src="js/msgpack.js"></script>
 <script src="js/wearscript-client.js"></script>
 <script type="text/javascript" src="js/reconnecting-websocket.js"></script>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
+<script src="//www.parsecdn.com/js/parse-1.2.19.min.js"></script>
+<script src="////code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="js/wc-get-endpoint.js"></script>
+
 <script src ="js/cropper.js"></script>
 <script>
-var WSEndpoint = 'ws://192.168.2.230:8112/';
+function wc() {
+  get_wc_endpoint( main );
+}
 
-$(document).ready(function () {
+$(document).ready( wc );
+
+function main( wc_endpoint ) {
   Date.prototype.today = function () {
     return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
   }
@@ -54,7 +62,7 @@ $(document).ready(function () {
   }
 
 
-  ws = new WearScriptConnection(new ReconnectingWebSocket(WSEndpoint),  "wc-webapp", Math.floor(Math.random() * 100000), onopen);
+  ws = new WearScriptConnection(new ReconnectingWebSocket( wc_endpoint ),  "wc-webapp", Math.floor(Math.random() * 100000), onopen);
   
   function onopen() {
     console.log("WearScriptConnection onopen");
@@ -78,7 +86,7 @@ $(document).ready(function () {
     });
     ws.send('register', 'registered', 'worker:' + currentTimeString());
   }
-}); 
+};
 
 </script>
 

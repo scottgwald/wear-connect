@@ -1,4 +1,4 @@
-var configURL = "js/parse.config";
+var configURL = "parse.config";
 
 function parseEndpoint( parseConfigRaw, callback ) {
     var parseConfig = JSON.parse( parseConfigRaw );
