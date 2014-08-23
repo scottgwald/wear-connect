@@ -158,6 +158,7 @@ function placePicture(imageData) {
         scene.remove(plane);
     image = new Image();
     image.src = imageData;
+    console.log("imageData: "+image.src)
     console.log("width, height of image is " + image.width + "," + image.height);
 
     var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
@@ -272,7 +273,8 @@ function init() {
 
     scene.add( list );
     
-    placePicture('glass.jpg');
+    // placePicture('glass.jpg');
+    placePicture('number.jpg');
 
     nextListPosition = virtualCanvasHeight / 2 - (virtualCanvasHeight * listItemProportion) - 10;
     
@@ -315,7 +317,7 @@ function init() {
         }
 
        
-        console.log(delta);
+        // console.log(delta);
 
 
         if (delta>0 &&list.position.y+ delta > virtualListHeight/2 + ((listItemHeight+listItemPadding)*(tagNum)- virtualListHeight) - listItemPadding* (tagNum-1)){
@@ -408,9 +410,9 @@ function init() {
                     actualTagWidth,
                     actualTagHeight));
 
-            if (DBG) console.log( "Mouse down position was " + mouseDownPosition.x + ", "
+            if (DBG) console.log( "onDocumentMouseUp: Mouse down position was " + mouseDownPosition.x + ", "
                     + mouseDownPosition.y );
-            if (DBG) console.log( "Mouse up position is " + event.clientX + ", " + event.clientY );
+            if (DBG) console.log( "onDocumentMouseUp: Mouse up position is " + event.clientX + ", " + event.clientY );
 
             isClicked = false;
 
@@ -422,8 +424,8 @@ function init() {
 
             console.log("In mouse up, cutPoint is "+cutPoint.x +" & y is "+ cutPoint.y);
             console.log("In mouse up, pixelTagDims is "+pixelTagDims.x +" & y is "+ pixelTagDims.y);
-            ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
-                   0, 0, pixelTagDims.x, pixelTagDims.y);
+            // ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
+                   // 0, 0, pixelTagDims.x, pixelTagDims.y);
 
             if (DBG) console.log( "Grabbing region of size " + pixelTagDims.x + ", "
                     + pixelTagDims.y + " from location "  + cutPoint.x + ", " + cutPoint.y );
@@ -432,12 +434,30 @@ function init() {
             dataURL = c.toDataURL();
             thumP.src = dataURL;
 
-            // console.log( dataURL );
-            c.width = pixelTagDims.y;
+            c.width = pixelTagDims.x;
             c.height = pixelTagDims.y;
-            var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*pixelTagDims.x ;
+            var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*Math.abs(pixelTagDims.x) ;
 
-            ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
+            var startClippingX=tagX;
+            var startClippingY=cutPoint.y;
+
+            if(pixelTagDims.x<0){
+                startClippingX +=pixelTagDims.x;
+                console.log("negative x"+startClippingX);
+            }
+
+            if(pixelTagDims.y<0){
+                startClippingY +=pixelTagDims.y;
+                console.log("negative y: "+startClippingY+" actualTagWidth: "+Math.abs(actualTagWidth)+ " actualTagHeight: "+Math.abs(actualTagHeight));
+            }
+            
+            ctx.drawImage(image, startClippingX,startClippingY,Math.abs(pixelTagDims.x),Math.abs(pixelTagDims.y),0,0,Math.abs(pixelTagDims.x),Math.abs(pixelTagDims.y));
+            // ctx.drawImage(image, mouseDownPosition.x,mouseDownPosition.y,pixelTagDims.x,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
+            // ctx.drawImage(image, cutPoint.x,cutPoint.y,pixelTagDims.x,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
+            // ctx.drawImage(image, currentPreview.position.x,currentPreview.position.y,currentPreview.width ,currentPreview.height,0,0,pixelTagDims.y,pixelTagDims.y);
+            // ctx.drawImage(image, currentPreview.position.x,currentPreview.position.y,pixelTagDims.x,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
+
+            console.log("In mouse up, mouseDownPosition is "+mouseDownPosition.x +" & y is "+ mouseDownPosition.y);
 
             var listWidth = .25 * window.innerWidth - 30;
             var listHeight = window.innerHeight / 6;
@@ -449,20 +469,20 @@ function init() {
             fullListItemY.push(listItemY);
 
             for (var i=0; i<itemList.length; i++){
-                console.log("in output");
                 itemList[i].position.y=fullListItemY[i];
                 itemList[i].start=fullListItemY[i];
             }
             
+            listItemY -= listItemHeight;
+
             // CHANGE TO CHECK VALUES- MINA
             // listItem.position.y = listItemY;
             // listItem.start = listItemY;
-            console.log("listItemY: "+listItemY+" virtualListHeight: "+virtualListHeight+" listItemHeight: " +listItemHeight);
+            // console.log("listItemY: "+listItemY+" virtualListHeight: "+virtualListHeight+" listItemHeight: " +listItemHeight);
             
-            listItemY -= listItemHeight; //actual line
-            console.log("SEE THE VALUES HERE");
-            // listItemY = listItemY+listItemHeight;
-            console.log("listItemY: "+listItemY+" virtualListHeight: "+virtualListHeight+" listItemHeight: " +listItemHeight);
+            //actual line
+            // console.log("SEE THE VALUES HERE");
+            // console.log("listItemY: "+listItemY+" virtualListHeight: "+virtualListHeight+" listItemHeight: " +listItemHeight);
 
             listItem.selected = false;
             listItem.tagName = text+tagNum;
@@ -676,8 +696,8 @@ function init() {
     function onDocumentTouchMove(event) {
         if (touchStartPosition.x < actualImageWidth) {
         touched=true;
-        console.log("touchmove here here here");
-
+        console.log("touch move here here here");
+        console.log("in onDocumentTouchMove, touchStartPosition is: "+touchStartPosition.x);
             event.preventDefault(event);
 
             if (currentPreview) {
@@ -738,10 +758,6 @@ function init() {
             // will need to handle different +/- cases
             actualTagWidth = x - mouseDownPosition.x;
             actualTagHeight = y - mouseDownPosition.y;
-
-            // if (actualTagWidth <= 0) {
-            //     mouseDownPosition.x = x;
-            // }
             
             var aspectWidth = actualTagWidth;
             var aspectHeight = actualTagHeight;
@@ -761,7 +777,9 @@ function init() {
             var geometry = new THREE.BoxGeometry( virtualTagDims.x, virtualTagDims.y, 100 );
             var material = new THREE.MeshBasicMaterial( {  opacity: .5, transparent: true} );
             currentPreview = new THREE.Mesh( geometry, material );
-
+            console.log("mouseDownPosition.x: "+mouseDownPosition.x+" actualTagDims.x: "+actualTagDims.x 
+                +"mouseDownPosition.y: "+mouseDownPosition.y+" actualTagDims.y: "+actualTagDims.y);
+            
             actualTagPos = new THREE.Vector2(  mouseDownPosition.x + actualTagDims.x / 2,
                    mouseDownPosition.y + actualTagDims.y/ 2 );
             virtualTagPos = actualToVirtualPos( actualTagPos );
@@ -769,9 +787,10 @@ function init() {
             currentPreview.position.x = virtualTagPos.x;
             currentPreview.position.y = virtualTagPos.y;
             currentPreview.position.z = 0;
+            console.log("currentPreview.position.x: "+currentPreview.position.x+" currentPreview.position.y: "+currentPreview.position.y);
             currentPreview.width = virtualTagDims.x;
             currentPreview.height = virtualTagDims.y;
-
+            console.log("currentPreview.width: "+currentPreview.width+" currentPreview.height: "+currentPreview.height);
             scene.add(currentPreview);
         }
     }
@@ -780,9 +799,10 @@ function init() {
         isTagging = true;
         mouseDownPosition.x = event.clientX;
         mouseDownPosition.y = event.clientY;
-        
+        console.log("mouseDownPosition is: x= "+mouseDownPosition.x+ " & y: "+ mouseDownPosition.y);
         if (mouseDownPosition.x < actualImageWidth) {
             isClicked = true ;
+            console.log("onDocumentMouseDown: mouseDownPosition.x < actualImageWidth");
 
             currentMousePosition.x = event.clientX;//(event.clientX - boundingRect.left) * (renderer.domElement.width / boundingRect.width);
             currentMousePosition.y = event.clientY;//(boundingRect.top -window.innerHeight + event.clientY) * (renderer.domElement.height / boundingRect.height);
@@ -792,8 +812,11 @@ function init() {
             //mouse3D.normalize();
             lastX = mouse3D.x;
             lastY = mouse3D.y;
+            // console.log("currentMousePosition.x: "+currentMousePosition.x +" currentMousePosition.y: "+currentMousePosition.y);
+            // console.log("event.clientX: "+event.clientX +" event.clientY: "+event.clientY);
+
         } else {
-           
+            console.log("onDocumentMouseDown: mouseDownPosition.x >= actualImageWidth");           
             mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (virtualCanvasWidth) ) * 2 - 1, - ( event.clientY / virtualCanvasHeight) * 2 + 1, 1 ), camera );
             mouse3D.sub(camera.position);
 
@@ -814,9 +837,9 @@ function init() {
             selectedItem = target;
 
             if (selectedItem) {
-
+                console.log("#####################selected item in onDocumentMouseDown");
                 var selectorGeo = new THREE.BoxGeometry (listWidth,listHeight);
-                var selectorMaterial = new THREE.MeshBasicMaterial({ color:0xEDED25,opacity: .5,transparent: true});
+                var selectorMaterial = new THREE.MeshBasicMaterial({ color:0xEDED25,opacity: 0.5,transparent: true});
                 selector = THREE.Mesh(selectorGeo,selectorMaterial);
 
             }

@@ -44,7 +44,7 @@ giant_message = False
 giant_message_doubling_exponent = 7
 log_outfile_name = "playback.log"
 LOG_OUTFILE = open(log_outfile_name, 'wb')
-HTTP_PORT = 9005
+HTTP_PORT = 8991
 base64_encode_image = False
 
 def open_page():
