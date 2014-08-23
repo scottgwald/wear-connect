@@ -1,6 +1,6 @@
 bottle==0.12.5
 redis==2.9.1
--e git+https://github.com/scottgwald/wearscript-python/#egg=wearscript
+-e git+https://github.com/scottgwald/wearscript-python.git@5984a00bddbbbfa7c8b62a9b70571632d0a48e41#egg=wearscript
 Pillow==2.5.1
 apscheduler==3.0.0
 twisted==14.0.0

@@ -1,4 +1,0 @@
-[submodule "src/wearscript"]
-	path = src/wearscript
-	url = https://github.com/scottgwald/wearscript-python.git
-
