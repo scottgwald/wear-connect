@@ -317,7 +317,7 @@ function init() {
         }
 
        
-        // console.log(delta);
+        console.log(delta);
 
 
         if (delta>0 &&list.position.y+ delta > virtualListHeight/2 + ((listItemHeight+listItemPadding)*(tagNum)- virtualListHeight) - listItemPadding* (tagNum-1)){
@@ -416,8 +416,8 @@ function init() {
 
             isClicked = false;
 
-            c.width  = pixelTagDims.x;
-            c.height = pixelTagDims.y;
+            c.width  = Math.abs(pixelTagDims.x);
+            c.height = Math.abs(pixelTagDims.y);
 
             var cutPoint = actualToPixelPos( new THREE.Vector2( mouseDownPosition.x,
                     mouseDownPosition.y ) );
@@ -434,8 +434,8 @@ function init() {
             dataURL = c.toDataURL();
             thumP.src = dataURL;
 
-            c.width = pixelTagDims.x;
-            c.height = pixelTagDims.y;
+            c.width = Math.abs(pixelTagDims.x);
+            c.height = Math.abs(pixelTagDims.y);
             var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*Math.abs(pixelTagDims.x) ;
 
             var startClippingX=tagX;
@@ -451,6 +451,8 @@ function init() {
                 console.log("negative y: "+startClippingY+" actualTagWidth: "+Math.abs(actualTagWidth)+ " actualTagHeight: "+Math.abs(actualTagHeight));
             }
             
+            console.log("startClippingX: "+startClippingX+ " startClippingY: "+startClippingY+" pixelTagDims.x: "+Math.abs(pixelTagDims.x)+" pixelTagDims.y: "+Math.abs(pixelTagDims.y)+" pixelTagDims.x: "+ Math.abs(pixelTagDims.x)+" pixelTagDims.y: "+Math.abs(pixelTagDims.y));
+
             ctx.drawImage(image, startClippingX,startClippingY,Math.abs(pixelTagDims.x),Math.abs(pixelTagDims.y),0,0,Math.abs(pixelTagDims.x),Math.abs(pixelTagDims.y));
             // ctx.drawImage(image, mouseDownPosition.x,mouseDownPosition.y,pixelTagDims.x,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
             // ctx.drawImage(image, cutPoint.x,cutPoint.y,pixelTagDims.x,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
@@ -550,8 +552,8 @@ function init() {
                     + touchStartPosition.y );
             if (DBG) console.log( "Touch up position is " + event.clientX + ", " + event.clientY );
 
-            c.width  = pixelTagDims.x;
-            c.height = pixelTagDims.y;
+            c.width  = Math.abs(pixelTagDims.x);
+            c.height = Math.abs(pixelTagDims.y);
 
             var cutPoint = actualToPixelPos( new THREE.Vector2( touchStartPosition.x,
                     touchStartPosition.y ) );
@@ -571,12 +573,29 @@ function init() {
             thumP.src = dataURL;
 
             console.log( dataURL );
-            c.width = pixelTagDims.y;
-            c.height = pixelTagDims.y;
+            c.width = Math.abs(pixelTagDims.y);
+            c.height = Math.abs(pixelTagDims.y);
             var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*pixelTagDims.x ;
             
+            var startClippingX=tagX;
+            var startClippingY=cutPoint.y;
 
-            ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
+            if(pixelTagDims.x<0){
+                startClippingX +=pixelTagDims.x;
+                console.log("negative x"+startClippingX);
+            }
+
+            if(pixelTagDims.y<0){
+                startClippingY +=pixelTagDims.y;
+                console.log("negative y: "+startClippingY+" actualTagWidth: "+Math.abs(actualTagWidth)+ " actualTagHeight: "+Math.abs(actualTagHeight));
+            }
+            
+            console.log("startClippingX: "+startClippingX+ " startClippingY: "+startClippingY+" pixelTagDims.x: "+Math.abs(pixelTagDims.x)+" pixelTagDims.y: "+Math.abs(pixelTagDims.y)+" pixelTagDims.x: "+ Math.abs(pixelTagDims.x)+" pixelTagDims.y: "+Math.abs(pixelTagDims.y));
+
+            ctx.drawImage(image, startClippingX,startClippingY,Math.abs(pixelTagDims.x),Math.abs(pixelTagDims.y),0,0,Math.abs(pixelTagDims.x),Math.abs(pixelTagDims.y));
+            
+
+            // ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
 
             var listWidth = .25 * window.innerWidth - 30;
             var listHeight = window.innerHeight / 6;
