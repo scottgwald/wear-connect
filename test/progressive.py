@@ -1,4 +1,5 @@
 import gevent.monkey
+import signal
 gevent.monkey.patch_all()
 from twisted.web.server import Site
 from twisted.web.static import File 
@@ -18,6 +19,7 @@ from datetime import datetime
 from datetime import timedelta
 from Queue import Queue
 from gevent.queue import Queue as GQueue
+from gevent.queue import JoinableQueue
 from gevent.event import Event
 from gevent.event import AsyncResult
 # from Queue import Queue
@@ -42,6 +44,7 @@ test_channel = 'image'
 test_subchannel = test_channel + ':alice'
 time_format_string = "%Y-%m-%d %H:%M:%S.%f"
 the_greenlets = []
+finish_greenlet = None
 finish_called = False
 messages_sent = 0
 messages_queued = 0
@@ -79,6 +82,9 @@ window_id_queue = GQueue()
 window_pos_queue = GQueue()
 window_info = []
 wcs = ""
+window_is_opening = JoinableQueue()
+
+sched = None
 
 def queue_window_params():
     for x in tile_x:
@@ -95,11 +101,14 @@ def open_pages():
 
 def open_tile_pages():
     queue_window_params()
-    for client_number in range(tile_number_of_clients):
+    for client_number in range(tile_number_of_clients):        
         gevent.spawn(open_page_id)
     gevent.spawn(arrange_tile_pages)
 
 def close_tile_pages():
+    print "close_tile_pages"
+    if window_info:
+        print "yep"
     for params in window_info:
         p = subprocess.Popen(['chrome-cli', 'close', '-w', params['id']])
 
@@ -129,14 +138,22 @@ def arrange_tile_pages():
 
 def open_page_id():
     # parse tab id from command output and subtract 1 to get window id
-    chrome_cli_output = subprocess.check_output(['chrome-cli', 'open', page_address, '-i'])
-    top_line = chrome_cli_output.split("\n")[0]
-    m = re.search( '(?P<id>[0-9]+)', top_line )
-    window_id = str(int(m.group('id')) - 1 )
-    x,y = window_pos_queue.get()
-    window_id_queue.put( {'id': window_id, 'x': str(x), 'y': str(y), 'w': str(TILE_WIDTH), 'h': str(TILE_HEIGHT) } )
-    if window_id_queue.qsize() >= tile_number_of_clients:
-        windows_are_open.set()
+    try:
+        window_is_opening.put(None)
+        chrome_cli_output = subprocess.check_output(['chrome-cli', 'open', page_address, '-i'])
+        top_line = chrome_cli_output.split("\n")[0]
+        m = re.search( '(?P<id>[0-9]+)', top_line )
+        window_id = str(int(m.group('id')) - 1 )
+        x,y = window_pos_queue.get()
+        window_id_queue.put( {'id': window_id, 'x': str(x), 'y': str(y), 'w': str(TILE_WIDTH), 'h': str(TILE_HEIGHT) } )
+        window_is_opening.get()
+        window_is_opening.task_done()
+
+        if window_id_queue.qsize() >= tile_number_of_clients:
+            windows_are_open.set()
+
+    except subprocess.CalledProcessError, e:
+        pass
 
 def open_page(client_number):
     if client_number == 0:
@@ -292,8 +309,13 @@ def queue_test_message(i_orig):
     except Exception:
         print "Exception raised in ws_alice publish"
 
+def finish_spawn():
+    global finish_greenlet
+    finish_greenlet = gevent.spawn(finish);
+
 def finish():
     global finish_called
+    global sched
     if finish_called:
         print "Finished called multiple times."
         return
@@ -302,13 +324,17 @@ def finish():
     finish_called = True
 
     # shut down the scheduler right away
-    sched.shutdown(wait=False)
+    if sched:
+        sched.shutdown(wait=False)
 
     # shut down the web server
     reactor.stop()
 
     # close chrome windows
     if tile_windows:
+        print("Waiting for window opens to finish: " + str(window_is_opening.qsize()))
+        window_is_opening.join()
+        print("Window opens finished.")
         close_tile_pages()
 
     # wait a few seconds for running jobs to finish
@@ -390,6 +416,8 @@ def start_everybody_else():
 
 def start_wearconnect():
     global wcs
+    gevent.signal(signal.SIGTERM, finish_spawn, ref=True)
+    gevent.signal(signal.SIGINT, finish_spawn, ref=True)
     windows_are_ready.wait()
     wcs = WearConnectServer()
     wcs_initialized.set()
@@ -415,6 +443,17 @@ if __name__ == '__main__':
     the_greenlets.append( gevent.spawn( scheduler_loop, "" ) )
     the_greenlets.append( gevent.spawn( do_process_queue ) )
 
-    gevent.joinall( the_greenlets )
-    # gevent.wait()
+    try:
+        gevent.joinall( the_greenlets )
+        # gevent.wait()
+    except gevent.hub.LoopExit as e:
+        print("LoopExit({0}): {1}".format(e.errno, e.strerror))
+        # print("LoopExit exception." + e.output)
+        # pass
+
+    if finish_greenlet is None:
+        print("No finish_greenlet to wait for.")
+    else:
+        print("Waiting for finish_greenlet.")
+        gevent.joinall([finish_greenlet])    
 
