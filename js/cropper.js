@@ -28,8 +28,18 @@ var glassAspectRatio = 16.0/9.0;
 var virtualImageOffset = -200;
 var virtualCanvasWidth = 1500;
 var virtualCanvasHeight = 750;
+
+// var actualCanvasWidth = 1000; // later window.innerWidth?
+// var actualCanvasHeight = 500; // later window.innerHeight?
+
 var actualCanvasWidth =  window.innerWidth-20;
-var actualCanvasHeight = actualCanvasWidth/1.6;
+var actualCanvasHeight = actualCanvasWidth/2;
+
+//for glass.jpg test image
+// var pixelImageWidth = 2528;
+// var pixelImageHeight = 1856;
+
+// for images from glass
 var pixelImageWidth = 416;
 var pixelImageHeight = 304;
 
@@ -140,10 +150,10 @@ function submit() {
     console.log('submitting in cropper.js submitting in cropper.js submitting in cropper.js');
 
     var geometry = new THREE.BoxGeometry( currentPreview.width, currentPreview.height, 10 );
-    var material = new THREE.MeshBasicMaterial( {  color:0x78AB46, opacity: .5, transparent: true} );
+    var material = new THREE.MeshBasicMaterial( {  color:0x9edb62, opacity: .5, transparent: true} );
     var currentPreview2 = new THREE.Mesh( geometry, material );
-    currentPreview2.position.x = currentPreview.position.x + width / 2;
-    currentPreview2.position.y = currentPreview.position.y - height/2;
+    currentPreview2.position.x = currentPreview.position.x; // + width / 2;
+    currentPreview2.position.y = currentPreview.position.y; // - height/2;
     currentPreview2.position.z = currentPreview.position.z;
     scene.remove(currentPreview);
     scene.add(currentPreview2);
@@ -157,6 +167,7 @@ function placePicture(imageData) {
     if (image)
         scene.remove(plane);
     image = new Image();
+    image.clien
     image.src = imageData;
     console.log("imageData: "+image.src)
     console.log("width, height of image is " + image.width + "," + image.height);
@@ -273,13 +284,11 @@ function init() {
 
     scene.add( list );
     
-    // placePicture('glass.jpg');
-    placePicture('number.jpg');
+    placePicture('glass.jpg');
+    // placePicture('number.jpg');
 
     nextListPosition = virtualCanvasHeight / 2 - (virtualCanvasHeight * listItemProportion) - 10;
     
-    placePicture
-
     function render() { 
         requestAnimationFrame(render);
         renderer.render(scene, camera);
@@ -405,7 +414,7 @@ function init() {
             } else {
             	actualTagWidth = actualTagHeight * glassAspectRatio;
             }
-            
+
             var pixelTagDims = actualToPixelScale( new THREE.Vector2(
                     actualTagWidth,
                     actualTagHeight));
@@ -438,18 +447,23 @@ function init() {
             c.height = Math.abs(pixelTagDims.y);
             var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*Math.abs(pixelTagDims.x) ;
 
-            var startClippingX=tagX;
-            var startClippingY=cutPoint.y;
+            var startClippingX=cutPoint.x;//mouseDownPosition.x; //tagX;
+            var startClippingY=cutPoint.y; //mouseDownPosition.y; //
 
             if(pixelTagDims.x<0){
                 startClippingX +=pixelTagDims.x;
-                console.log("negative x"+startClippingX);
+                console.log("negative x: "+startClippingX);
             }
 
             if(pixelTagDims.y<0){
                 startClippingY +=pixelTagDims.y;
                 console.log("negative y: "+startClippingY+" actualTagWidth: "+Math.abs(actualTagWidth)+ " actualTagHeight: "+Math.abs(actualTagHeight));
             }
+            
+            console.log("actualTagWidth: "+actualTagWidth+" actualTagHeight: "+actualTagHeight);
+            console.log("mouseDownPosition.x: "+mouseDownPosition.x+" mouseDownPosition.y: "+mouseDownPosition.y);
+            console.log("pixelTagDims.x: "+pixelTagDims.x+" pixelTagDims.y: "+pixelTagDims.y);
+            console.log("cutPoint.x: "+cutPoint.x+" cutPoint.y: "+cutPoint.y);
             
             console.log("startClippingX: "+startClippingX+ " startClippingY: "+startClippingY+" pixelTagDims.x: "+Math.abs(pixelTagDims.x)+" pixelTagDims.y: "+Math.abs(pixelTagDims.y)+" pixelTagDims.x: "+ Math.abs(pixelTagDims.x)+" pixelTagDims.y: "+Math.abs(pixelTagDims.y));
 
@@ -473,6 +487,8 @@ function init() {
             for (var i=0; i<itemList.length; i++){
                 itemList[i].position.y=fullListItemY[i];
                 itemList[i].start=fullListItemY[i];
+                console.log("i: "+i+" itemList[i].position.y: "+itemList[i].position.y+" fullListItemY[i]: "+fullListItemY[i]);
+
             }
             
             listItemY -= listItemHeight;
@@ -507,6 +523,9 @@ function init() {
             thumb.position.x = ( thumbWidth - virtualListWidth ) / 2 + listItemPadding;
             thumb.position.z = 40;
             listItem.thumb = thumb;
+
+            // itemList.unshift( listItem );
+            console.log(itemList);
 
             listItem.add( thumb );
             list.add( listItem );
@@ -558,9 +577,9 @@ function init() {
             var cutPoint = actualToPixelPos( new THREE.Vector2( touchStartPosition.x,
                     touchStartPosition.y ) );
 
-            console.log("In touch end, touchStartPosition is "+touchStartPosition.x +" & y is "+ touchStartPosition.y);
-            console.log("In touch end, cutPoint is "+cutPoint.x +" & y is "+ cutPoint.y);
-            console.log("In touch end, pixelTagDims is "+pixelTagDims.x +" & y is "+ pixelTagDims.y);            
+            // console.log("In touch end, touchStartPosition is "+touchStartPosition.x +" & y is "+ touchStartPosition.y);
+            // console.log("In touch end, cutPoint is "+cutPoint.x +" & y is "+ cutPoint.y);
+            // console.log("In touch end, pixelTagDims is "+pixelTagDims.x +" & y is "+ pixelTagDims.y);            
             
             ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
                    0, 0, pixelTagDims.x, pixelTagDims.y);
@@ -610,6 +629,7 @@ function init() {
                 console.log("in output");
                 itemList[i].position.y=fullListItemY[i];
                 itemList[i].start=fullListItemY[i];
+                console.log("itemList[i].position.y: "+itemList[i].position.y+" ");
             }
 
             listItemY -= listItemHeight;
@@ -640,7 +660,7 @@ function init() {
             thumb.position.z = 40;
             listItem.thumb = thumb;
 
-            itemList.unshift( listItem );
+            // itemList.unshift( listItem );
             console.log(itemList);
 
             listItem.add( thumb );
