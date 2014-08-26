@@ -23,12 +23,9 @@
         previousWord = '';
         images = [];
 
-        $(document).ready(function() {
-            console.log('in $(document).ready 23423234');
-            //$("#cards").bind("DOMSubtreeModified", startSlider);
-        });
-
     </script>
+    <script src="wc-get-endpoint.js"></script>
+
 </head>
 <body style="width:100%; height:100%; overflow:hidden; margin:0">
     <article id="card">
@@ -41,9 +38,6 @@
         </section>
     </article>
 <script>
-
-var customEndpoint = 'ws://192.168.2.230:8112/';
-// var customEndpoint = 'ws://18.111.28.58:8112/';
 
 function registered(channel, name) {
     //WS.say("Registered as " + name);
@@ -154,6 +148,7 @@ function serverCustom() {
 }
 
 var playground = true;
+var wc_endpoint = "";
 
 function toggleServer() {
     WS.sound("SELECTED");
@@ -161,7 +156,7 @@ function toggleServer() {
         WS.serverConnect('{{WSUrl}}', function() {});
         playground = true;
     } else {
-        WS.serverConnect(customEndpoint, serverCustom);
+        WS.serverConnect(wc_endpoint, serverCustom);
         playground = false;
     }
 }
@@ -189,7 +184,9 @@ function cameraOn() {
     toggleServer();
 });*/
 
-function main() {
+function main( _wc_endpoint ) {
+    WS.say("Got endpoint");
+    wc_endpoint = _wc_endpoint;
     if (WS.scriptVersion(1)) return;
     //ctx = document.getElementById('canvas').getContext("2d");
     // WS.serverConnect('{{WSUrl}}', server);
@@ -197,7 +194,14 @@ function main() {
     //wordReceive('words', 'hello', 'hola');
 }
 
-window.onload = main;
+// window.onload = main;
+
+function wc() {
+  get_wc_endpoint( main );
+}
+
+$(document).ready( wc );
+
 </script>
 </body>
 </html>

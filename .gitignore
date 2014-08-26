@@ -1,5 +1,6 @@
 sync_gists.sh
 untracked/
 src/pip-delete-this-directory.txt
-parse.config
+config.json
 /src/
+*.py[cod]
