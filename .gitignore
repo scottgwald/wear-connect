@@ -4,3 +4,4 @@ src/pip-delete-this-directory.txt
 config.json
 /src/
 *.py[cod]
+wearscript.apk
