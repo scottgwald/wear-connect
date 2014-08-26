@@ -29,8 +29,8 @@ var virtualCanvasWidth = 1500;
 var virtualCanvasHeight = 750;
 var actualCanvasWidth = 1000; // later window.innerWidth?
 var actualCanvasHeight = 500; // later window.innerHeight?
-var pixelImageWidth = 416;
-var pixelImageHeight = 304;
+var pixelImageWidth = 620;
+var pixelImageHeight = 358;
 
 var cameraZ = 400;
 
@@ -74,6 +74,12 @@ var addTags =0;
 var ctrlPressed = false;
 var spacePressed = false;
 var greenList= [];
+
+var paint = false;
+var doodlePoints = new Array();
+
+var drawPlane;
+var drawPlaneMaterial;
 
 init();
 
@@ -143,8 +149,10 @@ function submit() {
 }
 function placePicture(imageData) {
 
-    if (image)
+    if (image) {
         scene.remove(plane);
+        scene.remove(drawPlane);
+    }
     image = new Image();
     image.src = imageData;
     console.log("width, height of image is " + image.width + "," + image.height);
@@ -153,17 +161,34 @@ function placePicture(imageData) {
         map: THREE.ImageUtils.loadTexture(imageData)
     });
 
+    //draw image on canvas
+   
+
 
     img.map.needsUpdate = true; //ADDED
 
     // plane
     planeG = new THREE.PlaneGeometry(virtualImageWidth, virtualImageHeight);
     plane = new THREE.Mesh(planeG, img);
+
+
+
+    drawPlaneMaterial = new THREE.PlaneGeometry(virtualImageWidth, virtualImageHeight);
+    drawPlane = new THREE.Mesh(planeG, img);
+
     plane.position.x = virtualImageWidth / 2;
     plane.position.y = virtualImageHeight / 2;
 
-    plane.overdraw = true;
+    drawPlane.position.x = virtualImageWidth / 2;
+    drawPlane.position.y = virtualImageHeight / 2;
+
+
+    drawPlane.overdraw = true;
+
     scene.add(plane);
+    scene.add(drawPlane);
+
+
 }
 
 function makeTextDataURL( text ) {
@@ -255,11 +280,10 @@ function init() {
     listItemY = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
     scene.add( list );
     
-    // placePicture('yogurt.jpg');
+    placePicture('test.jpeg');
 
     nextListPosition = virtualCanvasHeight / 2 - (virtualCanvasHeight * listItemProportion) - 10;
     
-    placePicture
 
     function render() { 
         requestAnimationFrame(render);
@@ -371,201 +395,281 @@ function init() {
     // mouse events are in "actual" coordinates
     function onDocumentMouseUp(event) {
 
-        if (event.clientX < actualImageWidth) {
+        paint = false;
 
-  			if (actualTagWidth / actualTagHeight > glassAspectRatio) {
-            	actualTagHeight = actualTagWidth / glassAspectRatio;
-            } else {
-            	actualTagWidth = actualTagHeight * glassAspectRatio;
-            }
+     //    if (event.clientX < actualImageWidth) {
+
+  			// if (actualTagWidth / actualTagHeight > glassAspectRatio) {
+     //        	actualTagHeight = actualTagWidth / glassAspectRatio;
+     //        } else {
+     //        	actualTagWidth = actualTagHeight * glassAspectRatio;
+     //        }
             
-            var pixelTagDims = actualToPixelScale( new THREE.Vector2(
-                    actualTagWidth,
-                    actualTagHeight));
+            // var pixelTagDims = actualToPixelScale( new THREE.Vector2(
+            //         actualTagWidth,
+            //         actualTagHeight));
 
-            if (DBG) console.log( "Mouse down position was " + mouseDownPosition.x + ", "
-                    + mouseDownPosition.y );
-            if (DBG) console.log( "Mouse up position is " + event.clientX + ", " + event.clientY );
 
-            isClicked = false;
 
-            c.width  = pixelTagDims.x;
-            c.height = pixelTagDims.y;
+     //        if (DBG) console.log( "Mouse down position was " + mouseDownPosition.x + ", "
+     //                + mouseDownPosition.y );
+     //        if (DBG) console.log( "Mouse up position is " + event.clientX + ", " + event.clientY );
 
-            var cutPoint = actualToPixelPos( new THREE.Vector2( mouseDownPosition.x,
-                    mouseDownPosition.y ) );
+     //        isClicked = false;
 
-            ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
-                   0, 0, pixelTagDims.x, pixelTagDims.y);
+     //        c.width  = pixelTagDims.x;
+     //        c.height = pixelTagDims.y;
 
-            if (DBG) console.log( "Grabbing region of size " + pixelTagDims.x + ", "
-                    + pixelTagDims.y + " from location "  + cutPoint.x + ", " + cutPoint.y );
+     //        var cutPoint = actualToPixelPos( new THREE.Vector2( mouseDownPosition.x,
+     //                mouseDownPosition.y ) );
 
-            var thumP = new Image();
-            dataURL = c.toDataURL();
-            thumP.src = dataURL;
+     //        ctx.drawImage(image, cutPoint.x, cutPoint.y, pixelTagDims.x, pixelTagDims.y,
+     //               0, 0, pixelTagDims.x, pixelTagDims.y);
 
-            console.log( dataURL );
-            c.width = pixelTagDims.y;
-            c.height = pixelTagDims.y;
-            var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*pixelTagDims.x ;
+     //        if (DBG) console.log( "Grabbing region of size " + pixelTagDims.x + ", "
+     //                + pixelTagDims.y + " from location "  + cutPoint.x + ", " + cutPoint.y );
+
+     //        var thumP = new Image();
+     //        dataURL = c.toDataURL();
+     //        thumP.src = dataURL;
+
+     //        console.log( dataURL );
+     //        c.width = pixelTagDims.y;
+     //        c.height = pixelTagDims.y;
+     //        var tagX = cutPoint.x + ((1-1/glassAspectRatio)/2)*pixelTagDims.x ;
             
 
-            ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y)
+     //        ctx.drawImage(image, tagX,cutPoint.y,pixelTagDims.y,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y)
 
-            var listWidth = .25 * window.innerWidth - 30;
-            var listHeight = window.innerHeight / 6;
-            var listItem = new THREE.BoxGeometry( listWidth, listHeight,10);
-            var listMaterial = new THREE.MeshBasicMaterial({opacity:.7,transparent:true, color: 0x000000});
+     //        var listWidth = .25 * window.innerWidth - 30;
+     //        var listHeight = window.innerHeight / 6;
+     //        var listItem = new THREE.BoxGeometry( listWidth, listHeight,10);
+     //        var listMaterial = new THREE.MeshBasicMaterial({opacity:.7,transparent:true, color: 0x000000});
 
-            var listItem = new THREE.Mesh( listItemGeometry, listItemMaterial );
-            listItem.position.y = listItemY;
-            listItem.start = listItemY;
+     //        var listItem = new THREE.Mesh( listItemGeometry, listItemMaterial );
+     //        listItem.position.y = listItemY;
+     //        listItem.start = listItemY;
 
-            listItemY -= listItemHeight;
+     //        listItemY -= listItemHeight;
 
-            listItem.selected = false;
-            listItem.tagName = text+tagNum;
+     //        listItem.selected = false;
+     //        listItem.tagName = text+tagNum;
             
-            tagNum++;
+     //        tagNum++;
 
 
-             if ((listItemHeight+listItemPadding)*tagNum > virtualListHeight){
-                addTags++;
-            }
+     //         if ((listItemHeight+listItemPadding)*tagNum > virtualListHeight){
+     //            addTags++;
+     //        }
 
 
-            var thumbData = c.toDataURL();
-            console.log( thumbData );
+     //        var thumbData = c.toDataURL();
+     //        console.log( thumbData );
 
 
-            //console.log(item.selected)
-            var img = new THREE.MeshBasicMaterial({
-                    map: THREE.ImageUtils.loadTexture( thumbData )
-            });
+     //        //console.log(item.selected)
+     //        var img = new THREE.MeshBasicMaterial({
+     //                map: THREE.ImageUtils.loadTexture( thumbData )
+     //        });
 
-            var thumb = new THREE.Mesh( thumbGeometry, img);
-            thumb.position.x = ( thumbWidth - virtualListWidth ) / 2 + listItemPadding;
-            thumb.position.z = 40;
-            listItem.thumb = thumb;
+     //        var thumb = new THREE.Mesh( thumbGeometry, img);
+     //        thumb.position.x = ( thumbWidth - virtualListWidth ) / 2 + listItemPadding;
+     //        thumb.position.z = 40;
+     //        listItem.thumb = thumb;
 
-            itemList.push( listItem );
+     //        itemList.push( listItem );
 
-            listItem.add( thumb );
-            list.add( listItem );
+     //        listItem.add( thumb );
+     //        list.add( listItem );
 
-            selectedItem = listItem;
+     //        selectedItem = listItem;
 
-            $('#textform #field').val('').focus().keyup(function() {
-                var text = $('input').val();
-                selectedItem.tagText = text;
-                // var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
-                // $('body').append('<div style="position: absolute; left: ' + vec.x + '; top: ' + vec.y + ';">' + text + '</div>');
-                createTextForItem();
-            });
+     //        $('#textform #field').val('').focus().keyup(function() {
+     //            var text = $('input').val();
+     //            selectedItem.tagText = text;
+     //            // var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
+     //            // $('body').append('<div style="position: absolute; left: ' + vec.x + '; top: ' + vec.y + ';">' + text + '</div>');
+     //            createTextForItem();
+     //        });
 
           
 
-        }
+     //    }
 
     }
 
     function onDocumentMouseMove(event) {
 
-        if (isClicked) {
-            if (currentPreview) {
-                scene.remove(currentPreview);
-            }
+
+    if(paint){
+
 
             var x = event.clientX;
             var y = event.clientY;
 
-            // will need to handle different +/- cases
-            actualTagWidth = x - mouseDownPosition.x;
-            actualTagHeight = y - mouseDownPosition.y;
-
-            // if (actualTagWidth <= 0) {
-            //     mouseDownPosition.x = x;
-            // }
-            
-            var aspectWidth = actualTagWidth;
-            var aspectHeight = actualTagHeight;
-            
-            if (actualTagWidth / actualTagHeight > glassAspectRatio) {
-            	actualTagHeight = actualTagWidth / glassAspectRatio;
-            } else {
-            	actualTagWidth = actualTagHeight * glassAspectRatio;
-            }
-            
-            var actualTagDims = new THREE.Vector2( actualTagWidth, actualTagHeight );
-			var actual = new THREE.Vector2( aspectWidth, aspectHeight );
-
-			var vactual = actualToVirtualScale(actual);
-            var virtualTagDims = actualToVirtualScale( actualTagDims );
-
-            var geometry = new THREE.BoxGeometry( virtualTagDims.x, virtualTagDims.y, 100 );
-            var material = new THREE.MeshBasicMaterial( {  opacity: .5, transparent: true} );
-            currentPreview = new THREE.Mesh( geometry, material );
-
-            actualTagPos = new THREE.Vector2(  mouseDownPosition.x + actualTagDims.x / 2,
-                   mouseDownPosition.y + actualTagDims.y/ 2 );
-            virtualTagPos = actualToVirtualPos( actualTagPos );
-
-            currentPreview.position.x = virtualTagPos.x;
-            currentPreview.position.y = virtualTagPos.y;
-            currentPreview.position.z = 0;
-            currentPreview.width = virtualTagDims.x;
-            currentPreview.height = virtualTagDims.y;
-
-            scene.add(currentPreview);
-        }
+            var pixelXY = actualToPixelScale( new THREE.Vector2(x,y));
+            addClick(pixelXY, true);
+            redraw();
     }
 
+   //      if (isClicked) {
+   //          if (currentPreview) {
+   //              scene.remove(currentPreview);
+   //          }
+
+   //          var x = event.clientX;
+   //          var y = event.clientY;
+
+   //          // will need to handle different +/- cases
+   //          actualTagWidth = x - mouseDownPosition.x;
+   //          actualTagHeight = y - mouseDownPosition.y;
+
+   //          // if (actualTagWidth <= 0) {
+   //          //     mouseDownPosition.x = x;
+   //          // }
+            
+   //          var aspectWidth = actualTagWidth;
+   //          var aspectHeight = actualTagHeight;
+            
+   //          if (actualTagWidth / actualTagHeight > glassAspectRatio) {
+   //          	actualTagHeight = actualTagWidth / glassAspectRatio;
+   //          } else {
+   //          	actualTagWidth = actualTagHeight * glassAspectRatio;
+   //          }
+            
+   //          var actualTagDims = new THREE.Vector2( actualTagWidth, actualTagHeight );
+			// var actual = new THREE.Vector2( aspectWidth, aspectHeight );
+
+			// var vactual = actualToVirtualScale(actual);
+   //          var virtualTagDims = actualToVirtualScale( actualTagDims );
+
+   //          var geometry = new THREE.BoxGeometry( virtualTagDims.x, virtualTagDims.y, 100 );
+   //          var material = new THREE.MeshBasicMaterial( {  opacity: .5, transparent: true} );
+   //          currentPreview = new THREE.Mesh( geometry, material );
+
+   //          actualTagPos = new THREE.Vector2(  mouseDownPosition.x + actualTagDims.x / 2,
+   //                 mouseDownPosition.y + actualTagDims.y/ 2 );
+   //          virtualTagPos = actualToVirtualPos( actualTagPos );
+
+   //          currentPreview.position.x = virtualTagPos.x;
+   //          currentPreview.position.y = virtualTagPos.y;
+   //          currentPreview.position.z = 0;
+   //          currentPreview.width = virtualTagDims.x;
+   //          currentPreview.height = virtualTagDims.y;
+
+   //          scene.add(currentPreview);
+   //      }
+    }
+
+
+
+    function addClick (mouseXY,dragging) {
+
+        mouseXY.dragging = dragging;
+        doodlePoints.push(mouseXY);
+
+
+    }
+
+    function redraw(){
+
+
+        ctx.clearRect(0, 0, c.width, c.height); // Clears the canvas
+        c.width = image.width;
+        c.height = image.height;
+        ctx.drawImage(image,0,0);
+
+        ctx.strokeStyle = "#df4b26";
+        ctx.lineJoin = "round";
+        ctx.lineWidth = 5;
+
+         for(var i=0; i < doodlePoints.length; i++) {     
+            ctx.beginPath();
+            if(doodlePoints[i].dragging && i){
+                ctx.moveTo(doodlePoints[i-1].x, doodlePoints[i-1].y);
+            } else {
+                ctx.moveTo(doodlePoints[i].x-1, doodlePoints[i].y);
+            }
+            ctx.lineTo(doodlePoints[i].x, doodlePoints[i].y);
+            ctx.closePath();
+            ctx.stroke();
+         }
+
+
+
+          // var prev = new Image();
+           dataURL = c.toDataURL();
+           console.log(dataURL);
+          // prev.src = dataURL;
+
+
+          placePicture(dataURL);
+        // drawPlane.material.map = THREE.ImageUtils.loadTexture( dataURL );
+        // drawPlane.material.needsUpdate = true;
+        // animate();
+
+    }
     function onDocumentMouseDown(event) {
-        isTagging = true;
-        mouseDownPosition.x = event.clientX;
-        mouseDownPosition.y = event.clientY;
+
+            var x = event.clientX;
+            var y = event.clientY;
+
+            paint = true;
+            var pixelXY = actualToPixelScale( new THREE.Vector2(x,y));
+            console.log('hereee');
+
+            addClick(pixelXY,false);
+            redraw();
+
+
+
+
+
+
+                //     isTagging = true;
+    //     mouseDownPosition.x = event.clientX;
+    //     mouseDownPosition.y = event.clientY;
         
-        if (mouseDownPosition.x < actualImageWidth) {
-            isClicked = true ;
+    //     if (mouseDownPosition.x < actualImageWidth) {
+    //         isClicked = true ;
 
-            currentMousePosition.x = event.clientX;//(event.clientX - boundingRect.left) * (renderer.domElement.width / boundingRect.width);
-            currentMousePosition.y = event.clientY;//(boundingRect.top -window.innerHeight + event.clientY) * (renderer.domElement.height / boundingRect.height);
+    //         currentMousePosition.x = event.clientX;//(event.clientX - boundingRect.left) * (renderer.domElement.width / boundingRect.width);
+    //         currentMousePosition.y = event.clientY;//(boundingRect.top -window.innerHeight + event.clientY) * (renderer.domElement.height / boundingRect.height);
 
-            mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (window.innerWidth) ) * 2 - 1, - ( event.clientY / window.innerHeight) * 2 + 1, 1 ), camera );
-            mouse3D.sub(camera.position);
-            //mouse3D.normalize();
-            lastX = mouse3D.x;
-            lastY = mouse3D.y;
-        } else {
+    //         mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (window.innerWidth) ) * 2 - 1, - ( event.clientY / window.innerHeight) * 2 + 1, 1 ), camera );
+    //         mouse3D.sub(camera.position);
+    //         //mouse3D.normalize();
+    //         lastX = mouse3D.x;
+    //         lastY = mouse3D.y;
+    //     } else {
            
-            mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (virtualCanvasWidth) ) * 2 - 1, - ( event.clientY / virtualCanvasHeight) * 2 + 1, 1 ), camera );
-            mouse3D.sub(camera.position);
+    //         mouse3D = projector.unprojectVector( new THREE.Vector3( ( event.clientX / (virtualCanvasWidth) ) * 2 - 1, - ( event.clientY / virtualCanvasHeight) * 2 + 1, 1 ), camera );
+    //         mouse3D.sub(camera.position);
 
-            var target;
-            for (var i =0; i< itemList.length; i++) {
+    //         var target;
+    //         for (var i =0; i< itemList.length; i++) {
 				
-				console.log(itemList[i].start + virtualListHeight - listItemHeight);
-				console.log(mouse3D.y);
-                if (mouseDownPosition.x >actualImageWidth + listItemPadding && mouse3D.y < itemList[i].start+virtualListHeight/2 && mouse3D.y > itemList[i].start -virtualListHeight/2 ){
-                	console.log('click');
-                    target = itemList[i];
-                    target.selected = true;
+				// console.log(itemList[i].start + virtualListHeight - listItemHeight);
+				// console.log(mouse3D.y);
+    //             if (mouseDownPosition.x >actualImageWidth + listItemPadding && mouse3D.y < itemList[i].start+virtualListHeight/2 && mouse3D.y > itemList[i].start -virtualListHeight/2 ){
+    //             	console.log('click');
+    //                 target = itemList[i];
+    //                 target.selected = true;
 
-                } else {
-                    itemList[i].selected = false;
-                }
-            }
-            selectedItem = target;
+    //             } else {
+    //                 itemList[i].selected = false;
+    //             }
+    //         }
+    //         selectedItem = target;
 
-            if (selectedItem) {
+    //         if (selectedItem) {
 
-                var selectorGeo = new THREE.BoxGeometry (listWidth,listHeight);
-                var selectorMaterial = new THREE.MeshBasicMaterial({ color:0xEDED25,opacity: .5,transparent: true});
-                selector = THREE.Mesh(selectorGeo,selectorMaterial);
+    //             var selectorGeo = new THREE.BoxGeometry (listWidth,listHeight);
+    //             var selectorMaterial = new THREE.MeshBasicMaterial({ color:0xEDED25,opacity: .5,transparent: true});
+    //             selector = THREE.Mesh(selectorGeo,selectorMaterial);
 
-            }
-        }
+    //         }
+    //     }
     }
 
     $(document).ready(function() {
