@@ -1,4 +1,3 @@
-
 var DBG = false;
 var scene;
 var currentPreview;
@@ -64,6 +63,8 @@ var thumbWidthProportion = 0.33;
 var thumbWidth = listItemHeight - listItemPadding;
 var thumbHeight = thumbWidth;
 var textWidth = virtualListWidth - 2 * listItemPadding - thumbWidth;
+var textmessage_Width = virtualListWidth - 2 * listItemPadding;
+
 var c;
 var textCanvas;
 var textCanvasWidth = 500;
@@ -105,7 +106,8 @@ var listItemMaterial;
 var thumbGeometry = new THREE.PlaneGeometry( thumbWidth, thumbHeight);
 var textGeometry = new THREE.PlaneGeometry( textWidth, textWidth * textCanvasHeight / textCanvasWidth );
 var textMaterial = new THREE.MeshBasicMaterial( { color: 0xFFFFFF, overdraw: true } );
-
+// var textMessageGeometry = new THREE.PlaneGeometry( textmessage_Width, listItemHeight - listItemPadding );
+var textMessageGeometry;
 //y position for MESH LIST MINA
 var fullListItemY=[];
 
@@ -167,7 +169,6 @@ function placePicture(imageData) {
     if (image)
         scene.remove(plane);
     image = new Image();
-    image.clien
     image.src = imageData;
     console.log("imageData: "+image.src)
     console.log("width, height of image is " + image.width + "," + image.height);
@@ -200,11 +201,10 @@ function makeTextDataURL( text ) {
     console.log("text: " + text);
 
     //textContext.clearRect( 0, 0, 500, 90 );
-    
     textContext.fillStyle = "#bdbdbd";
-   	textContext.fillRect( 0, 0, textCanvasWidth, textCanvasHeight );
-   	//textContext.fillRect(0,0,500,90);
-   	textContext.fillStyle = "black";
+    textContext.fillRect( 0, 0, textCanvasWidth, textCanvasHeight );
+    //textContext.fillRect(0,0,500,90);
+    textContext.fillStyle = "black";
 
     textContext.fillText( text, textCanvasPadding, 70, textCanvasWidth - 2 * textCanvasPadding );
     var durl = textCanvas.toDataURL( 'image/jpeg' );
@@ -213,6 +213,42 @@ function makeTextDataURL( text ) {
 
 }
 
+function enterText(){
+    console.log("in enter text");
+
+    var textbox=document.getElementById("text_field");
+    var textvalue=textbox.value;
+    var textMessageURL = makeTextDataURL( textvalue );
+    console.log("entering text: "+textvalue);
+
+    var text_img = new THREE.MeshBasicMaterial({
+                    map: THREE.ImageUtils.loadTexture( textMessageURL )});
+    var textmessage_mesh = new THREE.Mesh( textMessageGeometry, text_img );
+    // var textmessage_mesh = new THREE.Mesh( textMessageGeometry, text_img );
+    // textmessage_mesh.position.x = textmessage_Width / 2 ;
+    textmessage_mesh.position.x = 0 ;
+    textmessage_mesh.position.z = 40;
+
+    // listItem.add(textmessage_mesh);
+    list.add( textmessage_mesh );
+    //selectedItem=textmessage_mesh;
+    // selectedItem.add( textmessage_mesh);
+    itemList.unshift( textmessage_mesh );
+    fullListItemY.push(listItemY);
+
+    console.log("textmessage_mesh.position.x: "+textmessage_mesh.position.x);
+    
+    for (var i=0; i<itemList.length; i++){
+    console.log("itemList: "+itemList);
+    itemList[i].position.y=fullListItemY[i];
+    itemList[i].start=fullListItemY[i];
+    console.log("i: "+i+" itemList[i].position.y: "+itemList[i].position.y+" fullListItemY[i]: "+fullListItemY[i]+" itemList[i].position.x: "+itemList[i].position.x);
+    }
+
+    listItemY = listItemY-listItemHeight;
+    tagNum++;
+    ws.publish('words', textvalue, textMessageURL);
+}
 
 function init() {
 
@@ -238,8 +274,6 @@ function init() {
     scene.add(camera); //ADDED
 
     renderer.setClearColorHex( 0xbdbdbd, 1 );
-
-
 
     c = document.getElementById("myCanvas");
     c.style.display = 'none';
@@ -279,8 +313,13 @@ function init() {
                 listItemHeight - listItemPadding, 1 );
     listItemMaterial = new THREE.MeshBasicMaterial( {  opacity: 0,transparent: true } );
 
+
     listItemY = ( virtualListHeight - listItemHeight ) / 2 - listItemPadding;
     console.log("in init (), listItemY: "+listItemY+" virtualListHeight: "+virtualListHeight+" listItemHeight: " +listItemHeight+ " listItemPadding: "+listItemPadding);
+
+    // textMessageGeometry = new THREE.BoxGeometry( listWidth - 2 * listItemPadding, listItemHeight - listItemPadding, 1 );
+    // textMessageGeometry = new THREE.BoxGeometry( (listItemHeight - listItemPadding)*(textCanvasWidth/textCanvasHeight), listItemHeight - listItemPadding, 1 );
+    textMessageGeometry = new THREE.BoxGeometry( listWidth - 2 * listItemPadding, (listWidth - 2 * listItemPadding)*(textCanvasHeight/textCanvasWidth), 1 );
 
     scene.add( list );
     
@@ -468,19 +507,16 @@ function init() {
             console.log("startClippingX: "+startClippingX+ " startClippingY: "+startClippingY+" pixelTagDims.x: "+Math.abs(pixelTagDims.x)+" pixelTagDims.y: "+Math.abs(pixelTagDims.y)+" pixelTagDims.x: "+ Math.abs(pixelTagDims.x)+" pixelTagDims.y: "+Math.abs(pixelTagDims.y));
 
             ctx.drawImage(image, startClippingX,startClippingY,Math.abs(pixelTagDims.x),Math.abs(pixelTagDims.y),0,0,Math.abs(pixelTagDims.x),Math.abs(pixelTagDims.y));
-            // ctx.drawImage(image, mouseDownPosition.x,mouseDownPosition.y,pixelTagDims.x,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
-            // ctx.drawImage(image, cutPoint.x,cutPoint.y,pixelTagDims.x,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
-            // ctx.drawImage(image, currentPreview.position.x,currentPreview.position.y,currentPreview.width ,currentPreview.height,0,0,pixelTagDims.y,pixelTagDims.y);
-            // ctx.drawImage(image, currentPreview.position.x,currentPreview.position.y,pixelTagDims.x,pixelTagDims.y,0,0,pixelTagDims.y,pixelTagDims.y);
-
+            
             console.log("In mouse up, mouseDownPosition is "+mouseDownPosition.x +" & y is "+ mouseDownPosition.y);
 
             var listWidth = .25 * window.innerWidth - 30;
             var listHeight = window.innerHeight / 6;
-            var listItem = new THREE.BoxGeometry( listWidth, listHeight,10);
+            // var listItem = new THREE.BoxGeometry( listWidth, listHeight,10);
             var listMaterial = new THREE.MeshBasicMaterial({opacity:.7,transparent:true, color: 0x000000});
  
             var listItem = new THREE.Mesh( listItemGeometry, listItemMaterial );
+
             itemList.unshift( listItem );
             fullListItemY.push(listItemY);
 
@@ -533,8 +569,9 @@ function init() {
             selectedItem = listItem;
 
 
-            $('#textform #field').val('').focus().keyup(function() {
-                var text = $('input').val();
+            $('#field').val('').focus().keyup(function() {
+                var text = $('#field').val();
+                console.log("text in textform: "+text);
                 selectedItem.tagText = text;
                 createTextForItem();
             });  

@@ -91,9 +91,27 @@ function main( wc_endpoint ) {
 
 </script>
 
-<form id="textform" action="javascript:void(0);" >
-<input type="text" id="field" />
+
+
+<div style="float:left;">
+  Enter yout text here:
+</div> 
+<form id="text_message" action="javascript:void(0);" >  
+  <input type="text" id="text_field" />
+  <input type="button" id="text_button" value="Send message!"/>
 </form>
+<form id="textform" action="javascript:void(0);" >
+  <input type="text" id="field" />
+</form>
+
+
+
+
+<script>
+//get button element by id
+button= document.getElementById("text_button");
+button.addEventListener('click',enterText);
+</script>
 
 </body>
 </html>
