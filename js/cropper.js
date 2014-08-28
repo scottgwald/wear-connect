@@ -706,7 +706,7 @@ function init() {
             selectedItem = listItem;
 
             $('#textform #field').val('').focus().keyup(function() {
-                var text = $('input').val();
+                var text = $('field').val();
                 selectedItem.tagText = text;
                 // var vec = virtualToActualPos(new THREE.Vector2(selectedItem.position.x, selectedItem.position.y));
                 // $('body').append('<div style="position: absolute; left: ' + vec.x + '; top: ' + vec.y + ';">' + text + '</div>');
