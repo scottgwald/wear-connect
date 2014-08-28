@@ -11,8 +11,7 @@ adb install wearscript.apk
 
 # create config
 cp config.json config.json.old &> /dev/null
-export WC_LOCAL_IP=`ifconfig | grep -A 3 en0 | grep -oh "inet [0-9]\{1,3\}.[0-9]\{1,3\}.[0-9]\{1,3\}.[0-9]\{1,3\}" | grep -oh "[0-9]\{1,3\}.[0-9]\{1,3\}.[0-9]\{1,3\}.[0-9]\{1,3\}"`
-python generate_config.py $WC_LOCAL_IP
+./update_wc_endpoint.sh
 
 # clear off existing scripts
 adb shell rm -r /sdcard/wearscript/gists/*
