@@ -4,18 +4,24 @@
     <meta charset="UTF-8">
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport'>
     <title>Word Connect</title>
-    <script src="//localhost:35729/livereload.js"></script>
+    <script src="//192.168.1.129:35729/livereload.js"></script>
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="bower_components/fontawesome/css/font-awesome.css">
     <style>
+        html body {
+            background-color: #f9f9f9;
+            color: #212121;
+            font-family: sans-serif;
+        }
         /* Background colors */
+        /* note: this is necessary to avoid black background in fullscreen */
         .left-container {
-            background-color: rgba(0,0,0,.54);
+            background-color: #e0e0e0;
         }
         .middle-container {
-            background-color: rgba(0,0,0,.87);
         }
         .right-container {
-            background-color: rgba(0,0,0,.54);
+            background-color: #e0e0e0;
         }
         .left-container {
             position: fixed;
@@ -23,6 +29,11 @@
             top: 0px;
             width: 100px;
             height: 100%;
+            padding-top: 100px;
+            
+            box-shadow: 2px 0 5px rgba(0,0,0,.26);
+
+            z-index: 1000;
         }
         .middle-container {
             margin: 0 auto;
@@ -40,25 +51,103 @@
             top: 0px;
             width: 100px;
             height: 100%;
+            padding-top: 100px;
+
+            box-shadow: -2px 0 5px rgba(0,0,0,.26);
+
+
+            z-index: 1010;
         }
-        aside, section, canvas {
+        canvas {
             border: 1px solid black;
+            margin-left: -1px;
+        }
+        
+        tools {
+            /* almost identical to ul */
+            margin-top: 0;
+            margin-bottom: 10px;
+            display: block;
+            -webkit-margin-before: 1em;
+            -webkit-margin-after: 1em;
+            -webkit-margin-start: 0px;
+            -webkit-margin-end: 0px;
+
+            /* custom style */
+            list-style-type: none;
+            margin-left: auto;
+            margin-right: auto;
+
+        }
+        tool {
+            /* almost  identical to li */
+            display: list-item;
+            text-align: -webkit-match-parent;
+
+            /* custom style */
+            /* positioning */
+            margin-bottom: 16px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-top: 8px;
+            text-align: center;
+            width: 60px;
+            height: 60px;
+
+            /* stylying */
+            list-style-type: none;
+            font-size: 30px;
+            
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,.26);
+        }
+        tool:nth-last-child(1) {
+            margin-bottom: 0;
+        }
+
+        require-fullscreen {
+            z-index: 9999999;
+            position:fixed;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            padding-top: 150px;
+
+            font-size: 36px;
+            text-align: center;
+            background-color: #e51c23;
+            color: white;
+            display: none;
         }
 
     </style>
 </head>
 <body>
-    <main class="container">
+    <main class="">
         <aside class="left-container">
-            this is the aside
+            <tools>
+                <tool><i class="fa fa-arrows"></i></tool>
+                <tool><i class="fa fa-paint-brush"></i></tool>
+                <tool><i class="fa fa-microphone"></i></tool>
+                <tool><i class="fa fa-font"></i></tool>
+                <tool><i class="fa fa-question"></i></tool>
+            </tools>
         </aside>
         <section id="midContainer" class="middle-container">
             <canvas id="canvas" class="canvas" width="100" height="100"></canvas>
         </section>
         <aside class="right-container">
-            this is the other aside
+            <tools>
+                <tool><i class="fa fa-arrows"></i></tool>
+                <tool><i class="fa fa-paint-brush"></i></tool>
+                <tool><i class="fa fa-microphone"></i></tool>
+                <tool><i class="fa fa-font"></i></tool>
+                <tool><i class="fa fa-question"></i></tool>
+            </tools>
         </aside>
     </main>
+    <require-fullscreen displayed="false">Tap to go fullscreen</require-fullscreen>
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
     <script src="js/main.js"></script>
