@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport'>
+    <title>Word Connect</title>
+    <script src="//localhost:35729/livereload.js"></script>
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
+    <style>
+        /* Background colors */
+        .left-container {
+            background-color: rgba(0,0,0,.54);
+        }
+        .middle-container {
+            background-color: rgba(0,0,0,.87);
+        }
+        .right-container {
+            background-color: rgba(0,0,0,.54);
+        }
+        .left-container {
+            position: fixed;
+            left: 0px;
+            top: 0px;
+            width: 100px;
+            height: 100%;
+        }
+        .middle-container {
+            margin: 0 auto;
+            position: fixed;
+            left: 100px;
+            right: 100px;
+            top: 0px;
+            height: 100%;
+            text-align: center;
+            padding-top: 75px;
+        }
+        .right-container {
+            position: fixed;
+            right: 0;
+            top: 0px;
+            width: 100px;
+            height: 100%;
+        }
+        aside, section, canvas {
+            border: 1px solid black;
+        }
+
+    </style>
+</head>
+<body>
+    <main class="container">
+        <aside class="left-container">
+            this is the aside
+        </aside>
+        <section id="midContainer" class="middle-container">
+            <canvas id="canvas" class="canvas" width="100" height="100"></canvas>
+        </section>
+        <aside class="right-container">
+            this is the other aside
+        </aside>
+    </main>
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

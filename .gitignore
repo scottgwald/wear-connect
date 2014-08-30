@@ -6,3 +6,7 @@ config.json.old
 /src/
 *.py[cod]
 wearscript.apk
+
+bower_components
+node_modules
+npm-debug.log
