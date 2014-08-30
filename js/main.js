@@ -1,4 +1,5 @@
 //(function(){
+
     //helper methods
     document.on = document.addEventListener;
     document.off = document.removeEventListener;
@@ -45,21 +46,19 @@
     }
     function setFullscreenChangeListeners(fn){
         document.on('webkitfullscreenchange', function(){
-            console.log('hi')
-            toggleFullScreenPrompt(rf)
+            console.log('webkitfullscreenchange');
+            fn();
         });
         document.on('mozfullscreenchange', function(){
-            console.log('hi')
-            toggleFullScreenPrompt(rf)
+            console.log('mozfullscreenchange');
+            fn();
         });
         document.on('fullscreenchange', function(){
-            console.log('hi')
-            toggleFullScreenPrompt(rf)
+            console.log('fullscreenchange');
+            fn();
         });
     }
-    console.log('test')
-    if(mobileCheck()){
-        console.log('is mobile');
+    function requireFullscreen(){
         var rf = document.querySelector('require-fullscreen');
         rf.addEventListener('click', toggleFullScreen);
         toggleFullScreenPrompt(rf);
@@ -67,13 +66,18 @@
             toggleFullScreenPrompt(rf);
         });
     }
+    if(mobileCheck()){
+        console.log('is mobile');
+        requireFullscreen();
+    }
 
     function setSize(){
-        var width = window.innerWidth - 240 // 240 is the sum of both asides width
+        var width = window.innerWidth - 200 - 200 // 200 is the sum of both asides width
                                         // and some extra padding
 
         canvas.width = width;
         canvas.height = width / glassAspectRatio;
+        makeGrid();
     }
 
 
@@ -93,7 +97,7 @@
     
 
     // SPATIAL DIMENSIONS
-    var glassAspectRatio = 16.0/9.0;
+    var glassAspectRatio = 4.0/3.0;
 
     var virtualImageOffset = -200;
     var virtualCanvasWidth = 1500;
@@ -110,11 +114,7 @@
 
     var midContainer = document.querySelector('#midContainer');
 
-    var width = window.innerWidth - 240 // 240 is the sum of both asides width
-                                        // and some extra padding
-
-    canvas.width = width;
-    canvas.height = width / glassAspectRatio;
+    setSize();
 
     function makeGrid(){
         var w = canvas.width;
@@ -128,8 +128,9 @@
             ctx.moveTo(0, y);
             ctx.lineTo(w, y);
         }
-        ctx.strokeStyle = "#fff";
+        ctx.strokeStyle = "#000";
         ctx.stroke();
         
     }
+    makeGrid();
 //}());

@@ -12,18 +12,22 @@
             background-color: #f9f9f9;
             color: #212121;
             font-family: sans-serif;
+            user-select: none;
         }
         /* Background colors */
         /* note: this is necessary to avoid black background in fullscreen */
         .left-container {
-            background-color: #e0e0e0;
+            background-color: #607d8b
         }
         .middle-container {
+            background-color: #f9f9f9;
         }
         .right-container {
-            background-color: #e0e0e0;
+            background-color: #607d8b
         }
         .left-container {
+            z-index: 1000;
+
             position: fixed;
             left: 0px;
             top: 0px;
@@ -32,10 +36,9 @@
             padding-top: 100px;
             
             box-shadow: 2px 0 5px rgba(0,0,0,.26);
-
-            z-index: 1000;
         }
         .middle-container {
+            z-index: 500;
             margin: 0 auto;
             position: fixed;
             left: 100px;
@@ -43,30 +46,40 @@
             top: 0px;
             height: 100%;
             text-align: center;
-            padding-top: 75px;
+            padding-top: 50px;
         }
         .right-container {
+            z-index: 1010;
+
             position: fixed;
-            right: 0;
+            right: 0px;
             top: 0px;
             width: 100px;
             height: 100%;
-            padding-top: 100px;
+            padding-top: 16px;
+            padding-left: 16px;
 
+            color: #f9f9f9;
+            font-size: 24px;
             box-shadow: -2px 0 5px rgba(0,0,0,.26);
 
+            -webkit-transition: width 0.5s cubic-bezier(0.36, 0.01, 0.11, 0.99);
+            -o-transition: width 0.5s cubic-bezier(0.36, 0.01, 0.11, 0.99);
+            transition: width 0.5s cubic-bezier(0.36, 0.01, 0.11, 0.99);
 
-            z-index: 1010;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            
         }
-        canvas {
-            border: 1px solid black;
-            margin-left: -1px;
+        .right-container:hover {
+            width: 248px;
         }
         
         tools {
             /* almost identical to ul */
             margin-top: 0;
             margin-bottom: 10px;
+            margin-left: 16px;
             display: block;
             -webkit-margin-before: 1em;
             -webkit-margin-after: 1em;
@@ -77,7 +90,6 @@
             list-style-type: none;
             margin-left: auto;
             margin-right: auto;
-
         }
         tool {
             /* almost  identical to li */
@@ -94,9 +106,14 @@
             width: 60px;
             height: 60px;
 
+            align-items: flex-start;
+
             /* stylying */
             list-style-type: none;
             font-size: 30px;
+            border-radius: 1px;
+
+            cursor: pointer;
             
             background-color: white;
             box-shadow: 0 2px 5px rgba(0,0,0,.26);
@@ -104,6 +121,45 @@
         tool:nth-last-child(1) {
             margin-bottom: 0;
         }
+        tool:focus{
+            /*background-color: #f3f3f3;*/
+            box-shadow: 0 3px 8px rgba(0,0,0,.23);
+        }
+        tool:active{
+            /*background-color: #f3f3f3;*/
+            box-shadow: 0 4px 10px rgba(0,0,0,.21);
+        }
+
+        pictures {
+            /* almost identical to ul */
+            position: relative;
+            margin-top: 0;
+            margin-bottom: 10px;
+            top: 16px;
+            display: block;
+
+        }
+        picture {
+            /* almost  identical to li */
+            display: list-item;
+            text-align: -webkit-match-parent;
+
+            /* custom style */
+            /* positioning */
+            position: relative;
+            margin-bottom: 16px;
+
+            align-items: flex-start;
+
+            /* stylying */
+            list-style-type: none;
+
+        }
+        pictures picture img {
+            width: 200px;
+        }
+
+
 
         require-fullscreen {
             z-index: 9999999;
@@ -119,6 +175,10 @@
             background-color: #e51c23;
             color: white;
             display: none;
+        }
+        canvas {
+            /*border: 1px solid black;
+            margin-left: -1px;*/
         }
 
     </style>
@@ -138,18 +198,51 @@
             <canvas id="canvas" class="canvas" width="100" height="100"></canvas>
         </section>
         <aside class="right-container">
-            <tools>
-                <tool><i class="fa fa-arrows"></i></tool>
-                <tool><i class="fa fa-paint-brush"></i></tool>
-                <tool><i class="fa fa-microphone"></i></tool>
-                <tool><i class="fa fa-font"></i></tool>
-                <tool><i class="fa fa-question"></i></tool>
-            </tools>
+            <heading>Images</heading>
+            <pictures>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+                <picture>
+                    <img src="img/glass.jpg">
+                </picture>
+            </pictures>
         </aside>
     </main>
     <require-fullscreen displayed="false">Tap to go fullscreen</require-fullscreen>
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="bower_components/angular/angular.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
