@@ -40,9 +40,16 @@
             top: 0px;
             width: 100px;
             height: 100%;
-            padding-top: 100px;
+            padding-top: 16px;
             
+            color: #f9f9f9;
+            font-size: 24px;
             box-shadow: 2px 0 5px rgba(0,0,0,.26);
+
+            text-align: center;
+        }
+        .left-container heading {
+            white-space: nowrap;
         }
         .middle-container {
             z-index: 500;
@@ -105,12 +112,13 @@
             margin-bottom: 10px;
             margin-left: 16px;
             display: block;
-            -webkit-margin-before: 1em;
             -webkit-margin-after: 1em;
             -webkit-margin-start: 0px;
             -webkit-margin-end: 0px;
 
             /* custom style */
+            position: relative;
+            top: 16px;
             list-style-type: none;
             margin-left: auto;
             margin-right: auto;
@@ -139,11 +147,14 @@
 
             cursor: pointer;
             
-            background-color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,.26);
+            color: black;
+            /*box-shadow: 0 2px 5px rgba(0,0,0,.26);*/
         }
         tool:nth-last-child(1) {
             margin-bottom: 0;
+        }
+        tool:hover{
+            box-shadow: 0 2px 5px rgba(0,0,0,.26);
         }
         tool:focus{
             /*background-color: #f3f3f3;*/
@@ -152,6 +163,10 @@
         tool:active{
             /*background-color: #f3f3f3;*/
             box-shadow: 0 4px 10px rgba(0,0,0,.21);
+        }
+        tool[selected]{
+            background-color: #ff4081;
+            color: white;
         }
 
         pictures {
@@ -207,7 +222,7 @@
             margin-left: -1px;*/
             position: absolute;
             left: 100px;
-            top: 50px;
+            top: 66px;
         }
 
     </style>
@@ -215,12 +230,13 @@
 <body>
     <main class="">
         <aside class="left-container">
+            <heading id="leftContainerToggle">Tools</heading>
             <tools>
-                <tool><i class="fa fa-arrows"></i></tool>
-                <tool><i class="fa fa-paint-brush"></i></tool>
-                <tool><i class="fa fa-microphone"></i></tool>
-                <tool><i class="fa fa-font"></i></tool>
-                <tool><i class="fa fa-question"></i></tool>
+                <tool id="panTool" selected><i class="fa fa-arrows"></i></tool>
+                <tool id="paintTool"><i class="fa fa-paint-brush"></i></tool>
+                <tool id="textTool"><i class="fa fa-font"></i></tool>
+                <tool id="audioTool"><i class="fa fa-microphone"></i></tool>
+                <tool id="helpTool"><i class="fa fa-question"></i></tool>
             </tools>
         </aside>
         <section id="midContainer" class="middle-container">

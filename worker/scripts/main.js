@@ -4,6 +4,9 @@
     EventTarget.prototype.on = EventTarget.prototype.addEventListener;
     EventTarget.prototype.off = EventTarget.prototype.removeEventListener;
 
+    var middleContainerPadding = 100
+        navDrawWidth = 100;
+
     // check if fullscreen is required
     (function(){
         function toggleFullScreen() {
@@ -78,7 +81,9 @@
             console.log('resize even called')
             window.clearTimeout(resizeTimeout);
             resizeTimeout = window.setTimeout(function(){
-                setSizeByWidth(window.innerWidth - 200 - 200, glassAspectRatio);
+                setSizeByWidth(
+                    window.innerWidth - (navDrawWidth * 2) - (middleContainerPadding * 2),
+                    glassAspectRatio);
             }, 300);
         }
         function destructor() {
@@ -101,10 +106,18 @@
     }
 
     (function(){
-        var tools = document.querySelector('tools');
-        tools.on('click', function(ev){
-            console.log(ev);
-        })
+        var tools = document.querySelector('tools'),
+            children = tools.children;
+
+        for(var i = 0; i < children.length; i++) {
+            var tool = children[i];
+            tool.on('click', function(ev){
+                var selected = document.querySelector('tool[selected]');
+                selected.removeAttribute('selected');
+                this.setAttribute('selected', '');
+                //ev.
+            }, false);
+        }
     }());
 
 
