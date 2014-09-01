@@ -100,7 +100,12 @@
         }
     }
 
-
+    (function(){
+        var tools = document.querySelector('tools');
+        tools.on('click', function(ev){
+            console.log(ev);
+        })
+    }());
 
 
 
@@ -192,8 +197,25 @@
         movingImage = false;
     }
     function onMouseWheel(ev){
-        var oldScale = img.scale;
+        var relativeWidth = img.width * img.scale,
+            touchX = ev.layerX - img.posX,
+            percentXOffset = touchX / relativeWidth,
+
+            relativeHeight = img.height * img.scale,
+            touchY = ev.layerY - img.posY,
+            percentYOffset = touchY / relativeHeight;
+        
         img.scale *= ev.wheelDelta > 0 ? 1+.05 : 1-0.05;
+
+        var newRelativeWidth = img.width * img.scale,
+            dx = (relativeWidth - newRelativeWidth) * percentXOffset,
+
+            newRelativeHeight = img.height * img.scale,
+            dy = (relativeHeight - newRelativeHeight) * percentYOffset;
+
+        img.posX += dx;
+        img.posY += dy;
+
         //console.log(img.scale)
         console.log(ev)
         redrawImage(img);
