@@ -10,3 +10,4 @@ wearscript.apk
 bower_components
 node_modules
 npm-debug.log
+.DS_STORE
