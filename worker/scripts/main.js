@@ -5,7 +5,8 @@
     EventTarget.prototype.off = EventTarget.prototype.removeEventListener;
 
     var middleContainerPadding = 100
-        navDrawWidth = 100;
+        navDrawWidth = 100,
+        canvasTop = 66;
 
     // check if fullscreen is required
     (function(){
@@ -239,28 +240,150 @@
     canvas.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('mousewheel', onMouseWheel);
 
+
+
+    function TouchListHandler(){
+        this.touches = [];
+        this.numTouches = 0;
+    }
+    TouchListHandler.prototype.addTouch = function(touch){
+        for(var i = 0; i < this.touches.length; i++){
+            if(this.touches[i] === undefined){
+                this.touches[i] = touch;
+                this.numTouches++;
+                return;
+            }
+        }
+        this.touches.push(touch);
+        this.numTouches++;
+    };
+    TouchListHandler.prototype.getTouchIndexById = function(id){
+        for(var i = 0; i < this.touches.length; i++){
+            if(this.touches[i] && this.touches[i].identifier === id){
+                return i;
+            }
+        }
+        return -1;
+    };
+    TouchListHandler.prototype.removeTouchById = function(id){
+        for(var i = 0; i < this.touches.length; i++){
+            if(this.touches[i] && this.touches[i].identifier === id){
+                this.touches[i] = undefined;
+                this.numTouches--;
+            }
+        }
+    };
+    TouchListHandler.prototype.copyTouch = function(touch) {
+        return { 
+            identifier: touch.identifier,
+            pageX: pageXToLocal(touch.pageX), 
+            pageY: pageXToLocal(touch.pageY) 
+        };
+    };
+    
+    TouchListHandler.prototype.updateTouchFromEventByIndex = function(touch, idx){
+        this.touches.splice(idx, 1, touch);
+    };
+    TouchListHandler.prototype.updateTouchByIndex = function(t, idx){
+        // todo: handle converting pageX and pageY to local
+        var touch = this.touches[idx];
+        touch.pageX = t.pageX;
+        touch.pageY = t.pageY;
+    };
+    TouchListHandler.prototype.updateTouchById = function(id){
+        this.updateTouchByIndex(this.getTouchIndexById(id));
+    };
+
+
+    function pageXToLocal(x){
+        return x - navDrawWidth - middleContainerPadding;
+    }
+    function pageYToLocal(y){
+        return y - canvasTop;
+    }
+
+
     var curX,
-        curY;
+        curY,
+        touchList = new TouchListHandler(),
+        startX = 0,
+        startY = 0;
+
     function onTouchStart(ev){
-        console.log('onTouchStart');
-        movingImage = true;
-        curX = ev.x;
-        curY = ev.y;
+        console.log('onTouchStart', ev);
+
+        var touches = ev.changedTouches,
+            numTouches = touches.length,
+            sumX = 0,
+            sumY = 0;
+            
+        for (var i=0; i < touches.length; i++) {
+            console.log("touchstart:"+i+"...");
+            touchList.addTouch(touchList.copyTouch(touches[i]));
+            sumX += pageXToLocal(touches[i].pageX);
+            sumY += pageYToLocal(touches[i].pageY);
+            console.log("touchstart:"+i+".");
+        }
+        if(!movingImage){
+            startX = (sumX / numTouches) - img.posX;
+            startY = (sumY / numTouches) - img.posY;
+            movingImage = true;
+        }
     }
     function onTouchMove(ev){
-        //console.log('onTouchMove');
-        if(movingImage){
-            console.log(ev);
-            var dx = ev.x - curX,
-                dy = ev.y - curY;
-            img.posX += dx;
-            img.posY += dy;
-            redrawImage(img);
+        var touches = ev.changedTouches,
+            sumX = 0,
+            sumY = 0,
+            numTouches = touches.length,
+            avgX = 0,
+            avgY = 0;
+
+        // iterateover each touch point and calculate
+        // the average x and y coord.
+        for (var i=0; i < touches.length; i++) {
+            var idx = touchList.getTouchIndexById(touches[i].identifier);
+            if(idx >= 0) {
+                // swap in the new touch record
+                touchList.updateTouchFromEventByIndex(
+                    touchList.copyTouch(touches[i]), idx);
+                //touchList.updateTouchByIndex(touches[i], idx);
+                sumX += pageXToLocal(touches[i].pageX);
+                sumY += pageYToLocal(touches[i].pageY);
+            } else {
+                console.log("can't figure out which touch to continue");
+            }
         }
+
+        avgX = sumX / numTouches;
+        avgY = sumY / numTouches;
+
+        // TODO: I don't think I'm suppose to be using the average when I draw
+        //       like this. If a new finger is added, the image shouldn't jump
+        //       from one position to a new averaged position.
+        img.posX = avgX - startX;
+        img.posY = avgY - startY;
+        redrawImage(img);
+
+        // if(movingImage){
+        //     //console.log(ev);
+        //     var dx = ev.x - curX,
+        //         dy = ev.y - curY;
+        //     img.posX += dx;
+        //     img.posY += dy;
+        //     redrawImage(img);
+        // }
     }
     function onTouchEnd(ev){
         console.log('onTouchEnd');
-        movingImage = false;
+
+        var touches = ev.changedTouches;
+        touchList.removeTouchById(ev)
+        for (var i=0; i < touches.length; i++) {
+            touchList.removeTouchById(touches[i].identifier);
+        }
+        if(touchList.numTouches === 0){
+            movingImage = false;
+        }
     }
     function onTouchWheel(ev){
         console.log('onTouchWheel');
