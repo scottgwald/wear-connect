@@ -219,8 +219,13 @@ function init() {
     var renderer = new THREE.WebGLRenderer();
     // dpr = window.devicePixelRatio;
     dpr = 1;
+    var container = document.getElementById('cropDiv');
+
+
     renderer.setSize( actualCanvasWidth * dpr, actualCanvasHeight * dpr );
-    document.body.appendChild( renderer.domElement );
+    //document.body.appendChild( renderer.domElement );
+    container.appendChild( renderer.domElement );
+
     elem = renderer.domElement;
     boundingRect = elem.getBoundingClientRect();
     camera = new THREE.OrthographicCamera( 0, virtualCanvasWidth, virtualCanvasHeight, 0, 1, 5000 );
@@ -504,8 +509,9 @@ function init() {
     if(paint){
 
 
-            var x = event.clientX;
-            var y = event.clientY;
+        var x = event.clientX- container.offsetLeft;
+            var y = event.clientY- container.offsetTop;
+
 
             var pixelXY = actualToPixelScale( new THREE.Vector2(x,y));
             addClick(pixelXY, true);
@@ -611,8 +617,9 @@ function init() {
     }
     function onDocumentMouseDown(event) {
 
-            var x = event.clientX;
-            var y = event.clientY;
+            var x = event.clientX- container.offsetLeft;
+            var y = event.clientY- container.offsetTop;
+            console.log(container.offsetLeft);
 
             paint = true;
             var pixelXY = actualToPixelScale( new THREE.Vector2(x,y));
