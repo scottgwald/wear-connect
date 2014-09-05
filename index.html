@@ -6,7 +6,10 @@
   <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
   <link href="css/cropper.css" rel="stylesheet" type="text/css">
 </head>
-<body>
+<body style="
+position: fixed;
+top: 0 px;
+left: 0 px;">
 <canvas id="myCanvas" width="1300" height="1300" style="border: 20px solid #000"></canvas> 
 <canvas id="textCanvas"></canvas>
 <div id="cropper"></div>
@@ -19,20 +22,15 @@
 <script src="js/msgpack.js"></script>
 <script src="js/wearscript-client.js"></script>
 <script type="text/javascript" src="js/reconnecting-websocket.js"></script>
-<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
-<script src="//www.parsecdn.com/js/parse-1.2.19.min.js"></script>
-<script src="////code.jquery.com/jquery-1.11.0.min.js"></script>
-<script src="js/wc-get-endpoint.js"></script>
-
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script src ="js/cropper.js"></script>
 <script>
-function wc() {
-  get_wc_endpoint( main );
-}
 
-$(document).ready( wc );
+var WSEndpoint = 'ws://wearconnect.thruhere.net:8112/';
+// var WSEndpoint = 'ws://66.30.119.59:8112/';
+// var WSEndpoint = 'ws://192.168.2.230:8112/';
 
-function main( wc_endpoint ) {
+$(document).ready(function () {
   Date.prototype.today = function () {
     return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
   }
@@ -63,7 +61,7 @@ function main( wc_endpoint ) {
   }
 
 
-  ws = new WearScriptConnection(new ReconnectingWebSocket( wc_endpoint ),  "wc-webapp", Math.floor(Math.random() * 100000), onopen);
+  ws = new WearScriptConnection(new ReconnectingWebSocket(WSEndpoint),  "wc-webapp", Math.floor(Math.random() * 100000), onopen);
   
   function onopen() {
     console.log("WearScriptConnection onopen");
@@ -87,7 +85,7 @@ function main( wc_endpoint ) {
     });
     ws.send('register', 'registered', 'worker:' + currentTimeString());
   }
-};
+}); 
 
 </script>
 
@@ -102,8 +100,6 @@ Enter yout text here:
 <form id="textform" action="javascript:void(0);" >
   <input type="text" id="field" />
 </form>
-
-
 
 
 <script>
