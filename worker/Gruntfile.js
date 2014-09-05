@@ -2,7 +2,7 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     watch: {
-      files: ['Gruntfile.js', 'index.html', 'scripts/main.js'],
+      files: ['Gruntfile.js', 'index.html', 'scripts/**/*.js'],
       options: {
           livereload: true
       }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-ng-app="app" data-ng-controller="AppController">
 <head>
     <meta charset="UTF-8">
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' name='viewport'>
@@ -21,6 +21,19 @@
             -o-user-select: none;
             user-select: none;
         }
+
+        /* prevent overscrolling on mac */
+        html, body {
+            width:      100%;
+            height:     100%;
+            overflow:   hidden;
+        }
+
+        body > div {
+            height:     100%;
+            overflow:   scroll;
+        }
+
         /* Background colors */
         /* note: this is necessary to avoid black background in fullscreen */
         .left-container {
@@ -293,14 +306,16 @@
         </aside>
     </main>
     <require-fullscreen displayed="false">Tap to go fullscreen</require-fullscreen>
-    <script src="bower_components/jquery/dist/jquery.js"></script>
-    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <!-- // <script src="bower_components/jquery/dist/jquery.js"></script> -->
+    <!-- // <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script> -->
     <script src="bower_components/angular/angular.js"></script>
 
     <script src="bower_components/reconnecting-websocket/reconnecting-websocket.js"></script>
     <script src="bower_components/wearscript-js/wearscript-client.js"></script>
     <script src="bower_components/msgpack-javascript/msgpack.js"></script>
-
+    
+    <script src="scripts/controllers/appCtrl.js"></script>
+    <script src="scripts/modules/app.js"></script>
     <script src="scripts/main.js"></script>
     <!--<script src="scripts/cropper.js"></script>-->
 </body>
