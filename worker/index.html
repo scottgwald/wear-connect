@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport'>
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' name='viewport'>
     <title>Word Connect</title>
     <script src="//192.168.1.129:35729/livereload.js"></script>
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
     <link rel="stylesheet" href="bower_components/fontawesome/css/font-awesome.css">
     <style>
         html body {
-            background-color: #f9f9f9;
+            background-color: #181818;
             color: #212121;
             font-family: sans-serif;
 
@@ -27,7 +27,7 @@
             background-color: #3F51B5;
         }
         .middle-container {
-            background-color: #f9f9f9;
+            background-color: #181818;
         }
         .right-container {
             background-color: #3F51B5;
@@ -61,6 +61,8 @@
             height: 100%;
             text-align: center;
             padding-top: 50px;
+
+            color: #f9f9f9;
         }
         .right-container {
             z-index: 1010;
@@ -224,6 +226,9 @@
             left: 100px;
             top: 66px;
         }
+        canvas#backgroundCanvas {
+            background-color: #000;
+        }
 
     </style>
 </head>
@@ -242,7 +247,7 @@
         <section id="midContainer" class="middle-container">
             <canvases>
                 <canvas id="backgroundCanvas" class="canvas" width="100" height="100"></canvas>
-                <canvas id="canvas" class="canvas" width="100" height="100"></canvas>
+                <canvas id="mainCanvas" class="canvas" width="100" height="100"></canvas>
             </canvases>
         </section>
         <aside class="right-container" state="closed">
@@ -291,6 +296,11 @@
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
     <script src="bower_components/angular/angular.js"></script>
+
+    <script src="bower_components/reconnecting-websocket/reconnecting-websocket.js"></script>
+    <script src="bower_components/wearscript-js/wearscript-client.js"></script>
+    <script src="bower_components/msgpack-javascript/msgpack.js"></script>
+
     <script src="scripts/main.js"></script>
     <!--<script src="scripts/cropper.js"></script>-->
 </body>

@@ -1,14 +1,41 @@
 //(function(){
 
-    //helper methods
+    //////////////////////////////////////////////
+    /*         Helper methods for Events        */
+    //////////////////////////////////////////////
     EventTarget.prototype.on = EventTarget.prototype.addEventListener;
     EventTarget.prototype.off = EventTarget.prototype.removeEventListener;
 
+    //////////////////////////////////////////////
+    /*             Constant  values             */
+    //////////////////////////////////////////////
     var middleContainerPadding = 100
         navDrawWidth = 100,
-        canvasTop = 66;
+        canvasTop = 66,
+        glassAspectRatio = 4.0/3.0;
 
-    // check if fullscreen is required
+    function computeCanvasWidth(){
+        return window.innerWidth - (navDrawWidth * 2) - (middleContainerPadding * 2);
+    }
+    function resizeCanvasByWidth(canvas, width, ratio, callback){
+        canvas.width = width;
+        canvas.height = width / (ratio || 1);
+        makeGrid(canvas);
+
+        if(callback){
+            callback();
+        }
+    }
+    // TODO: remove this everywhere and handle redrawing the image in a better way
+    function _redrawImg(){
+        if(img){
+            redrawImage(mainCanvas, img);
+        }
+    }
+
+    //////////////////////////////////////////////
+    /*      Check if fullscreen is required     */
+    //////////////////////////////////////////////
     (function(){
         function toggleFullScreen() {
             if (!document.fullscreenElement &&    // alternative standard method
@@ -75,16 +102,26 @@
         }
     }());
 
-    // resizeHandler
+    //////////////////////////////////////////////
+    /*          Handle resizing window          */
+    //////////////////////////////////////////////
     (function(){
         var resizeTimeout;
         function resizeHandler() {
             console.log('resize even called')
             window.clearTimeout(resizeTimeout);
             resizeTimeout = window.setTimeout(function(){
-                setSizeByWidth(
-                    window.innerWidth - (navDrawWidth * 2) - (middleContainerPadding * 2),
-                    glassAspectRatio);
+                var width = computeCanvasWidth();
+                resizeCanvasByWidth(
+                    mainCanvas,
+                    width,
+                    glassAspectRatio,
+                    _redrawImg);
+                resizeCanvasByWidth(
+                    backgroundCanvas,
+                    width,
+                    glassAspectRatio,
+                    _redrawImg);
             }, 300);
         }
         function destructor() {
@@ -94,18 +131,9 @@
         window.on('resize', resizeHandler);
     }());
 
-    function setSizeByWidth(width, ratio){
-        backgroundCanvas.width = width;
-        backgroundCanvas.height = width / ratio;
-        makeBackgroundGrid();
-
-        canvas.width = width;
-        canvas.height = width / ratio;
-        if(img){
-            redrawImage(img);
-        }
-    }
-
+    //////////////////////////////////////////////
+    /*        Add functionality to tools        */
+    //////////////////////////////////////////////
     (function(){
         var tools = document.querySelector('tools'),
             children = tools.children;
@@ -116,57 +144,48 @@
                 var selected = document.querySelector('tool[selected]');
                 selected.removeAttribute('selected');
                 this.setAttribute('selected', '');
-                //ev.
             }, false);
         }
     }());
 
 
-
-
-
-    // SPATIAL DIMENSIONS
-    var glassAspectRatio = 4.0/3.0;
-
-    var virtualImageOffset = -200;
-    var virtualCanvasWidth = 1500;
-    var virtualCanvasHeight = 750;
-
-    var actualCanvasWidth = 1000; // later window.innerWidth?
-    var actualCanvasHeight = 500; // later window.innerHeight?
-
-    var pixelImageWidth = 416;
-    var pixelImageHeight = 304;
-
-    var canvas = document.querySelector('#canvas'),
+    var mainCanvas = document.querySelector('#mainCanvas'),
+        mainCtx = mainCanvas.getContext('2d'),
         backgroundCanvas = document.querySelector('#backgroundCanvas'),
-        ctx = canvas.getContext('2d'),
         backgroundCtx = backgroundCanvas.getContext('2d');
 
     var midContainer = document.querySelector('#midContainer');
-
-    setSizeByWidth(window.innerWidth - 200 - 200, glassAspectRatio);
-    // -200 for left and right drawer.
-    // -200 for padding.
-
     
-    function makeBackgroundGrid(){
-        var w = backgroundCanvas.width;
-        var h = backgroundCanvas.height;
+
+    function init(){
+        resizeCanvasByWidth(
+            mainCanvas, computeCanvasWidth(),
+            glassAspectRatio, _redrawImg);
+        resizeCanvasByWidth(
+            backgroundCanvas, computeCanvasWidth(),
+            glassAspectRatio, _redrawImg);
+        makeGrid(backgroundCanvas, "#f9f9f9");
+    }
+
+
+    function makeGrid(canvas, color){
+        var w = canvas.width,
+            h = canvas.height,
+            ctx = canvas.getContext('2d');
 
         for(var x = 0.5; x < w; x+=10){
-            backgroundCtx.moveTo(x, 0);
-            backgroundCtx.lineTo(x, h);
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
         }
         for(var y = 0.5; y < h; y+=10){
-            backgroundCtx.moveTo(0, y);
-            backgroundCtx.lineTo(w, y);
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
         }
-        backgroundCtx.strokeStyle = "#000";
-        backgroundCtx.stroke();
-        
+        ctx.strokeStyle = color || "#000";
+        ctx.stroke();
     }
-    makeBackgroundGrid();
+
+    init();
 
     var img = new Image();
     img.onload = function() {
@@ -174,21 +193,22 @@
         img.posX = 0;
         img.posY = 0;
         img.scale = 1;
-        drawImage(this);
+        drawImage(mainCanvas, this);
     };
     img.src = 'images/glass.jpg';
 
-    function clearCanvas(c){
-        c.width = c.width;
+    function clearCanvas(canvas){
+        canvas.width = canvas.width;
     }
-    function drawImage(image){
+    function drawImage(canvas, image){
+        var ctx = canvas.getContext('2d');
         ctx.drawImage(image,
             image.posX, image.posY,
             image.width * image.scale, image.height * image.scale);
     }
-    function redrawImage(image){
+    function redrawImage(canvas, image){
         clearCanvas(canvas);
-        drawImage(image);
+        drawImage(mainCanvas, image);
     }
 
 
@@ -201,10 +221,10 @@
     }
     function onMouseMove(ev){
         if(movingImage){
-            console.log(ev);
+            //console.log(ev);
             img.posX += ev.movementX;
             img.posY += ev.movementY;
-            redrawImage(img);
+            redrawImage(mainCanvas, img);
         }
     }
     function onMouseUp(ev){
@@ -231,14 +251,14 @@
         img.posY += dy;
 
         //console.log(img.scale)
-        console.log(ev)
-        redrawImage(img);
+        //console.log(ev)
+        redrawImage(mainCanvas, img);
     }
     
-    canvas.addEventListener('mousedown', onMouseDown);
-    canvas.addEventListener('mousemove', onMouseMove);
-    canvas.addEventListener('mouseup', onMouseUp);
-    canvas.addEventListener('mousewheel', onMouseWheel);
+    mainCanvas.addEventListener('mousedown', onMouseDown);
+    mainCanvas.addEventListener('mousemove', onMouseMove);
+    mainCanvas.addEventListener('mouseup', onMouseUp);
+    mainCanvas.addEventListener('mousewheel', onMouseWheel);
 
 
 
@@ -310,7 +330,8 @@
         startY = 0;
 
     function onTouchStart(ev){
-        console.log('onTouchStart', ev);
+        console.log('onTouchStart', 'touch list length: ', ev.changedTouches.length, 'id of 0: ', 
+            ev.changedTouches[0].identifier);
 
         var touches = ev.changedTouches,
             numTouches = touches.length,
@@ -362,7 +383,7 @@
         //       from one position to a new averaged position.
         img.posX = avgX - startX;
         img.posY = avgY - startY;
-        redrawImage(img);
+        redrawImage(mainCanvas, img);
 
         // if(movingImage){
         //     //console.log(ev);
@@ -385,19 +406,20 @@
             movingImage = false;
         }
     }
-    function onTouchWheel(ev){
-        console.log('onTouchWheel');
-        img.scale += ev.wheelDelta > 0 ? 0.1 : -0.1;
-        console.log(img.scale)
-        redrawImage(img);
+    function onTouchCancel(){
+
+    }
+    function onTouchLeave(){
+
     }
 
-    canvas.addEventListener('touchstart', onTouchStart);
-    canvas.addEventListener('touchmove', onTouchMove);
-    canvas.addEventListener('touchend',   onTouchEnd);
-    canvas.addEventListener('touchwheel',onTouchWheel);
+    mainCanvas.addEventListener('touchstart', onTouchStart);
+    mainCanvas.addEventListener('touchmove', onTouchMove);
+    mainCanvas.addEventListener('touchend',   onTouchEnd);
+    mainCanvas.addEventListener('touchcancel', onTouchCancel);
+    mainCanvas.addEventListener('touchleave', onTouchLeave);
+
     
-    //canvas.addEventListener
 
 
 
