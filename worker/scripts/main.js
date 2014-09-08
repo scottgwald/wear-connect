@@ -12,15 +12,17 @@
     var middleContainerPadding = 100
         navDrawWidth = 100,
         canvasTop = 66,
-        glassAspectRatio = 4.0/3.0;
+        glassPictureRatio = 79 / 58,
+        glassAspectRatio = 640 / 360; // 16/9
 
     function computeCanvasWidth(){
-        return window.innerWidth - (navDrawWidth * 2) - (middleContainerPadding * 2);
+        //return window.innerWidth - (navDrawWidth * 2) - (middleContainerPadding * 2);
+        return 640;
     }
     function resizeCanvasByWidth(canvas, width, ratio, callback){
         canvas.width = width;
         canvas.height = width / (ratio || 1);
-        makeGrid(canvas);
+        //makeGrid(canvas);
 
         if(callback){
             callback();
@@ -33,10 +35,10 @@
         }
     }
 
-    //////////////////////////////////////////////
-    /*      Check if fullscreen is required     */
-    //////////////////////////////////////////////
     (function(){
+        //////////////////////////////////////////////
+        /*      Check if fullscreen is required     */
+        //////////////////////////////////////////////
         function toggleFullScreen() {
             if (!document.fullscreenElement &&    // alternative standard method
                     !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {  // current working methods
@@ -102,10 +104,10 @@
         }
     }());
 
-    //////////////////////////////////////////////
-    /*          Handle resizing window          */
-    //////////////////////////////////////////////
     (function(){
+        //////////////////////////////////////////////
+        /*          Handle resizing window          */
+        //////////////////////////////////////////////
         var resizeTimeout;
         function resizeHandler() {
             console.log('resize even called')
@@ -116,12 +118,18 @@
                     mainCanvas,
                     width,
                     glassAspectRatio,
-                    _redrawImg);
+                    function(){
+                        makeGrid(backgroundCanvas, "#f9f9f9");
+                        _redrawImg();
+                    });
                 resizeCanvasByWidth(
                     backgroundCanvas,
                     width,
                     glassAspectRatio,
-                    _redrawImg);
+                    function(){
+                        makeGrid(backgroundCanvas, "#f9f9f9");
+                        _redrawImg();
+                    });
             }, 300);
         }
         function destructor() {
@@ -131,10 +139,10 @@
         window.on('resize', resizeHandler);
     }());
 
-    //////////////////////////////////////////////
-    /*        Add functionality to tools        */
-    //////////////////////////////////////////////
     (function(){
+        //////////////////////////////////////////////
+        /*        Add functionality to tools        */
+        //////////////////////////////////////////////
         var tools = document.querySelector('tools'),
             children = tools.children;
 
@@ -148,6 +156,21 @@
         }
     }());
 
+    (function(){
+        //////////////////////////////////////////////
+        /*     Add functionality to right drawer    */
+        //////////////////////////////////////////////
+        var rightDrawer = document.querySelector('.right-container');
+        var rightContainerToggle = document.querySelector('#rightContainerToggle')
+        rightContainerToggle.addEventListener('click', function(ev){
+            var state = rightDrawer.getAttribute('state');
+            if(state == 'open'){
+                rightDrawer.setAttribute('state', 'closed');
+            } else {
+                rightDrawer.setAttribute('state', 'open');
+            }
+        },false);
+    }());
 
     var mainCanvas = document.querySelector('#mainCanvas'),
         mainCtx = mainCanvas.getContext('2d'),
@@ -155,7 +178,7 @@
         backgroundCtx = backgroundCanvas.getContext('2d');
 
     var midContainer = document.querySelector('#midContainer');
-    
+
 
     function init(){
         resizeCanvasByWidth(
@@ -202,6 +225,12 @@
     }
     function drawImage(canvas, image){
         var ctx = canvas.getContext('2d');
+        /**
+         *  image.posX,
+                 .posY,
+                 .scale
+            I added all of these properties
+         */
         ctx.drawImage(image,
             image.posX, image.posY,
             image.width * image.scale, image.height * image.scale);
@@ -211,6 +240,45 @@
         drawImage(mainCanvas, image);
     }
 
+    function checkImagePosition(canvas, image){
+        var relativeWidth = image.width * image.scale,
+            relativeHeight = image.height * image.scale,
+            check = true,
+            margin = 10;
+
+        if(image.posX + relativeWidth < 0 + margin) {
+            image.posX =  margin - relativeWidth;
+            check = false;
+        }
+
+        if(image.posY + relativeHeight < 0 + margin) {
+            image.posY = margin - relativeHeight;
+            check = false;
+        }
+
+        if(image.posX > canvas.width - margin) {
+            image.posX = canvas.width - margin;
+            check = false;
+        }
+        
+        if(image.posY > canvas.height - margin) {
+            image.posY = canvas.height - margin;
+            check = false;
+        }
+        return check;
+    }
+
+    function checkImageScale(canvas, image) {
+        var relativeWidth = image.width * image.scale,
+            relativeHeight = image.height * image.scale,
+            check = true;
+
+        if(relativeWidth < canvas.width){
+            // TODO: correct image's scale
+        }
+
+        return true;
+    }
 
 
 
@@ -220,14 +288,19 @@
         movingImage = true;
     }
     function onMouseMove(ev){
+        ev.stopPropagation();
         if(movingImage){
             //console.log(ev);
             img.posX += ev.movementX;
             img.posY += ev.movementY;
+
+            checkImagePosition(mainCanvas, img);
+
             redrawImage(mainCanvas, img);
         }
     }
     function onMouseUp(ev){
+        ev.stopPropagation();
         movingImage = false;
     }
     function onMouseWheel(ev){
@@ -241,6 +314,9 @@
         
         img.scale *= ev.wheelDelta > 0 ? 1+.05 : 1-0.05;
 
+        checkImageScale(mainCanvas, img);
+
+        console.log('img.scale =', img.scale);
         var newRelativeWidth = img.width * img.scale,
             dx = (relativeWidth - newRelativeWidth) * percentXOffset,
 
@@ -249,6 +325,8 @@
 
         img.posX += dx;
         img.posY += dy;
+
+        checkImagePosition(mainCanvas, img);
 
         //console.log(img.scale)
         //console.log(ev)
@@ -260,8 +338,31 @@
     mainCanvas.addEventListener('mouseup', onMouseUp);
     mainCanvas.addEventListener('mousewheel', onMouseWheel);
 
+    // if the cursor is off of the canvas, this allows the user to continue
+    // dragging the image around
+    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mousemove', onMouseMove);
 
+/*
+    public class TouchListHandler {
+        Array touches = [];
+        public TouchListHandler(){
+            this.touches = [];
+            this.numTouches = 0;
+        }
 
+        public void addTouch(touch){
+            this.touches.push(touch);
+        }
+    }
+*/
+
+    /*
+     * @name TouchListHandler
+     * @description Used to manage multiple touches on a touch enabled device
+     *
+     * @reference https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Touch_events
+     */
     function TouchListHandler(){
         this.touches = [];
         this.numTouches = 0;
@@ -323,9 +424,7 @@
     }
 
 
-    var curX,
-        curY,
-        touchList = new TouchListHandler(),
+    var touchList = new TouchListHandler(),
         startX = 0,
         startY = 0;
 
@@ -398,7 +497,7 @@
         console.log('onTouchEnd');
 
         var touches = ev.changedTouches;
-        touchList.removeTouchById(ev)
+        //touchList.removeTouchById(ev)
         for (var i=0; i < touches.length; i++) {
             touchList.removeTouchById(touches[i].identifier);
         }
@@ -427,14 +526,166 @@
 
 
 
-    var rightDrawer = document.querySelector('.right-container');
-    var rightContainerToggle = document.querySelector('#rightContainerToggle')
-    rightContainerToggle.addEventListener('click', function(ev){
-        var state = rightDrawer.getAttribute('state');
-        if(state == 'open'){
-            rightDrawer.setAttribute('state', 'closed');
-        } else {
-            rightDrawer.setAttribute('state', 'open');
+
+
+
+    //addNewPictureFromDataUrl(mainCanvas.toDataURL());
+
+    function addNewPictureFromDataUrl(imageData){
+        var image = new Image(),
+            picture = document.createElement('picture'),
+            pictures = document.querySelector('pictures');
+        image.onload = function() {
+            picture.appendChild(image);
+            prependElement(pictures, picture);
         }
-    },false);    
+        image.src = imageData;
+    }
+
+    function prependElement(parent, child){
+        parent.insertBefore(child, parent.insertBefore);
+    }
+
+
+
+
+
+
+
+
+    var configURL = "config.json";
+
+    function getWCEndpoint(callback) {
+        console.log('in getWCEndpoint');
+        var request = new XMLHttpRequest();
+        request.open("GET", configURL, true);
+        request.onreadystatechange = function() {
+            if (request.readyState != 4 || request.status != 200) return;
+            parseEndpoint(request.responseText, callback);
+        };
+        request.send();
+    }
+
+    function parseEndpoint(wcConfigRaw, callback) {
+        console.log('in parseEndpoint');
+        var wcConfig = {};
+        if (typeof wcConfigRaw === "string") {
+            wcConfig = JSON.parse(wcConfigRaw);
+        } else if (typeof wcConfigRaw === "object") {
+            wcConfig = wcConfigRaw
+        }
+        getEndpoint(wcConfig, callback);
+    }
+
+    function getEndpoint(wcConfig, callback) {
+        console.log('in getEndpoint', wcConfig);
+        if (wcConfig.use_local) {
+            callback(wcConfig.wc_ip_address);
+        } else {
+            // Parse.initialize(wcConfig.applicationId, wcConfig.javaScriptKey);
+            // var query = new Parse.Query(wcConfig.className);
+            // query.get(wcConfig.objectId, {
+            //     success: function(object) {
+            //         wc_endpoint = object.attributes[wcConfig.columnName];
+            //         callback(wc_endpoint);
+            //     },
+            //     error: function(object, error) {
+            //         console.log("Parse error, sad face.");
+            //     }
+            // });
+        }
+    }
+
+
+    function wc() {
+        console.log('in wc');
+        getWCEndpoint(main);
+    }
+
+    //$(document).ready(wc);
+
+    function main(wc_endpoint) {
+        console.log('in main');
+        Date.prototype.today = function() {
+        
+            return ((this.getDate() < 10) ? "0" : "") + this.getDate() + "/" + (((this.getMonth() + 1) < 10) ? "0" : "") + (this.getMonth() + 1) + "/" + this.getFullYear();
+        }
+        Date.prototype.timeNow = function() {
+        
+            return ((this.getHours() < 10) ? "0" : "") + this.getHours() + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds();
+        }
+        Date.prototype.timeNowMilli = function() {
+        
+            return ((this.getHours() < 10) ? "0" : "") + this.getHours() + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds() + "." + padInt(this.getMilliseconds(), 3);
+        }
+        function padInt(_int, len) {
+            paddingNeeded = len - _int.toString().length;
+            if (paddingNeeded < 0) {
+                return _int;
+            } else {
+                paddingArr = [];
+                for (var k = 0; k < paddingNeeded; k++) {
+                    paddingArr.push('0');
+                }
+                return paddingArr.join("") + _int.toString();
+            }
+        }
+        function currentTimeString() {
+        
+            return new Date().today() + " @ " + new Date().timeNowMilli();
+        }
+
+        var ws = new WearScriptConnection(
+            new ReconnectingWebSocket(wc_endpoint),
+            "wc-webapp",
+            Math.floor(Math.random() * 100000),
+            onopen
+        );
+        console.log(ws)
+
+        function onopen() {
+            console.log("WearScriptConnection onopen");
+            ws.subscribe('registered', function(channel, name) {
+                console.log('registered as ' + name);
+            });
+            console.log("%cAbout to subscribe to image channel", "color: green");
+            console.log(ws)
+            ws.subscribe('image', function(chan, timestamp, image) {
+                console.log('%cgot image', "color: green")
+                console.log(JSON.stringify({
+                    chan: chan,
+                    timestamp: timestamp
+                }), null, 4);
+
+                //$('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
+                //if (!isTagging) {
+                    placePicture('data:image/jpg;base64,' + btoa(image));//, ws, 'image');
+                    console.log('in if (!isTagging)');
+
+
+                //ws.publish('words',,)
+
+            });
+            ws.send('register', 'registered', 'worker:' + currentTimeString());
+        }
+    };
+
+    function placePicture(imageDataUrl, ws, channel) {
+        console.log('in placePicture');
+        if(ws){
+            console.log('unsubscribe', channel)
+            ws.unsubscribe(channel);
+        }
+        var incomingImages = document.querySelector('incoming-images'),
+            incomingImage = document.createElement('incoming-image'),
+            image = new Image();
+
+        image.onload = function(){
+            incomingImage.appendChild(image);
+            prependElement(incomingImages, incomingImage);
+        }
+        image.src = imageDataUrl;
+    }
+
+
 //}());

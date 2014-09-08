@@ -2,6 +2,7 @@ sync_gists.sh
 untracked/
 src/pip-delete-this-directory.txt
 config.json
+worder/config.json
 config.json.old
 /src/
 *.py[cod]
