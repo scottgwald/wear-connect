@@ -87,7 +87,7 @@ def finish():
     reactor.stop()
 
     # close chrome window
-    close_page()
+    ##close_page()
 
     # kill everything
     server_done_event.wait()
