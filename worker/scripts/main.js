@@ -1,4 +1,101 @@
 //(function(){
+    //////////////////////////////////////////////
+    /*          Hook up custom elements         */
+    //////////////////////////////////////////////
+    var globals = this,
+        customElementPrototypes = {
+        'tools-container': function(){
+            var prototype = Object.create(HTMLElement.prototype);
+            prototype.foo = function(){
+                console.log('called foooo');
+            }
+            Object.defineProperty(prototype, "bar", {value: 5});
+            return { prototype: prototype };
+        },
+        'tool-element': function(){
+            var prototype = Object.create(HTMLElement.prototype);
+            prototype.createdCallback = function() {
+                this.addEventListener('click', function(ev){
+                    var selected = document.querySelector('tool-element[selected]');
+                    selected.removeAttribute('selected');
+                    this.setAttribute('selected', '');
+                }, false);
+            };
+            return { prototype: prototype };
+        },
+        'canvases-container': defaultPrototypeFunction,
+        'pictures-container': defaultPrototypeFunction,
+        'picture-element': defaultPrototypeFunction,
+        'incoming-images': function(){
+            var superClass = HTMLElement,
+                prototype = Object.create(superClass.prototype);
+            prototype.addImage = function(data){
+                console.log(data);
+                this.appendChild(document.createTextNode(data))
+            }
+            return { prototype: prototype };
+        },
+        'incoming-image': function(){
+            var superClass = HTMLImageElement,
+                prototype = Object.create(superClass.prototype);
+            prototype.createdCallback = function() {
+                this.addEventListener('click', function(ev){
+                    // TODO: start editing photo
+                }, false);
+            };
+            Object.defineProperty(prototype, "bar", {value: 100});
+
+
+            return { prototype: prototype,
+                     extends: 'img' };
+        },
+        'outgoing-image': function(){
+            var superClass = HTMLImageElement,
+                prototype = Object.create(superClass.prototype);
+            prototype.createdCallback = function() {
+                this.addEventListener('click', function(ev){
+                    // TODO: what happens when you click an outgoing image?
+                }, false);
+            };
+            Object.defineProperty(prototype, "bar", {value: 100});
+
+
+            return { prototype: prototype,
+                     extends: 'img' };
+        }
+    };
+
+    function defaultPrototypeFunction() {
+        var superClass = HTMLElement,
+            prototype = Object.create(superClass.prototype);
+        console.log('defaultPrototypeFunction()')
+        return { prototype: prototype };
+    }
+
+    function tagNameToConstructorName(tag){
+        // "x-custom-tag" -> "XCustomTag"
+        var elementName = '',
+            x = tag.split('-');
+        for(var i = 0; i < x.length; i++){
+            elementName += x[i].substr(0,1).toUpperCase() + x[i].substr(1);
+        }
+        return elementName;
+    }
+
+    for(key in customElementPrototypes){
+        // var cutsomPrototype = customElementPrototypes[key];
+        // customElementConstructors[key] =
+        //     document.registerElement(key, {
+        //         prototype: Object.create(HTMLElement.prototype, cutsomPrototype)
+        //     });
+
+        //==========================//
+
+        var customPrototype = customElementPrototypes[key](),
+            elementName = tagNameToConstructorName(key);
+        globals[elementName] =
+            document.registerElement(key, customPrototype);
+    }
 
     //////////////////////////////////////////////
     /*         Helper methods for Events        */
@@ -137,23 +234,6 @@
         }
         //add listeners
         window.on('resize', resizeHandler);
-    }());
-
-    (function(){
-        //////////////////////////////////////////////
-        /*        Add functionality to tools        */
-        //////////////////////////////////////////////
-        var tools = document.querySelector('tools'),
-            children = tools.children;
-
-        for(var i = 0; i < children.length; i++) {
-            var tool = children[i];
-            tool.on('click', function(ev){
-                var selected = document.querySelector('tool[selected]');
-                selected.removeAttribute('selected');
-                this.setAttribute('selected', '');
-            }, false);
-        }
     }());
 
     (function(){
@@ -529,12 +609,12 @@
 
 
 
-    //addNewPictureFromDataUrl(mainCanvas.toDataURL());
+    //addNewPictureFromDataURL(mainCanvas.toDataURL());
 
-    function addNewPictureFromDataUrl(imageData){
+    function addNewPictureFromDataURL(imageData){
         var image = new Image(),
-            picture = document.createElement('picture'),
-            pictures = document.querySelector('pictures');
+            picture = document.createElement('picture-element'),
+            pictures = document.querySelector('pictures-container');
         image.onload = function() {
             picture.appendChild(image);
             prependElement(pictures, picture);
@@ -549,6 +629,37 @@
 
 
 
+
+
+
+    Date.prototype.today = function() {
+    
+        return ((this.getDate() < 10) ? "0" : "") + this.getDate() + "/" + (((this.getMonth() + 1) < 10) ? "0" : "") + (this.getMonth() + 1) + "/" + this.getFullYear();
+    }
+    Date.prototype.timeNow = function() {
+    
+        return ((this.getHours() < 10) ? "0" : "") + this.getHours() + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds();
+    }
+    Date.prototype.timeNowMilli = function() {
+    
+        return ((this.getHours() < 10) ? "0" : "") + this.getHours() + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds() + "." + padInt(this.getMilliseconds(), 3);
+    }
+    function padInt(_int, len) {
+        paddingNeeded = len - _int.toString().length;
+        if (paddingNeeded < 0) {
+            return _int;
+        } else {
+            paddingArr = [];
+            for (var k = 0; k < paddingNeeded; k++) {
+                paddingArr.push('0');
+            }
+            return paddingArr.join("") + _int.toString();
+        }
+    }
+    function currentTimeString() {
+    
+        return new Date().today() + " @ " + new Date().timeNowMilli();
+    }
 
 
 
@@ -597,50 +708,27 @@
     }
 
 
-    function wc() {
-        console.log('in wc');
+    function startWordConnect() {
+        console.log('in startWordConnect');
         getWCEndpoint(main);
     }
 
-    //$(document).ready(wc);
+    //$(document).ready(startWordConnect);
+
+    var incomingImageHandler = undefined;
 
     function main(wc_endpoint) {
         console.log('in main');
-        Date.prototype.today = function() {
-        
-            return ((this.getDate() < 10) ? "0" : "") + this.getDate() + "/" + (((this.getMonth() + 1) < 10) ? "0" : "") + (this.getMonth() + 1) + "/" + this.getFullYear();
-        }
-        Date.prototype.timeNow = function() {
-        
-            return ((this.getHours() < 10) ? "0" : "") + this.getHours() + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds();
-        }
-        Date.prototype.timeNowMilli = function() {
-        
-            return ((this.getHours() < 10) ? "0" : "") + this.getHours() + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds() + "." + padInt(this.getMilliseconds(), 3);
-        }
-        function padInt(_int, len) {
-            paddingNeeded = len - _int.toString().length;
-            if (paddingNeeded < 0) {
-                return _int;
-            } else {
-                paddingArr = [];
-                for (var k = 0; k < paddingNeeded; k++) {
-                    paddingArr.push('0');
-                }
-                return paddingArr.join("") + _int.toString();
-            }
-        }
-        function currentTimeString() {
-        
-            return new Date().today() + " @ " + new Date().timeNowMilli();
-        }
 
-        var ws = new WearScriptConnection(
-            new ReconnectingWebSocket(wc_endpoint),
-            "wc-webapp",
-            Math.floor(Math.random() * 100000),
-            onopen
-        );
+        var wearScriptConnection = new WearScriptConnection(
+                new ReconnectingWebSocket(wc_endpoint),
+                "wc-webapp",
+                Math.floor(Math.random() * 100000),
+                onopen
+            );
+
+        incomingImageHandler = new IncomingImageHandler(wearScriptConnection);
+
         console.log(ws)
 
         function onopen() {
@@ -670,7 +758,7 @@
         }
     };
 
-    function placePicture(imageDataUrl, ws, channel) {
+    function placePicture(imageDataURL, ws, channel) {
         console.log('in placePicture');
         if(ws){
             console.log('unsubscribe', channel)
@@ -684,7 +772,15 @@
             incomingImage.appendChild(image);
             prependElement(incomingImages, incomingImage);
         }
-        image.src = imageDataUrl;
+        image.src = imageDataURL;
+    }
+
+    function IncomingImageHandler(incomingImages){
+        this.incomingImages = incomingImages | document.querySelector('incoming-images');
+        this.images = [];
+    }
+    IncomingImageHandler.prototype.addImageFromDataURL = function(){
+
     }
 
 
