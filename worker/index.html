@@ -160,7 +160,7 @@
             margin-left: auto;
             margin-right: auto;
         }
-        tool-element {
+        tools-container > tool-element {
             /* almost  identical to li */
             display: list-item;
             text-align: -webkit-match-parent;
@@ -189,21 +189,21 @@
             transition: box-shadow 0.1s cubic-bezier(0.36, 0.01, 0.11, 0.99);
             /*box-shadow: 0 2px 5px rgba(0,0,0,.26);*/
         }
-        tool-element:nth-last-child(1) {
+        tools-container > tool-element:nth-last-child(1) {
             margin-bottom: 0;
         }
-        tool-element:hover{
+        tools-container > tool-element:hover{
             box-shadow: 0 2px 5px rgba(0,0,0,.26);
         }
-        tool-element:focus{
+        tools-container > tool-element:focus{
             /*background-color: #f3f3f3;*/
             box-shadow: 0 3px 8px rgba(0,0,0,.23);
         }
-        tool-element:active{
+        tools-container > tool-element:active{
             /*background-color: #f3f3f3;*/
             box-shadow: 0 4px 10px rgba(0,0,0,.21);
         }
-        tool-element[selected]{
+        tools-container > tool-element[selected]{
             background-color: #ff4081;
             color: white;
         }
@@ -274,18 +274,18 @@
         <aside class="left-container">
             <heading id="leftContainerToggle">Tools</heading>
             <tools-container>
-                <tool-element id="panTool" selected><i class="fa fa-arrows"></i></tool-element>
-                <tool-element id="paintTool"><i class="fa fa-paint-brush"></i></tool-element>
-                <tool-element id="textTool"><i class="fa fa-font"></i></tool-element>
-                <tool-element id="audioTool"><i class="fa fa-microphone"></i></tool-element>
-                <tool-element id="helpTool"><i class="fa fa-question"></i></tool-element>
+                <tool-element type="pan" selected><i class="fa fa-arrows"></i></tool-element>
+                <tool-element type="doodle"><i class="fa fa-paint-brush"></i></tool-element>
+                <tool-element type="text"><i class="fa fa-font"></i></tool-element>
+                <tool-element type="audio"><i class="fa fa-microphone"></i></tool-element>
+                <tool-element type="help"><i class="fa fa-question"></i></tool-element>
             </tools-container>
         </aside>
         <section id="midContainer" class="middle-container">
-            <canvases-container>
-                <canvas id="backgroundCanvas" class="canvas" width="100" height="100"></canvas>
-                <canvas id="mainCanvas" class="canvas" width="100" height="100"></canvas>
-            </canvases-container>
+            <picture-composer>
+                <canvas id="backgroundCanvas" width="100" height="100"></canvas>
+                <canvas is="composer-image-layer" tool="pan" id="mainCanvas" width="100" height="100"></canvas>
+            </picture-composer>
             <incoming-images>
                 <img is="incoming-image" src="images/jpg.jpg">
                 <img is="incoming-image">

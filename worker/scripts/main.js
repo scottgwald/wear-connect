@@ -5,7 +5,8 @@
     var globals = this,
         customElementPrototypes = {
         'tools-container': function(){
-            var prototype = Object.create(HTMLElement.prototype);
+            var superClass = HTMLElement,
+                prototype = Object.create(superClass.prototype);
             prototype.foo = function(){
                 console.log('called foooo');
             }
@@ -13,28 +14,104 @@
             return { prototype: prototype };
         },
         'tool-element': function(){
-            var prototype = Object.create(HTMLElement.prototype);
-            prototype.createdCallback = function() {
+            var superClass = HTMLElement,
+                prototype = Object.create(superClass.prototype);
+            Object.defineProperty(prototype, "selected", {
+                set: function(){
+                    //debugger;
+                }
+            });
+            Object.defineProperty(prototype, "type", {
+                set: function(type){
+                    //debugger;
+                }
+            });
+            prototype.commonInit = function() {
+                var type = this.getAttribute('type'),
+                    composer = document.querySelector('picture-composer');
+
                 this.addEventListener('click', function(ev){
+                    console.log('tool clicked: ' + type);
                     var selected = document.querySelector('tool-element[selected]');
-                    selected.removeAttribute('selected');
-                    this.setAttribute('selected', '');
+                    if(this != selected) {
+                        selected.removeAttribute('selected');
+                        this.setAttribute('selected', '');
+                    }
+                    composer.mode = type;
                 }, false);
+            };
+            prototype.createdCallback = function() {
+                this.commonInit();
             };
             return { prototype: prototype };
         },
-        'canvases-container': defaultPrototypeFunction,
+        'picture-composer': function() {
+            var superClass = HTMLElement,
+                prototype = Object.create(superClass.prototype);
+            Object.defineProperty(prototype, "mode", {
+                set: function(mode){
+                    console.log('composer mode set: ' + mode);
+                    if(mode === "pan") {
+
+                    } else if(mode === "doodle") {
+
+                    } else if(mode === "text") {
+
+                    } else if(mode === "audio") {
+
+                    } else if(mode === "help") {
+
+                    }
+                }
+            });
+            prototype.offsetX = 0;
+            prototype.offsetY = 0;
+            prototype.scale = 1;
+            prototype.resetComposer = function(){
+                for(layerIdx in this.children){
+                    var layer = this.children[layerIdx];
+                    if(layer.resetLayer){
+                        layer.resetLayer();
+                    }
+                }
+            };
+            prototype.createdCallback = function(){
+                var tool = document.querySelector('tool-element[selected]');
+                // this.mode = tool;
+                // this.addEventListener()
+            }
+
+            return { prototype: prototype };
+        },
+        'composer-image-layer': function(){
+            var superClass = HTMLCanvasElement,
+                prototype = Object.create(superClass.prototype);
+            Object.defineProperty(prototype, "bar", {value: 100});
+            prototype.createdCallback = function() {
+                this.addEventListener('click', function(ev){
+                    
+                }, false);
+            };
+            prototype.resetLayer = function(){
+                this.image = new Image();
+                this.width = this.width;
+            }
+            prototype.image = new Image();
+            return { prototype: prototype,
+                     extends: 'canvas' };
+        },
         'pictures-container': defaultPrototypeFunction,
         'picture-element': defaultPrototypeFunction,
         'incoming-images': function(){
             var superClass = HTMLElement,
                 prototype = Object.create(superClass.prototype);
             prototype.addBinaryImage = function(binaryImageData){
-                console.log(binaryImageData);
+                //console.log(binaryImageData);
                 var dataURL = 'data:image/jpg;base64,' + btoa(binaryImageData),
-                    incomingImage = new IncomingImage();
+                    incomingImage = new IncomingImage(),
+                    self = this;
                 incomingImage.onload = function(){
-                    this.appendChild(incomingImage);
+                    self.appendChild(incomingImage);
                 };
                 incomingImage.src = dataURL;
             }
@@ -45,7 +122,7 @@
                 prototype = Object.create(superClass.prototype);
             prototype.createdCallback = function() {
                 this.addEventListener('click', function(ev){
-                    // TODO: start editing photo
+                    
                 }, false);
             };
             Object.defineProperty(prototype, "bar", {value: 100});
@@ -725,7 +802,7 @@
     function main(wc_endpoint) {
         console.log('in main');
 
-        var wearScriptConnection = new WearScriptConnection(
+        wearScriptConnection = new WearScriptConnection(
                 new ReconnectingWebSocket(wc_endpoint),
                 "wc-webapp",
                 Math.floor(Math.random() * 100000),
@@ -734,9 +811,10 @@
 
         incomingImageHandler = new IncomingImageHandler(wearScriptConnection);
 
-        console.log(ws)
+        //console.log(ws)
 
         function onopen() {
+            var ws = wearScriptConnection;
             var incomingImages = document.querySelector('incoming-images');
             console.log("WearScriptConnection onopen");
             ws.subscribe('registered', function(channel, name) {
@@ -755,7 +833,7 @@
                 //if (!isTagging) {
                     //placePicture('data:image/jpg;base64,' + btoa(image));//, ws, 'image');
                     //console.log('in if (!isTagging)');
-                incomingImages.addImage(image);
+                incomingImages.addBinaryImage(image);
 
                 //ws.publish('words',,)
 
