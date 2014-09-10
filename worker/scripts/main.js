@@ -4,148 +4,148 @@
     //////////////////////////////////////////////
     var globals = this,
         customElementPrototypes = {
-        'tools-container': function(){
-            var superClass = HTMLElement,
-                prototype = Object.create(superClass.prototype);
-            prototype.foo = function(){
-                console.log('called foooo');
-            }
-            Object.defineProperty(prototype, "bar", {value: 5});
-            return { prototype: prototype };
-        },
-        'tool-element': function(){
-            var superClass = HTMLElement,
-                prototype = Object.create(superClass.prototype);
-            Object.defineProperty(prototype, "selected", {
-                set: function(){
-                    //debugger;
+            'tools-container': function(){
+                var superClass = HTMLElement,
+                    prototype = Object.create(superClass.prototype);
+                prototype.foo = function(){
+                    console.log('called foooo');
                 }
-            });
-            Object.defineProperty(prototype, "type", {
-                set: function(type){
-                    //debugger;
-                }
-            });
-            prototype.commonInit = function() {
-                var type = this.getAttribute('type'),
-                    composer = document.querySelector('picture-composer');
-
-                this.addEventListener('click', function(ev){
-                    console.log('tool clicked: ' + type);
-                    var selected = document.querySelector('tool-element[selected]');
-                    if(this != selected) {
-                        selected.removeAttribute('selected');
-                        this.setAttribute('selected', '');
+                Object.defineProperty(prototype, "bar", {value: 5});
+                return { prototype: prototype };
+            },
+            'tool-element': function(){
+                var superClass = HTMLElement,
+                    prototype = Object.create(superClass.prototype);
+                Object.defineProperty(prototype, "selected", {
+                    set: function(){
+                        //debugger;
                     }
-                    composer.mode = type;
-                }, false);
-            };
-            prototype.createdCallback = function() {
-                this.commonInit();
-            };
-            return { prototype: prototype };
-        },
-        'picture-composer': function() {
-            var superClass = HTMLElement,
-                prototype = Object.create(superClass.prototype);
-            Object.defineProperty(prototype, "mode", {
-                set: function(mode){
-                    console.log('composer mode set: ' + mode);
-                    if(mode === "pan") {
-
-                    } else if(mode === "doodle") {
-
-                    } else if(mode === "text") {
-
-                    } else if(mode === "audio") {
-
-                    } else if(mode === "help") {
-
+                });
+                Object.defineProperty(prototype, "type", {
+                    set: function(type){
+                        //debugger;
                     }
-                }
-            });
-            prototype.offsetX = 0;
-            prototype.offsetY = 0;
-            prototype.scale = 1;
-            prototype.resetComposer = function(){
-                for(layerIdx in this.children){
-                    var layer = this.children[layerIdx];
-                    if(layer.resetLayer){
-                        layer.resetLayer();
-                    }
-                }
-            };
-            prototype.createdCallback = function(){
-                var tool = document.querySelector('tool-element[selected]');
-                // this.mode = tool;
-                // this.addEventListener()
-            }
+                });
+                prototype.commonInit = function() {
+                    var type = this.getAttribute('type'),
+                        composer = document.querySelector('picture-composer');
 
-            return { prototype: prototype };
-        },
-        'composer-image-layer': function(){
-            var superClass = HTMLCanvasElement,
-                prototype = Object.create(superClass.prototype);
-            Object.defineProperty(prototype, "bar", {value: 100});
-            prototype.createdCallback = function() {
-                this.addEventListener('click', function(ev){
-                    
-                }, false);
-            };
-            prototype.resetLayer = function(){
-                this.image = new Image();
-                this.width = this.width;
-            }
-            prototype.image = new Image();
-            return { prototype: prototype,
-                     extends: 'canvas' };
-        },
-        'pictures-container': defaultPrototypeFunction,
-        'picture-element': defaultPrototypeFunction,
-        'incoming-images': function(){
-            var superClass = HTMLElement,
-                prototype = Object.create(superClass.prototype);
-            prototype.addBinaryImage = function(binaryImageData){
-                //console.log(binaryImageData);
-                var dataURL = 'data:image/jpg;base64,' + btoa(binaryImageData),
-                    incomingImage = new IncomingImage(),
-                    self = this;
-                incomingImage.onload = function(){
-                    self.appendChild(incomingImage);
+                    this.addEventListener('click', function(ev){
+                        console.log('tool clicked: ' + type);
+                        var selected = document.querySelector('tool-element[selected]');
+                        if(this != selected) {
+                            selected.removeAttribute('selected');
+                            this.setAttribute('selected', '');
+                        }
+                        composer.mode = type;
+                    }, false);
                 };
-                incomingImage.src = dataURL;
+                prototype.createdCallback = function() {
+                    this.commonInit();
+                };
+                return { prototype: prototype };
+            },
+            'picture-composer': function() {
+                var superClass = HTMLElement,
+                    prototype = Object.create(superClass.prototype);
+                Object.defineProperty(prototype, "mode", {
+                    set: function(mode){
+                        console.log('composer mode set: ' + mode);
+                        if(mode === "pan") {
+
+                        } else if(mode === "doodle") {
+
+                        } else if(mode === "text") {
+
+                        } else if(mode === "audio") {
+
+                        } else if(mode === "help") {
+
+                        }
+                    }
+                });
+                prototype.offsetX = 0;
+                prototype.offsetY = 0;
+                prototype.scale = 1;
+                prototype.resetComposer = function(){
+                    for(layerIdx in this.children){
+                        var layer = this.children[layerIdx];
+                        if(layer.resetLayer){
+                            layer.resetLayer();
+                        }
+                    }
+                };
+                prototype.createdCallback = function(){
+                    var tool = document.querySelector('tool-element[selected]');
+                    // this.mode = tool;
+                    // this.addEventListener()
+                }
+
+                return { prototype: prototype };
+            },
+            'composer-image-layer': function(){
+                var superClass = HTMLCanvasElement,
+                    prototype = Object.create(superClass.prototype);
+                Object.defineProperty(prototype, "bar", {value: 100});
+                prototype.createdCallback = function() {
+                    this.addEventListener('click', function(ev){
+                        
+                    }, false);
+                };
+                prototype.resetLayer = function(){
+                    this.image = new Image();
+                    this.width = this.width;
+                }
+                prototype.image = new Image();
+                return { prototype: prototype,
+                         extends: 'canvas' };
+            },
+            'pictures-container': defaultPrototypeFunction,
+            'picture-element': defaultPrototypeFunction,
+            'incoming-images': function(){
+                var superClass = HTMLElement,
+                    prototype = Object.create(superClass.prototype);
+                prototype.addBinaryImage = function(binaryImageData){
+                    //console.log(binaryImageData);
+                    var dataURL = 'data:image/jpg;base64,' + btoa(binaryImageData),
+                        incomingImage = new IncomingImage(),
+                        self = this;
+                    incomingImage.onload = function(){
+                        self.appendChild(incomingImage);
+                    };
+                    incomingImage.src = dataURL;
+                }
+                return { prototype: prototype };
+            },
+            'incoming-image': function(){
+                var superClass = HTMLImageElement,
+                    prototype = Object.create(superClass.prototype);
+                prototype.createdCallback = function() {
+                    this.addEventListener('click', function(ev){
+                        
+                    }, false);
+                };
+                Object.defineProperty(prototype, "bar", {value: 100});
+
+
+                return { prototype: prototype,
+                         extends: 'img' };
+            },
+            'outgoing-image': function(){
+                var superClass = HTMLImageElement,
+                    prototype = Object.create(superClass.prototype);
+                prototype.createdCallback = function() {
+                    this.addEventListener('click', function(ev){
+                        // TODO: what happens when you click an outgoing image?
+                    }, false);
+                };
+                Object.defineProperty(prototype, "bar", {value: 100});
+
+
+                return { prototype: prototype,
+                         extends: 'img' };
             }
-            return { prototype: prototype };
-        },
-        'incoming-image': function(){
-            var superClass = HTMLImageElement,
-                prototype = Object.create(superClass.prototype);
-            prototype.createdCallback = function() {
-                this.addEventListener('click', function(ev){
-                    
-                }, false);
-            };
-            Object.defineProperty(prototype, "bar", {value: 100});
-
-
-            return { prototype: prototype,
-                     extends: 'img' };
-        },
-        'outgoing-image': function(){
-            var superClass = HTMLImageElement,
-                prototype = Object.create(superClass.prototype);
-            prototype.createdCallback = function() {
-                this.addEventListener('click', function(ev){
-                    // TODO: what happens when you click an outgoing image?
-                }, false);
-            };
-            Object.defineProperty(prototype, "bar", {value: 100});
-
-
-            return { prototype: prototype,
-                     extends: 'img' };
-        }
-    };
+        };
 
     function defaultPrototypeFunction() {
         var superClass = HTMLElement,
