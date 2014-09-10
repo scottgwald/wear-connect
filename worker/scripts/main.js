@@ -637,7 +637,7 @@
     }
 
     function submitPicturesToGlass(){
-        ws.publish('pictures', picture.text , picture); 
+        ws.publish('pictures', picture.text , image.src); 
     }
 
     Date.prototype.today = function() {
