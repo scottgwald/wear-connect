@@ -626,16 +626,12 @@
         parent.insertBefore(child, parent.insertBefore);
     }
 
-
-
     function addText(){
         var text = prompt("Please enter your text message", "");
         if (text != null) {
             picture.text= text;
         }
     }
-
-
 
     Date.prototype.today = function() {
     
