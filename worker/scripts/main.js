@@ -29,9 +29,14 @@
         'incoming-images': function(){
             var superClass = HTMLElement,
                 prototype = Object.create(superClass.prototype);
-            prototype.addImage = function(data){
-                console.log(data);
-                this.appendChild(document.createTextNode(data))
+            prototype.addBinaryImage = function(binaryImageData){
+                console.log(binaryImageData);
+                var dataURL = 'data:image/jpg;base64,' + btoa(binaryImageData),
+                    incomingImage = new IncomingImage();
+                incomingImage.onload = function(){
+                    this.appendChild(incomingImage);
+                };
+                incomingImage.src = dataURL;
             }
             return { prototype: prototype };
         },
@@ -732,6 +737,7 @@
         console.log(ws)
 
         function onopen() {
+            var incomingImages = document.querySelector('incoming-images');
             console.log("WearScriptConnection onopen");
             ws.subscribe('registered', function(channel, name) {
                 console.log('registered as ' + name);
@@ -747,9 +753,9 @@
 
                 //$('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
                 //if (!isTagging) {
-                    placePicture('data:image/jpg;base64,' + btoa(image));//, ws, 'image');
-                    console.log('in if (!isTagging)');
-
+                    //placePicture('data:image/jpg;base64,' + btoa(image));//, ws, 'image');
+                    //console.log('in if (!isTagging)');
+                incomingImages.addImage(image);
 
                 //ws.publish('words',,)
 
