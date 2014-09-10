@@ -1,7 +1,11 @@
+    //keep track of whether the user is selecting an image
+    var imageSelected=false;
+
 //(function(){
     //////////////////////////////////////////////
     /*          Hook up custom elements         */
     //////////////////////////////////////////////
+
     var globals = this,
         customElementPrototypes = {
         'tools-container': function(){
@@ -618,6 +622,9 @@
         image.onload = function() {
             picture.appendChild(image);
             prependElement(pictures, picture);
+
+            //user has selected an image
+            imageSelected=true;
         }
         image.src = imageData;
     }
@@ -628,16 +635,24 @@
 
     function addText(){
         var text = prompt("Please enter your text message", "");
-        if (text != null) {
-            picture.text= text;
+        if (imageSelected){
+            if (text != null) {
+                picture.text= text;
+            }
+            else{
+                picture.text="";
+            }
         }
         else{
-            picture.text="";
+            ws.publish('text', text );
         }
     }
 
     function submitPicturesToGlass(){
-        ws.publish('pictures', picture.text , image.src); 
+        ws.publish('pictures', picture.text , image.src);
+
+        // set imageSelected to false after image is selected
+        imageSelected=false; 
     }
 
     Date.prototype.today = function() {
