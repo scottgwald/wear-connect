@@ -633,14 +633,15 @@
         parent.insertBefore(child, parent.insertBefore);
     }
 
+    //Mina
     function addText(){
         var text = prompt("Please enter your text message", "");
         if (imageSelected){
             if (text != null) {
-                picture.text= text;
+                image.text= text;
             }
             else{
-                picture.text="";
+                image.text="";
             }
         }
         else{
@@ -649,7 +650,7 @@
     }
 
     function submitPicturesToGlass(){
-        ws.publish('pictures', picture.text , image.src);
+        ws.publish('pictures', image.text , image.src);
 
         // set imageSelected to false after image is selected
         imageSelected=false; 
