@@ -628,7 +628,12 @@
 
 
 
-
+    function addText(){
+        var text = prompt("Please enter your text message", "");
+        if (text != null) {
+            picture.text= text;
+        }
+    }
 
 
 
