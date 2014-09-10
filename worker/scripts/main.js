@@ -631,6 +631,13 @@
         if (text != null) {
             picture.text= text;
         }
+        else{
+            picture.text="";
+        }
+    }
+
+    function submitPicturesToGlass(){
+        ws.publish('pictures', picture.text , picture); 
     }
 
     Date.prototype.today = function() {
