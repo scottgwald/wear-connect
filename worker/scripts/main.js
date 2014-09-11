@@ -16,6 +16,7 @@
             'tool-element': function(){
                 var superClass = HTMLElement,
                     prototype = Object.create(superClass.prototype);
+                prototype._type = '';
                 Object.defineProperty(prototype, "selected", {
                     set: function(){
                         //debugger;
@@ -24,12 +25,15 @@
                 Object.defineProperty(prototype, "type", {
                     set: function(type){
                         //debugger;
+                    },
+                    get: function(){
+                        return this._type;
                     }
                 });
                 prototype.commonInit = function() {
                     var type = this.getAttribute('type'),
                         composer = document.querySelector('picture-composer');
-
+                    this._type = type;
                     this.addEventListener('click', function(ev){
                         console.log('tool clicked: ' + type);
                         var selected = document.querySelector('tool-element[selected]');
@@ -48,38 +52,155 @@
             'picture-composer': function() {
                 var superClass = HTMLElement,
                     prototype = Object.create(superClass.prototype);
+                prototype._width = 100;
+                prototype._height = 100;
+                prototype._mode = '';
+                prototype._moving = false;
+                prototype._offsetX = 0;
+                prototype._offsetY = 0;
+                prototype._scale = 1;
+                Object.defineProperty(prototype, "width", {
+                    set: function(val){
+                        if(typeof val !== 'number') {
+                            throw new Error("Property 'width' must be a Number");
+                        }
+                        this._width = val;
+                        this.setAttribute('width', val);
+                        this.style.width = val + 'px';
+                    },
+                    get: function(){
+                        return this._width;
+                    }
+                });
+                Object.defineProperty(prototype, "height", {
+                    set: function(val){
+                        if(typeof val !== 'number') {
+                            throw new Error("Property 'height' must be a Number");
+                        }
+                        this._height = val;
+                        this.setAttribute('height', val);
+                        this.style.height = val + 'px';
+                    },
+                    get: function(){
+                        return this._height;
+                    }
+                });
                 Object.defineProperty(prototype, "mode", {
                     set: function(mode){
                         console.log('composer mode set: ' + mode);
-                        if(mode === "pan") {
+                        // if(mode === "pan") {
 
-                        } else if(mode === "doodle") {
+                        // } else if(mode === "doodle") {
 
-                        } else if(mode === "text") {
+                        // } else if(mode === "text") {
 
-                        } else if(mode === "audio") {
+                        // } else if(mode === "audio") {
 
-                        } else if(mode === "help") {
+                        // } else if(mode === "help") {
 
-                        }
+                        // }
+                        this._mode = mode;
+                        this.setAttribute('mode', mode);
+                    },
+                    get: function(){
+                        return this._mode;
                     }
                 });
-                prototype.offsetX = 0;
-                prototype.offsetY = 0;
-                prototype.scale = 1;
-                prototype.resetComposer = function(){
-                    for(layerIdx in this.children){
-                        var layer = this.children[layerIdx];
-                        if(layer.resetLayer){
-                            layer.resetLayer();
+                Object.defineProperty(prototype, "moving", {
+                    set: function(bool){
+                        if(typeof bool !== 'boolean') {
+                            throw new Error("Property 'moving' must be a Boolean");
+                        }
+                        this._moving = bool;
+                        this.setAttribute('moving', bool);
+                    },
+                    get: function(){
+                        return this._moving;
+                    }
+                });
+                Object.defineProperty(prototype, "offsetX", {
+                    set: function(val){
+                        if(typeof val !== 'number') {
+                            throw new Error("Property 'offsetX' must be a Number");
+                        }
+                        this._offsetX = val;
+                        this.setAttribute('offset-y', val);
+                    },
+                    get: function(){
+                        return this._offsetX;
+                    }
+                });
+                Object.defineProperty(prototype, "offsetY", {
+                    set: function(val){
+                        if(typeof val !== 'number') {
+                            throw new Error("Property 'offsetY' must be a Number");
+                        }
+                        this._offsetY = val;
+                        this.setAttribute('offset-y', val);
+                    },
+                    get: function(){
+                        return this._offsetY;
+                    }
+                });
+                Object.defineProperty(prototype, "scale", {
+                    set: function(val){
+                        if(typeof val !== 'number') {
+                            throw new Error("Property 'scale' must be a Number");
+                        } else if(val > 0) {
+                            this._scale = val;
+                            this.setAttribute('scale', val);
+                        }
+                    },
+                    get: function(){
+                        return this._scale;
+                    }
+                });
+
+
+
+                prototype.reset = function(){
+                    this.resetPanZoom();
+                    var layers = this.children;
+                    for(var i = 0; i < layers.length; i++){
+                        var layer = layers[i];
+                        if(layer.reset){
+                            layer.reset();
                         }
                     }
                 };
+                prototype.drawLayers = function() {
+                    var layers = this.children;
+                    for(var i = 0; i < layers.length; i++){
+                        var layer = layers[i];
+                        if(layer.draw){
+                            layer.draw();
+                        }
+                    }
+                };
+                prototype.resetPanZoom = function(){
+                    this.offsetX = 0;
+                    this.offsetY = 0;
+                    this.scale = 1;
+                }
+                prototype.registerEventListener = function(type, fn) {
+                    this.addEventListener(type, fn);
+                };
                 prototype.createdCallback = function(){
                     var tool = document.querySelector('tool-element[selected]');
-                    // this.mode = tool;
-                    // this.addEventListener()
-                }
+                    this.mode = tool.type;
+                    this.width = parseFloat(this.getAttribute('width')) || this._width;
+                    this.height = parseFloat(this.getAttribute('height')) || this._height;
+                    if(this.getAttribute('mode'))
+                        this.mode = this.getAttribute('mode');
+                    if(this.getAttribute('offset-x'))
+                        this.offsetX = this.getAttribute('offset-x');
+                    if(this.getAttribute('offset-y'))
+                        this.offsetY = this.getAttribute('offset-y');
+                    if(this.getAttribute('scale'))
+                        this.scale = this.getAttribute('scale');
+                    
+                };
+
 
                 return { prototype: prototype };
             },
@@ -87,15 +208,146 @@
                 var superClass = HTMLCanvasElement,
                     prototype = Object.create(superClass.prototype);
                 Object.defineProperty(prototype, "bar", {value: 100});
+                Object.defineProperty(prototype, "src", {
+                    set: function(src) {
+                        this.image.src = src;
+                        this.redraw();
+                    }
+                });
+                prototype.reset = function(){
+                    this.image.src = '';
+                    this.clear();
+                };
+                prototype.clear = function(){
+                    this.width = this.width;
+                };
+                prototype.redraw = function(){
+                    this.clear();
+                    this.draw();
+                };
+                prototype.draw = function(){
+                    var ctx = this.getContext('2d'),
+                        composer = document.querySelector('picture-composer');
+                    ctx.drawImage(this.image,
+                        composer.offsetX, composer.offsetY,
+                        this.image.width * composer.scale, this.image.height * composer.scale);
+                };
+
+
+                prototype.checkImageScale = function(){
+
+                }
+                prototype.checkImagePosition = function(){
+                    var composer = document.querySelector('picture-composer'),
+                        relativeWidth = this.image.width * composer.scale,
+                        relativeHeight = this.image.height * composer.scale,
+                        check = true,
+                        margin = 10;
+
+                    if(composer.offsetX + relativeWidth < 0 + margin) {
+                        composer.offsetX =  margin - relativeWidth;
+                        check = false;
+                    }
+
+                    if(composer.offsetY + relativeHeight < 0 + margin) {
+                        composer.offsetY = margin - relativeHeight;
+                        check = false;
+                    }
+
+                    if(composer.offsetX > this.width - margin) {
+                        composer.offsetX = this.width - margin;
+                        check = false;
+                    }
+                    
+                    if(composer.offsetY > this.height - margin) {
+                        composer.offsetY = this.height - margin;
+                        check = false;
+                    }
+                    return check;
+                }
+
+
+                prototype.onComposerMouseDown = function(ev) {
+                    var composer = document.querySelector('picture-composer');
+                    if(composer.mode === "pan") {
+                        composer.moving = true;
+                    }
+                };
+                prototype.onComposerMouseUp = function(ev) {
+                    var composer = document.querySelector('picture-composer');
+                    if(composer.mode === "pan") {
+                        ev.stopPropagation();
+
+                        composer.moving = false;
+                    }
+                };
+                prototype.onComposerMouseMove = function(ev) {
+                    var composer = document.querySelector('picture-composer');
+                    if(composer.mode === "pan") {
+                        ev.stopPropagation();
+                        if(composer.moving){
+                            //console.log(ev);
+                            composer.offsetX += ev.movementX;
+                            composer.offsetY+= ev.movementY;
+
+                            this.checkImagePosition();
+
+                            //redrawImage(mainCanvas, img);
+                            this.redraw();
+                        }
+                    }
+                };
+                prototype.onComposerMouseWheel = function(ev) {
+                    var composer = document.querySelector('picture-composer');
+                    if(composer.mode === "pan") {
+                        var relativeWidth = this.image.width * composer.scale,
+                            touchX = ev.layerX - composer.offsetX,
+                            percentXOffset = touchX / relativeWidth,
+
+                            relativeHeight = this.image.height * composer.scale,
+                            touchY = ev.layerY - composer.offsetY,
+                            percentYOffset = touchY / relativeHeight;
+
+                        composer.scale *= ev.wheelDelta > 0 ? 1 + .05 : 1 - 0.05;
+
+                        this.checkImageScale(mainCanvas, img);///////////////
+
+                        console.log('composer.scale =', composer.scale);
+                        var newRelativeWidth = this.image.width * composer.scale,
+                            dx = (relativeWidth - newRelativeWidth) * percentXOffset,
+
+                            newRelativeHeight = this.image.height * composer.scale,
+                            dy = (relativeHeight - newRelativeHeight) * percentYOffset;
+
+                        composer.offsetX += dx;
+                        composer.offsetY += dy;
+
+                        this.checkImagePosition();////////////
+
+                        //console.log(composer.scale)
+                        //console.log(ev)
+                        this.redraw();
+                    }
+                };
+
                 prototype.createdCallback = function() {
+                    var composer = document.querySelector('picture-composer');
+                    composer.registerEventListener('mousedown', this.onComposerMouseDown.bind(this));
+                    composer.registerEventListener('mousemove', this.onComposerMouseMove.bind(this));
+                    composer.registerEventListener('mouseup', this.onComposerMouseUp.bind(this));
+                    composer.registerEventListener('mousewheel', this.onComposerMouseWheel.bind(this));
+
+                    // if the cursor is off of the canvas, this allows the user to continue
+                    // dragging the image around
+                    document.addEventListener('mouseup', this.onComposerMouseUp.bind(this));
+                    document.addEventListener('mousemove', this.onComposerMouseMove.bind(this));
+
+
                     this.addEventListener('click', function(ev){
                         
                     }, false);
                 };
-                prototype.resetLayer = function(){
-                    this.image = new Image();
-                    this.width = this.width;
-                }
+                
                 prototype.image = new Image();
                 return { prototype: prototype,
                          extends: 'canvas' };
@@ -121,13 +373,17 @@
                 var superClass = HTMLImageElement,
                     prototype = Object.create(superClass.prototype);
                 prototype.createdCallback = function() {
+                    var composer = document.querySelector('picture-composer'),
+                        composerImageLayer = document.querySelector('canvas[is="composer-image-layer"]')
                     this.addEventListener('click', function(ev){
-                        
+                        composer.reset();
+                        composerImageLayer.src = this.src;
+                        composerImageLayer.redraw();
                     }, false);
                 };
                 Object.defineProperty(prototype, "bar", {value: 100});
 
-
+                
                 return { prototype: prototype,
                          extends: 'img' };
             },
@@ -315,7 +571,7 @@
             window.off('resize', resizeHandler);
         }
         //add listeners
-        window.on('resize', resizeHandler);
+        //window.on('resize', resizeHandler);
     }());
 
     (function(){
@@ -342,6 +598,7 @@
     var midContainer = document.querySelector('#midContainer');
 
 
+    makeGrid(backgroundCanvas, "#f9f9f9");
     function init(){
         resizeCanvasByWidth(
             mainCanvas, computeCanvasWidth(),
@@ -370,7 +627,7 @@
         ctx.stroke();
     }
 
-    init();
+    //init();
 
     var img = new Image();
     img.onload = function() {
@@ -378,7 +635,7 @@
         img.posX = 0;
         img.posY = 0;
         img.scale = 1;
-        drawImage(mainCanvas, this);
+        //drawImage(mainCanvas, this);
     };
     img.src = 'images/glass.jpg';
 
@@ -495,15 +752,15 @@
         redrawImage(mainCanvas, img);
     }
     
-    mainCanvas.addEventListener('mousedown', onMouseDown);
-    mainCanvas.addEventListener('mousemove', onMouseMove);
-    mainCanvas.addEventListener('mouseup', onMouseUp);
-    mainCanvas.addEventListener('mousewheel', onMouseWheel);
+    // mainCanvas.addEventListener('mousedown', onMouseDown);
+    // mainCanvas.addEventListener('mousemove', onMouseMove);
+    // mainCanvas.addEventListener('mouseup', onMouseUp);
+    // mainCanvas.addEventListener('mousewheel', onMouseWheel);
 
-    // if the cursor is off of the canvas, this allows the user to continue
-    // dragging the image around
-    document.addEventListener('mouseup', onMouseUp);
-    document.addEventListener('mousemove', onMouseMove);
+    // // if the cursor is off of the canvas, this allows the user to continue
+    // // dragging the image around
+    // document.addEventListener('mouseup', onMouseUp);
+    // document.addEventListener('mousemove', onMouseMove);
 
 /*
     public class TouchListHandler {
