@@ -53,16 +53,12 @@
             top: 0px;
             width: 92px;
             height: 100%;
-            padding-top: 16px;
             
             color: #f9f9f9;
             font-size: 24px;
             box-shadow: 2px 0 5px rgba(0,0,0,.26);
 
             text-align: center;
-        }
-        .left-container heading {
-            white-space: nowrap;
         }
         .middle-container {
             z-index: 500;
@@ -161,6 +157,9 @@
             margin-left: auto;
             margin-right: auto;
         }
+        tools-container > heading {
+            white-space: nowrap;
+        }
         tools-container > tool-element {
             /* almost  identical to li */
             display: list-item;
@@ -189,6 +188,9 @@
 
             transition: box-shadow 0.1s cubic-bezier(0.36, 0.01, 0.11, 0.99);
             /*box-shadow: 0 2px 5px rgba(0,0,0,.26);*/
+        }
+        tools-container tool-element:first-of-type {
+            margin-top: 16px;
         }
         tools-container > tool-element:nth-last-child(1) {
             margin-bottom: 0;
@@ -262,6 +264,9 @@
             position: absolute;
             left: 25px;
         }
+        picture-composer[mode="pan"] {
+            cursor: move;
+        }
         picture-composer > canvas {
             /*border: 1px solid black;
             margin-left: -1px;*/
@@ -276,8 +281,8 @@
 <body>
     <main class="">
         <aside class="left-container">
-            <heading id="leftContainerToggle">Tools</heading>
             <tools-container>
+                <heading id="leftContainerToggle">Tools</heading>
                 <tool-element type="pan" selected><i class="fa fa-arrows"></i></tool-element>
                 <tool-element type="doodle"><i class="fa fa-paint-brush"></i></tool-element>
                 <tool-element type="text"><i class="fa fa-font"></i></tool-element>
