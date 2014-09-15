@@ -4,356 +4,511 @@
     //////////////////////////////////////////////
     var globals = this,
         customElementPrototypes = {
-            'tools-container': function(){
-                var superClass = HTMLElement,
-                    prototype = Object.create(superClass.prototype);
-                prototype.foo = function(){
-                    console.log('called foooo');
-                }
-                Object.defineProperty(prototype, "bar", {value: 5});
-                return { prototype: prototype };
-            },
-            'tool-element': function(){
-                var superClass = HTMLElement,
-                    prototype = Object.create(superClass.prototype);
-                prototype._type = '';
-                Object.defineProperty(prototype, "selected", {
-                    set: function(){
-                        //debugger;
+            'tagalong-composer': defaultPrototypeFunction,
+                'composer-tools': function(){
+                    var superClass = HTMLElement,
+                        prototype = Object.create(superClass.prototype);
+                    prototype._selectedtool = null;
+                    Object.defineProperty(prototype, "selectedtool", {
+                        set: function(val){
+                            this._selectedtool = val;
+                            this.setAttribute('selectedtool', val);
+                        },
+                        get: function(){
+                            return this.querySelector('composer-tool[type="'+this._selectedtool+'"]');
+                        }
+                    });
+                    prototype.createdCallback = function(){
+
                     }
-                });
-                Object.defineProperty(prototype, "type", {
-                    set: function(type){
-                        //debugger;
+                    return { prototype: prototype };
+                },
+                    'composer-tool': function(){
+                        var superClass = HTMLElement,
+                            prototype = Object.create(superClass.prototype);
+
+                        prototype._type = '';
+                        Object.defineProperty(prototype, "selected", {
+                            set: function(){
+                                //debugger;
+                            },
+                            get: function(){
+                                return this.hasAttribute('selected');
+                            }
+                        });
+                        Object.defineProperty(prototype, "type", {
+                            set: function(type){
+                                this._type = type;
+                                this.setAttribute('type', type);
+                                this.checkIfSelected();
+                            },
+                            get: function(){
+                                return this._type;
+                            }
+                        });
+                        prototype.getComposerRoot = function(){
+                            return this.parentNode && this.parentNode.parentNode;
+                        };
+                        prototype.checkIfSelected = function(){
+                            var tools = this.parentNode,
+                                isSelcted = this.hasAttribute('selected');
+                            if(isSelcted){
+                                tools.selectedtool = this._type;
+                            }
+                        }
+                        prototype.bootstrap = function(){
+                            var type = this.getAttribute('type');
+                            this._type = type;
+                            this.checkIfSelected();
+                        };
+                        prototype.commonInit = function() {
+                            var root = this.getComposerRoot(),
+                                tools = this.parentNode,
+                                composer = root.querySelector('composer-canvas');
+                            
+                            this.addEventListener('click', function(ev){
+                                console.log('tool clicked: ' + this.type);
+                                var selected = tools.querySelector('composer-tool[selected]');
+
+                                if(this != selected && !this.hasAttribute('unselectable')) {
+                                    selected.removeAttribute('selected');
+                                    this.setAttribute('selected', '');
+                                    tools.selectedtool = this.type;
+                                    composer.mode = this.type;
+                                }
+                            }, false);
+                        };
+                        prototype.createdCallback = function() {
+                            this.bootstrap();
+                            this.commonInit();
+                        };
+                        return { prototype: prototype };
                     },
-                    get: function(){
-                        return this._type;
-                    }
-                });
-                prototype.commonInit = function() {
-                    var type = this.getAttribute('type'),
-                        composer = document.querySelector('picture-composer');
-                    this._type = type;
-                    this.addEventListener('click', function(ev){
-                        console.log('tool clicked: ' + type);
-                        var selected = document.querySelector('tool-element[selected]');
-                        if(this != selected) {
-                            selected.removeAttribute('selected');
-                            this.setAttribute('selected', '');
+                'composer-canvas': function() {
+                    var superClass = HTMLElement,
+                        prototype = Object.create(superClass.prototype);
+
+                    // layerswidth and layersheight are the virtual
+                    // width and height of each layer. The properties should be
+                    // set by the image width and height of the image layer
+                    prototype._layerswidth   = 0;
+                    prototype._layersheight  = 0;
+                    prototype._width   = 100;
+                    prototype._height  = 100;
+                    prototype._mode    = '';
+                    prototype._moving  = false;
+                    prototype._offsetX = 0;
+                    prototype._offsetY = 0;
+                    prototype._scale   = 1;
+
+                    Object.defineProperty(prototype, "layerswidth", {
+                        set: function(val){
+                            if(typeof val !== 'number') {
+                                throw new Error("Property 'layerswidth' must be a Number");
+                            }
+                            this._layerswidth = val;
+                            this.setAttribute('layerswidth', val);
+                            this.update();
+                        },
+                        get: function(){
+                            return this._layerswidth;
                         }
-                        composer.mode = type;
-                    }, false);
-                };
-                prototype.createdCallback = function() {
-                    this.commonInit();
-                };
-                return { prototype: prototype };
-            },
-            'picture-composer': function() {
-                var superClass = HTMLElement,
-                    prototype = Object.create(superClass.prototype);
-                prototype._width = 100;
-                prototype._height = 100;
-                prototype._mode = '';
-                prototype._moving = false;
-                prototype._offsetX = 0;
-                prototype._offsetY = 0;
-                prototype._scale = 1;
-                Object.defineProperty(prototype, "width", {
-                    set: function(val){
-                        if(typeof val !== 'number') {
-                            throw new Error("Property 'width' must be a Number");
+                    });
+                    Object.defineProperty(prototype, "layersheight", {
+                        set: function(val){
+                            if(typeof val !== 'number') {
+                                throw new Error("Property 'layersheight' must be a Number");
+                            }
+                            this._layersheight = val;
+                            this.setAttribute('layersheight', val);
+                            this.update();
+                        },
+                        get: function(){
+                            return this._layersheight;
                         }
-                        this._width = val;
-                        this.setAttribute('width', val);
-                        this.style.width = val + 'px';
-                    },
-                    get: function(){
-                        return this._width;
-                    }
-                });
-                Object.defineProperty(prototype, "height", {
-                    set: function(val){
-                        if(typeof val !== 'number') {
-                            throw new Error("Property 'height' must be a Number");
+                    });
+                    Object.defineProperty(prototype, "width", {
+                        set: function(val){
+                            if(typeof val !== 'number') {
+                                throw new Error("Property 'width' must be a Number");
+                            }
+                            this._width = val;
+                            this.setAttribute('width', val);
+                            this.style.width = val + 'px';
+                        },
+                        get: function(){
+                            return this._width;
                         }
-                        this._height = val;
-                        this.setAttribute('height', val);
-                        this.style.height = val + 'px';
-                    },
-                    get: function(){
-                        return this._height;
-                    }
-                });
-                Object.defineProperty(prototype, "mode", {
-                    set: function(mode){
-                        console.log('composer mode set: ' + mode);
-                        // if(mode === "pan") {
-
-                        // } else if(mode === "doodle") {
-
-                        // } else if(mode === "text") {
-
-                        // } else if(mode === "audio") {
-
-                        // } else if(mode === "help") {
-
-                        // }
-                        this._mode = mode;
-                        this.setAttribute('mode', mode);
-                    },
-                    get: function(){
-                        return this._mode;
-                    }
-                });
-                Object.defineProperty(prototype, "moving", {
-                    set: function(bool){
-                        if(typeof bool !== 'boolean') {
-                            throw new Error("Property 'moving' must be a Boolean");
+                    });
+                    Object.defineProperty(prototype, "height", {
+                        set: function(val){
+                            if(typeof val !== 'number') {
+                                throw new Error("Property 'height' must be a Number");
+                            }
+                            this._height = val;
+                            this.setAttribute('height', val);
+                            this.style.height = val + 'px';
+                        },
+                        get: function(){
+                            return this._height;
                         }
-                        this._moving = bool;
-                        this.setAttribute('moving', bool);
-                    },
-                    get: function(){
-                        return this._moving;
-                    }
-                });
-                Object.defineProperty(prototype, "offsetX", {
-                    set: function(val){
-                        if(typeof val !== 'number') {
-                            throw new Error("Property 'offsetX' must be a Number");
+                    });
+                    Object.defineProperty(prototype, "mode", {
+                        set: function(mode){
+                            console.log('composer mode set: ' + mode);
+                            // if(mode === "pan") {
+
+                            // } else if(mode === "doodle") {
+
+                            // }
+                            this._mode = mode;
+                            this.setAttribute('mode', mode);
+                        },
+                        get: function(){
+                            return this._mode;
                         }
-                        this._offsetX = val;
-                        this.setAttribute('offset-y', val);
-                    },
-                    get: function(){
-                        return this._offsetX;
-                    }
-                });
-                Object.defineProperty(prototype, "offsetY", {
-                    set: function(val){
-                        if(typeof val !== 'number') {
-                            throw new Error("Property 'offsetY' must be a Number");
+                    });
+                    Object.defineProperty(prototype, "moving", {
+                        set: function(bool){
+                            if(typeof bool !== 'boolean') {
+                                throw new Error("Property 'moving' must be a Boolean");
+                            }
+                            this._moving = bool;
+                            if(bool){
+                                this.setAttribute('moving', '');
+                            } else {
+                                this.removeAttribute('moving');
+                            }
+                        },
+                        get: function(){
+                            return this._moving;
                         }
-                        this._offsetY = val;
-                        this.setAttribute('offset-y', val);
-                    },
-                    get: function(){
-                        return this._offsetY;
-                    }
-                });
-                Object.defineProperty(prototype, "scale", {
-                    set: function(val){
-                        if(typeof val !== 'number') {
-                            throw new Error("Property 'scale' must be a Number");
-                        } else if(val > 0) {
-                            this._scale = val;
-                            this.setAttribute('scale', val);
+                    });
+                    Object.defineProperty(prototype, "offsetX", {
+                        set: function(val){
+                            if(typeof val !== 'number') {
+                                throw new Error("Property 'offsetX' must be a Number");
+                            }
+                            this._offsetX = val;
+                            this.setAttribute('offset-x', val);
+                        },
+                        get: function(){
+                            return this._offsetX;
                         }
-                    },
-                    get: function(){
-                        return this._scale;
-                    }
-                });
-
-
-
-                prototype.reset = function(){
-                    this.resetPanZoom();
-                    var layers = this.children;
-                    for(var i = 0; i < layers.length; i++){
-                        var layer = layers[i];
-                        if(layer.reset){
-                            layer.reset();
+                    });
+                    Object.defineProperty(prototype, "offsetY", {
+                        set: function(val){
+                            if(typeof val !== 'number') {
+                                throw new Error("Property 'offsetY' must be a Number");
+                            }
+                            this._offsetY = val;
+                            this.setAttribute('offset-y', val);
+                        },
+                        get: function(){
+                            return this._offsetY;
                         }
-                    }
-                };
-                prototype.drawLayers = function() {
-                    var layers = this.children;
-                    for(var i = 0; i < layers.length; i++){
-                        var layer = layers[i];
-                        if(layer.draw){
-                            layer.draw();
+                    });
+                    Object.defineProperty(prototype, "scale", {
+                        set: function(val){
+                            if(typeof val !== 'number') {
+                                throw new Error("Property 'scale' must be a Number");
+                            } else if(val > 0) {
+                                this._scale = val;
+                                this.setAttribute('scale', val);
+                            }
+                        },
+                        get: function(){
+                            return this._scale;
                         }
+                    });
+
+                    prototype.update = function(){
+
+
+                        // Update layers
+                        var layers = this.querySelectorAll('canvas[layer]');
+                        for(var i = 0; i < layers.length; i++){
+                            var layer = layers[i];
+                            if(layer.update){
+                                layer.update();
+                            }
+                        }
+                    };
+                    prototype.reset = function(){
+                        this.resetPanZoom();
+
+
+                        // Reset layers
+                        var layers = this.children;
+                        for(var i = 0; i < layers.length; i++){
+                            var layer = layers[i];
+                            if(layer.reset){
+                                layer.reset();
+                            }
+                        }
+                    };
+                    prototype.draw = function() {
+
+
+                        // Draw layers
+                        var layers = this.children;
+                        for(var i = 0; i < layers.length; i++){
+                            var layer = layers[i];
+                            if(layer.draw){
+                                layer.draw();
+                            }
+                        }
+                    };
+                    prototype.resetPanZoom = function(){
+                        this.offsetX = 0;
+                        this.offsetY = 0;
+                        this.scale = 1;
                     }
-                };
-                prototype.resetPanZoom = function(){
-                    this.offsetX = 0;
-                    this.offsetY = 0;
-                    this.scale = 1;
-                }
-                prototype.registerEventListener = function(type, fn) {
-                    this.addEventListener(type, fn);
-                };
-                prototype.createdCallback = function(){
-                    var tool = document.querySelector('tool-element[selected]');
-                    this.mode = tool.type;
-                    this.width = parseFloat(this.getAttribute('width')) || this._width;
-                    this.height = parseFloat(this.getAttribute('height')) || this._height;
-                    if(this.getAttribute('mode'))
-                        this.mode = this.getAttribute('mode');
-                    if(this.getAttribute('offset-x'))
-                        this.offsetX = this.getAttribute('offset-x');
-                    if(this.getAttribute('offset-y'))
-                        this.offsetY = this.getAttribute('offset-y');
-                    if(this.getAttribute('scale'))
-                        this.scale = this.getAttribute('scale');
-                    
-                };
+                    prototype.registerEventListener = function(type, fn) {
+                        this.addEventListener(type, fn, false);
+                    };
+                    prototype.getComposerRoot = function(){
+                        return this.parentNode;
+                    };
 
+                    prototype.checkLayerScale = function(){
 
-                return { prototype: prototype };
-            },
-            'composer-image-layer': function(){
-                var superClass = HTMLCanvasElement,
-                    prototype = Object.create(superClass.prototype);
-                Object.defineProperty(prototype, "bar", {value: 100});
-                Object.defineProperty(prototype, "src", {
-                    set: function(src) {
-                        this.image.src = src;
-                        this.redraw();
-                    }
-                });
-                prototype.reset = function(){
-                    this.image.src = '';
-                    this.clear();
-                };
-                prototype.clear = function(){
-                    this.width = this.width;
-                };
-                prototype.redraw = function(){
-                    this.clear();
-                    this.draw();
-                };
-                prototype.draw = function(){
-                    var ctx = this.getContext('2d'),
-                        composer = document.querySelector('picture-composer');
-                    ctx.drawImage(this.image,
-                        composer.offsetX, composer.offsetY,
-                        this.image.width * composer.scale, this.image.height * composer.scale);
-                };
+                    };
+                    prototype.checkLayerPosition = function(){
+                        var relativeWidth = this.layerswidth * this.scale,
+                            relativeHeight = this.layersheight * this.scale,
+                            check = true,
+                            margin = 10;
 
+                        if(this.offsetX + relativeWidth < 0 + margin) {
+                            this.offsetX =  margin - relativeWidth;
+                            check = false;
+                        }
 
-                prototype.checkImageScale = function(){
+                        if(this.offsetY + relativeHeight < 0 + margin) {
+                            this.offsetY = margin - relativeHeight;
+                            check = false;
+                        }
 
-                }
-                prototype.checkImagePosition = function(){
-                    var composer = document.querySelector('picture-composer'),
-                        relativeWidth = this.image.width * composer.scale,
-                        relativeHeight = this.image.height * composer.scale,
-                        check = true,
-                        margin = 10;
-
-                    if(composer.offsetX + relativeWidth < 0 + margin) {
-                        composer.offsetX =  margin - relativeWidth;
-                        check = false;
+                        if(this.offsetX > this.width - margin) {
+                            this.offsetX = this.width - margin;
+                            check = false;
+                        }
+                        
+                        if(this.offsetY > this.height - margin) {
+                            this.offsetY = this.height - margin;
+                            check = false;
+                        }
+                        return check;
                     }
 
-                    if(composer.offsetY + relativeHeight < 0 + margin) {
-                        composer.offsetY = margin - relativeHeight;
-                        check = false;
-                    }
+                    ////////////////////
+                    ////// EVENTS //////
+                    ////////////////////
+                    prototype.onMouseDown = function(ev){
+                        this.moving = true;
+                        this.update();
+                    };
+                    prototype.onMouseUp = function(ev){
+                        this.moving = false;
+                        this.update();
+                    };
+                    prototype.onMouseMove = function(ev){
+                        if(this.mode === "pan" && this.layerswidth && this.layersheight) {
+                            ev.stopPropagation();
+                            if(this.moving){
+                                this.offsetX += ev.movementX;
+                                this.offsetY += ev.movementY;
+                                this.checkLayerPosition();
+                            }
+                            this.update();
+                        }
+                    };
+                    prototype.onMouseWheel = function(ev){
+                        if(this.mode === "pan" && this.layerswidth && this.layersheight) {
+                            var relativeWidth = this.layerswidth * this.scale,
+                                touchX = ev.layerX - this.offsetX,
+                                percentXOffset = touchX / relativeWidth,
 
-                    if(composer.offsetX > this.width - margin) {
-                        composer.offsetX = this.width - margin;
-                        check = false;
-                    }
-                    
-                    if(composer.offsetY > this.height - margin) {
-                        composer.offsetY = this.height - margin;
-                        check = false;
-                    }
-                    return check;
-                }
+                                relativeHeight = this.layersheight * this.scale,
+                                touchY = ev.layerY - this.offsetY,
+                                percentYOffset = touchY / relativeHeight;
+
+                            this.scale *= ev.wheelDelta > 0 ? 1 + .05 : 1 - 0.05;
+
+                            this.checkLayerScale(mainCanvas, img);///// TODO: not implemented //////////
+
+                            var newRelativeWidth = this.layerswidth * this.scale,
+                                dx = (relativeWidth - newRelativeWidth) * percentXOffset,
+
+                                newRelativeHeight = this.layersheight * this.scale,
+                                dy = (relativeHeight - newRelativeHeight) * percentYOffset;
+
+                            this.offsetX += dx;
+                            this.offsetY += dy;
+
+                            this.checkLayerPosition();////////////
+
+                            this.update();
+                        }
+                    };
+
+                    prototype.createdCallback = function(){
+                        var root = this.getComposerRoot(),
+                            tools = root.querySelector('composer-tools'),
+                            tool = tools.querySelector('composer-tool[selected]');
+
+                        this.mode = tool.type;
+                        this.width = parseFloat(this.getAttribute('width')) || this._width;
+                        this.height = parseFloat(this.getAttribute('height')) || this._height;
+                        if(this.hasAttribute('mode'))
+                            this.mode = this.getAttribute('mode');
+                        if(this.hasAttribute('offset-x'))
+                            this.offsetX = this.getAttribute('offset-x');
+                        if(this.hasAttribute('offset-y'))
+                            this.offsetY = this.getAttribute('offset-y');
+                        if(this.hasAttribute('scale'))
+                            this.scale = this.getAttribute('scale');
+                        if(this.hasAttribute('layerswidth'))
+                            this.layerswidth = this.getAttribute('layerswidth');
+                        if(this.hasAttribute('layersheight'))
+                            this.layersheight = this.getAttribute('layersheight');
+
+                        this.addEventListener('mousedown', this.onMouseDown.bind(this), false);
+                        this.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+                        this.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+                        this.addEventListener('mousewheel', this.onMouseWheel.bind(this), false);
+
+                        document.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+                        document.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+                    };
 
 
-                prototype.onComposerMouseDown = function(ev) {
-                    var composer = document.querySelector('picture-composer');
-                    if(composer.mode === "pan") {
-                        composer.moving = true;
-                    }
-                };
-                prototype.onComposerMouseUp = function(ev) {
-                    var composer = document.querySelector('picture-composer');
-                    if(composer.mode === "pan") {
-                        ev.stopPropagation();
+                    return { prototype: prototype };
+                },
+                    'composer-image-layer': function(){
+                        var superClass = HTMLCanvasElement,
+                            prototype = Object.create(superClass.prototype);
 
-                        composer.moving = false;
-                    }
-                };
-                prototype.onComposerMouseMove = function(ev) {
-                    var composer = document.querySelector('picture-composer');
-                    if(composer.mode === "pan") {
-                        ev.stopPropagation();
-                        if(composer.moving){
-                            //console.log(ev);
-                            composer.offsetX += ev.movementX;
-                            composer.offsetY+= ev.movementY;
-
-                            this.checkImagePosition();
-
-                            //redrawImage(mainCanvas, img);
+                        prototype.image = new Image();
+                        Object.defineProperty(prototype, "src", {
+                            set: function(src) {
+                                var self = this;
+                                this.image.src = src;
+                                this.image.onload = function(){
+                                    var composer = self.getComposerCanvas();
+                                    composer.layerswidth = self.image.width;
+                                    composer.layersheight = self.image.height;
+                                    self.redraw();
+                                }
+                                this.redraw();
+                            },
+                            get: function(){
+                                return this.image.src;
+                            }
+                        });
+                        prototype.getComposerCanvas = function(){
+                            return this.parentNode;
+                        }
+                        prototype.reset = function(){
+                            this.image.src = '';
+                            this.clear();
+                        };
+                        prototype.clear = function(){
+                            this.width = this.width;
+                        };
+                        prototype.redraw = function(){
+                            this.clear();
+                            this.draw();
+                        };
+                        prototype.draw = function(){
+                            var ctx = this.getContext('2d'),
+                                composer = this.getComposerCanvas();
+                            if(this.image.width && this.image.height) {
+                                ctx.drawImage(this.image,
+                                    composer.offsetX, composer.offsetY,
+                                    composer.layerswidth * composer.scale,
+                                    composer.layersheight * composer.scale);
+                            }
+                        };
+                        prototype.update = function(){
                             this.redraw();
                         }
-                    }
-                };
-                prototype.onComposerMouseWheel = function(ev) {
-                    var composer = document.querySelector('picture-composer');
-                    if(composer.mode === "pan") {
-                        var relativeWidth = this.image.width * composer.scale,
-                            touchX = ev.layerX - composer.offsetX,
-                            percentXOffset = touchX / relativeWidth,
 
-                            relativeHeight = this.image.height * composer.scale,
-                            touchY = ev.layerY - composer.offsetY,
-                            percentYOffset = touchY / relativeHeight;
-
-                        composer.scale *= ev.wheelDelta > 0 ? 1 + .05 : 1 - 0.05;
-
-                        this.checkImageScale(mainCanvas, img);///////////////
-
-                        console.log('composer.scale =', composer.scale);
-                        var newRelativeWidth = this.image.width * composer.scale,
-                            dx = (relativeWidth - newRelativeWidth) * percentXOffset,
-
-                            newRelativeHeight = this.image.height * composer.scale,
-                            dy = (relativeHeight - newRelativeHeight) * percentYOffset;
-
-                        composer.offsetX += dx;
-                        composer.offsetY += dy;
-
-                        this.checkImagePosition();////////////
-
-                        //console.log(composer.scale)
-                        //console.log(ev)
-                        this.redraw();
-                    }
-                };
-
-                prototype.createdCallback = function() {
-                    var composer = document.querySelector('picture-composer');
-                    composer.registerEventListener('mousedown', this.onComposerMouseDown.bind(this));
-                    composer.registerEventListener('mousemove', this.onComposerMouseMove.bind(this));
-                    composer.registerEventListener('mouseup', this.onComposerMouseUp.bind(this));
-                    composer.registerEventListener('mousewheel', this.onComposerMouseWheel.bind(this));
-
-                    // if the cursor is off of the canvas, this allows the user to continue
-                    // dragging the image around
-                    document.addEventListener('mouseup', this.onComposerMouseUp.bind(this));
-                    document.addEventListener('mousemove', this.onComposerMouseMove.bind(this));
-
-
-                    this.addEventListener('click', function(ev){
+                        prototype.createdCallback = function() {
+                            // var composer = this.getComposerCanvas();
+                        };
                         
-                    }, false);
-                };
-                
-                prototype.image = new Image();
-                return { prototype: prototype,
-                         extends: 'canvas' };
-            },
-            'pictures-container': defaultPrototypeFunction,
-            'picture-element': defaultPrototypeFunction,
+                        return { prototype: prototype,
+                                 extends: 'canvas' };
+                    },
+                    'composer-doodle-layer': function(){
+                        var superClass = HTMLCanvasElement,
+                            prototype = Object.create(superClass.prototype);
+
+                        prototype.getComposerCanvas = function(){
+                            return this.parentNode;
+                        }
+                        prototype.reset = function(){
+                            this.clear();
+                        };
+                        prototype.clear = function(){
+                            this.width = this.width;
+                        };
+                        prototype.redraw = function(){
+                            this.clear();
+                            this.draw();
+                        };
+                        prototype.draw = function(){
+                            var ctx = this.getContext('2d'),
+                                composer = this.getComposerCanvas();
+
+                            // ctx.fillRect(25 + composer.offsetX, 25 + composer.offsetY,
+                            //     composer.scale * 100, composer.scale * 100);
+                            // ctx.strokeRect(25 + composer.offsetX, 25 + composer.offsetY,
+                            //     composer.scale * 100, composer.scale * 100);
+                        };
+                        prototype.update = function(){
+                            this.redraw();
+                        }
+
+                        prototype.onComposerMouseDown = function(ev) {
+                            var composer = this.getComposerCanvas();
+                            if(composer.mode === "pan") {
+                            }
+                        };
+                        prototype.onComposerMouseUp = function(ev) {
+                            var composer = this.getComposerCanvas();
+                            if(composer.mode === "pan") {
+                            }
+                        };
+                        prototype.onComposerMouseMove = function(ev) {
+                            var composer = this.getComposerCanvas();
+                            if(composer.mode === "pan") {
+                            }
+                        };
+                        prototype.onComposerMouseWheel = function(ev) {
+                            var composer = this.getComposerCanvas();
+                            if(composer.mode === "pan") {
+                            }
+                        };
+
+                        prototype.createdCallback = function() {
+                            var composer = this.getComposerCanvas();
+                            // composer.registerEventListener('mousedown', this.onComposerMouseDown.bind(this));
+                            // composer.registerEventListener('mousemove', this.onComposerMouseMove.bind(this));
+                            // composer.registerEventListener('mouseup', this.onComposerMouseUp.bind(this));
+                            // composer.registerEventListener('mousewheel', this.onComposerMouseWheel.bind(this));
+
+                            // // if the cursor is off of the canvas, this allows the user to continue
+                            // // dragging the image around
+                            // document.addEventListener('mouseup', this.onComposerMouseUp.bind(this));
+                            // document.addEventListener('mousemove', this.onComposerMouseMove.bind(this));
+                        };
+                        
+                        return { prototype: prototype,
+                                 extends: 'canvas' };
+                    },
             'incoming-images': function(){
                 var superClass = HTMLElement,
                     prototype = Object.create(superClass.prototype);
@@ -363,30 +518,30 @@
                         incomingImage = new IncomingImage(),
                         self = this;
                     incomingImage.onload = function(){
+
                         self.appendChild(incomingImage);
                     };
                     incomingImage.src = dataURL;
                 }
                 return { prototype: prototype };
             },
-            'incoming-image': function(){
-                var superClass = HTMLImageElement,
-                    prototype = Object.create(superClass.prototype);
-                prototype.createdCallback = function() {
-                    var composer = document.querySelector('picture-composer'),
-                        composerImageLayer = document.querySelector('canvas[is="composer-image-layer"]')
-                    this.addEventListener('click', function(ev){
-                        composer.reset();
-                        composerImageLayer.src = this.src;
-                        composerImageLayer.redraw();
-                    }, false);
-                };
-                Object.defineProperty(prototype, "bar", {value: 100});
+                'incoming-image': function(){
+                    var superClass = HTMLImageElement,
+                        prototype = Object.create(superClass.prototype);
+                    prototype.createdCallback = function() {
+                        var composer = document.querySelector('composer-canvas'),
+                            composerImageLayer = document.querySelector('canvas[is="composer-image-layer"]');
+                        this.addEventListener('click', function(ev){
+                            composer.reset();
+                            composerImageLayer.src = this.src;
+                            //composerImageLayer.redraw();
+                        }, false);
+                    };
+                    Object.defineProperty(prototype, "bar", {value: 100});
 
-                
-                return { prototype: prototype,
-                         extends: 'img' };
-            },
+                    return { prototype: prototype,
+                             extends: 'img' };
+                },
             'outgoing-image': function(){
                 var superClass = HTMLImageElement,
                     prototype = Object.create(superClass.prototype);
@@ -400,7 +555,9 @@
 
                 return { prototype: prototype,
                          extends: 'img' };
-            }
+            },
+            'pictures-container': defaultPrototypeFunction,
+            'picture-element': defaultPrototypeFunction
         };
 
     function defaultPrototypeFunction() {
@@ -421,19 +578,201 @@
     }
 
     for(key in customElementPrototypes){
-        // var cutsomPrototype = customElementPrototypes[key];
-        // customElementConstructors[key] =
-        //     document.registerElement(key, {
-        //         prototype: Object.create(HTMLElement.prototype, cutsomPrototype)
-        //     });
-
-        //==========================//
-
         var customPrototype = customElementPrototypes[key](),
             elementName = tagNameToConstructorName(key);
+
+        // customElements[key] =
         globals[elementName] =
             document.registerElement(key, customPrototype);
     }
+
+
+
+    ////////////////////////////
+    /*          Main          */
+    ////////////////////////////
+    var composer = document.querySelector('composer-canvas'),
+        imageLayer = composer.querySelector('canvas[is="composer-image-layer"]'),
+        imageLayerEvents = {
+            onComposerMouseDown: function (ev) {
+                var composer = this.getComposerCanvas();
+                if(composer.mode === "pan") {
+                }
+            },
+            onComposerMouseUp: function (ev) {
+                var composer = this.getComposerCanvas();
+                if(composer.mode === "pan") {
+                    ev.stopPropagation();
+                }
+            },
+            onComposerMouseMove: function (ev) {
+                var composer = this.getComposerCanvas();
+                if(composer.mode === "pan") {
+                    ev.stopPropagation();
+                    if(composer.moving){
+                        console.log(composer.moving)
+                        this.redraw();
+                    }
+                }
+            },
+            onComposerMouseWheel: function (ev) {
+                var composer = this.getComposerCanvas();
+                if(composer.mode === "pan") {
+                    this.redraw();
+                }
+            }
+        },
+        documentEvents = {
+            onMouseMove: function(ev){
+                var composer = this.getComposerCanvas();
+                if(composer.mode === "pan") {
+                    ev.stopPropagation();
+                    if(composer.moving){
+                        console.log(composer.moving)
+                        this.redraw();
+                    }
+                }
+            }
+        };
+
+    
+    
+    
+    composer.registerEventListener('mousedown', imageLayerEvents.onComposerMouseDown.bind(imageLayer), false);
+    composer.registerEventListener('mousemove', imageLayerEvents.onComposerMouseMove.bind(imageLayer), false);
+    composer.registerEventListener('mouseup', imageLayerEvents.onComposerMouseUp.bind(imageLayer), false);
+    composer.registerEventListener('mousewheel', imageLayerEvents.onComposerMouseWheel.bind(imageLayer), false);
+
+    // if the cursor is off of the canvas, this allows the user to continue
+    // dragging the image around
+    document.addEventListener('mouseup', imageLayerEvents.onComposerMouseUp.bind(imageLayer), false);
+    document.addEventListener('mousemove', imageLayerEvents.onComposerMouseMove.bind(imageLayer), false);
+    
+
+    // imageLayer.oncomposermousedown = imageLayerEvents.onComposerMouseDown;
+    // imageLayer.oncomposermouseup = imageLayerEvents.onComposerMouseUp;
+    // imageLayer.oncomposermousemove = imageLayerEvents.onComposerMouseMove;
+    // imageLayer.oncomposermousewheel = imageLayerEvents.onComposerMouseWheel;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     //////////////////////////////////////////////
     /*         Helper methods for Events        */

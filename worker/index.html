@@ -34,6 +34,16 @@
             overflow:   scroll;
         }
 
+        main {
+            position:   fixed;
+            width:      100%;
+            height:     100%;
+        }
+
+        main {
+            padding-top: 16px;
+        }
+
         /* Background colors */
         /* note: this is necessary to avoid black background in fullscreen */
         .left-container {
@@ -56,7 +66,7 @@
             
             color: #f9f9f9;
             font-size: 24px;
-            box-shadow: 2px 0 5px rgba(0,0,0,.26);
+            box-shadow: 2px 0px 5px rgba(0,0,0,.26);
 
             text-align: center;
         }
@@ -64,12 +74,11 @@
             z-index: 500;
             margin: 0 auto;
             position: fixed;
-            left: 92px;
+            left: 0;
             right: 92px;
             top: 0px;
             height: 100%;
             /*text-align: center;*/
-            padding-top: 50px;
 
             color: #f9f9f9;
         }
@@ -78,10 +87,9 @@
             position: relative;
             display: block;
             font-size: 0;
-            bottom: -400px;
             background-color: #fff;
 
-            height: 50%;
+            height: 200px;
             overflow-y: scroll;
         }
         incoming-images img[is="incoming-image"] {
@@ -139,35 +147,37 @@
         .right-container[state="open"] heading .fa-arrow-left {
             transform: rotate(-180deg);
         }
-        
-        tools-container {
-            /* almost identical to ul */
-            margin-top: 0;
-            margin-bottom: 10px;
-            margin-left: 16px;
+
+        tagalong-composer {
+            background-color: #c5cae9;
             display: block;
-            -webkit-margin-after: 1em;
-            -webkit-margin-start: 0px;
+            width: 656px;
+            padding: 8px;
+        }
+        
+        composer-tools {
+            margin-top: 0;
+            display: block;
             -webkit-margin-end: 0px;
 
             /* custom style */
             position: relative;
-            top: 16px;
             list-style-type: none;
-            margin-left: auto;
-            margin-right: auto;
+            background-color: #3F51B5;
+            padding: 8px;
         }
-        tools-container > heading {
+        composer-tools > heading {
             white-space: nowrap;
+            color: #f9f9f9;
+            font-size: 24px;
+            margin: 0 8px;
         }
-        tools-container > tool-element {
-            /* almost  identical to li */
-            display: list-item;
+        composer-tools > composer-tool {
+            display: inline-block;
             text-align: -webkit-match-parent;
 
             /* custom style */
             /* positioning */
-            margin-bottom: 16px;
             margin-left: auto;
             margin-right: auto;
             padding-top: 8px;
@@ -186,29 +196,41 @@
             
             color: black;
 
-            transition: box-shadow 0.1s cubic-bezier(0.36, 0.01, 0.11, 0.99);
+            transition: box-shadow 0.1s cubic-bezier(0.36, 0.01, 0.11, 0.99),
+                        color 0.1s cubic-bezier(0.36, 0.01, 0.11, 0.99),
+                        background-color 0.1s cubic-bezier(0.36, 0.01, 0.11, 0.99);
             /*box-shadow: 0 2px 5px rgba(0,0,0,.26);*/
         }
-        tools-container tool-element:first-of-type {
-            margin-top: 16px;
-        }
-        tools-container > tool-element:nth-last-child(1) {
-            margin-bottom: 0;
-        }
-        tools-container > tool-element:hover{
+        composer-tools > composer-tool:hover{
             box-shadow: 0 2px 5px rgba(0,0,0,.26);
+            background-color: #303f9f;
         }
-        tools-container > tool-element:focus{
+        composer-tools > composer-tool:focus{
             /*background-color: #f3f3f3;*/
             box-shadow: 0 3px 8px rgba(0,0,0,.23);
         }
-        tools-container > tool-element:active{
+        composer-tools > composer-tool:active{
             /*background-color: #f3f3f3;*/
             box-shadow: 0 4px 10px rgba(0,0,0,.21);
         }
-        tools-container > tool-element[selected]{
+        composer-tools > composer-tool[selected]{
             background-color: #ff4081;
             color: white;
+        }
+        composer-tools > composer-tool[right] {
+            float: right;
+            color: rgba(0, 0, 0, 0.54);
+
+            transition: color 0.05s cubic-bezier(0.36, 0.01, 0.11, 0.99),
+                background-color 0.05s cubic-bezier(0.36, 0.01, 0.11, 0.99);
+        }
+        composer-tools > composer-tool[right]:active {
+            background-color: #F50057;
+            color: black;
+        }
+        composer-tools > composer-tool[right]:hover {
+            background-color: #F50057;
+            color: black;
         }
 
         pictures-container {
@@ -260,41 +282,116 @@
             display: none;
         }
 
-        picture-composer {
-            position: absolute;
-            left: 25px;
+        composer-canvas {
         }
-        picture-composer[mode="pan"] {
+        composer-canvas[mode="pan"] {
             cursor: move;
         }
-        picture-composer > canvas {
+        composer-canvas > canvas {
             /*border: 1px solid black;
             margin-left: -1px;*/
             position: absolute;
         }
-        picture-composer > canvas#backgroundCanvas {
+        composer-canvas > canvas#backgroundCanvas {
             background-color: #000;
         }
 
+        .canvas-backdrop {
+            height: 360px;
+            background-color: red;
+            width: 640px;
+            display: block;
+            opacity: 0.5;
+            position: relative;
+            z-index: -9999;
+        }
+        .spacer {
+            z-index: -9999;
+            height: 100%;
+            background-color: red;
+            width: 640px;
+            display: block;
+            opacity: 0.5;
+            position: relative;
+        }
+
+        picture-caption {
+            position: relative;
+            display: block;
+
+            -webkit-margin-end: 0px;
+            list-style-type: none;
+            background-color: #3F51B5;
+            padding: 8px;
+        }
+        picture-caption > heading {
+            white-space: nowrap;
+            color: #f9f9f9;
+            font-size: 24px;
+            margin: 0 8px;
+        }
+        picture-caption > picture-caption-text {
+            position: absolute;
+            display: inline-block;
+            height: auto;
+            min-width: 220px;
+            max-width: 498px;
+            top: 8px;
+            bottom: 8px;
+            
+            margin-left: 0;
+            margin-right: 0;
+
+            text-align: center;
+            font-size: 24px;
+
+            color: black;
+            background-color: #f1f1f1; /*#3F51B5;c5cae9*/
+            
+            transition: transform 0.5s cubic-bezier(0.36, 0.01, 0.11, 0.99),
+                        min-width 0.5s cubic-bezier(0.36, 0.01, 0.11, 0.99);
+        }
+        /*@media (max-width:960px){
+            picture-caption > picture-caption-text:focus {
+                top: -227px;
+                bottom: auto;
+                min-width: 75%;
+                height: auto;
+                margin-left: 20px;
+                margin-right: 20px;
+
+                min-width: 500px;
+                transform: translate(-55px, -300px);
+            }
+        }*/
     </style>
 </head>
 <body>
-    <main class="">
-        <aside class="left-container">
-            <tools-container>
-                <heading id="leftContainerToggle">Tools</heading>
-                <tool-element type="pan" selected><i class="fa fa-arrows"></i></tool-element>
-                <tool-element type="doodle"><i class="fa fa-paint-brush"></i></tool-element>
-                <tool-element type="text"><i class="fa fa-font"></i></tool-element>
-                <tool-element type="audio"><i class="fa fa-microphone"></i></tool-element>
-                <tool-element type="help"><i class="fa fa-question"></i></tool-element>
-            </tools-container>
-        </aside>
+    <main>
         <section id="midContainer" class="middle-container">
-            <picture-composer width="640" height="360">
-                <canvas id="backgroundCanvas" width="640" height="360"></canvas>
-                <canvas is="composer-image-layer" tool="pan" id="mainCanvas" width="640" height="360"></canvas>
-            </picture-composer>
+            <tagalong-composer>
+                <composer-tools>
+                    <heading>Tools</heading>
+                    <composer-tool type="pan" selected><i class="fa fa-arrows"></i></composer-tool>
+                    <composer-tool type="doodle"><i class="fa fa-paint-brush"></i></composer-tool>
+                    <composer-tool type="send" right static unselectable><i class="fa fa-send"></i></composer-tool>
+                    <composer-tool type="reset" right static unselectable><i class="fa fa-refresh"></i></composer-tool>
+                </composer-tools>
+                <composer-canvas width="640" height="360">
+                    <canvas id="backgroundCanvas" width="640" height="360"></canvas>
+                    <canvas is="composer-image-layer" layer id="mainCanvas" width="640" height="360"></canvas>
+                    <canvas is="composer-doodle-layer" layer width="640" height="360"></canvas>
+                </composer-canvas>
+                <div class="canvas-backdrop"></div>
+
+
+
+                <picture-caption>
+                    <heading>Caption:</heading>
+                    <picture-caption-text contenteditable="true"></picture-caption-text>
+                    <span class="spacer"></span>
+                </picture-caption>
+            </tagalong-composer>
             <incoming-images>
                 <img is="incoming-image" src="images/jpg.jpg">
                 <img is="incoming-image">
@@ -311,17 +408,21 @@
     </main>
     <require-fullscreen displayed="false">Tap to go fullscreen</require-fullscreen>
 
-    <!-- // <script src="bower_components/jquery/dist/jquery.js"></script> -->
-    <!-- // <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script> -->
-    <script src="bower_components/angular/angular.js"></script>
+    <!-- <script src="bower_components/jquery/dist/jquery.js"></script> -->
+    <!-- <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script> -->
+    <!-- <script src="bower_components/angular/angular.js"></script> -->
 
     <script src="bower_components/reconnecting-websocket/reconnecting-websocket.js"></script>
     <script src="bower_components/wearscript-js/wearscript-client.js"></script>
     <script src="bower_components/msgpack-javascript/msgpack.js"></script>
     
-    <script src="scripts/controllers/appCtrl.js"></script>
-    <script src="scripts/modules/app.js"></script>
+    <!-- <script src="scripts/controllers/appCtrl.js"></script>
+    <script src="scripts/modules/app.js"></script> -->
     <script src="scripts/main.js"></script>
     <!--<script src="scripts/cropper.js"></script>-->
+
+               <!-- <composer-tool type="text"><i class="fa fa-font"></i></composer-tool>
+                    <composer-tool type="audio"><i class="fa fa-microphone"></i></composer-tool>
+                    <composer-tool type="help"><i class="fa fa-question"></i></composer-tool> -->
 </body>
 </html>
