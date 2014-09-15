@@ -88,11 +88,11 @@
                     var superClass = HTMLElement,
                         prototype = Object.create(superClass.prototype);
 
-                    // layerswidth and layersheight are the virtual
+                    // layerwidth and layerheight are the virtual
                     // width and height of each layer. The properties should be
                     // set by the image width and height of the image layer
-                    prototype._layerswidth   = 0;
-                    prototype._layersheight  = 0;
+                    prototype._layerwidth   = 0;
+                    prototype._layerheight  = 0;
                     prototype._width   = 100;
                     prototype._height  = 100;
                     prototype._mode    = '';
@@ -101,30 +101,30 @@
                     prototype._offsetY = 0;
                     prototype._scale   = 1;
 
-                    Object.defineProperty(prototype, "layerswidth", {
+                    Object.defineProperty(prototype, "layerwidth", {
                         set: function(val){
                             if(typeof val !== 'number') {
-                                throw new Error("Property 'layerswidth' must be a Number");
+                                throw new Error("Property 'layerwidth' must be a Number");
                             }
-                            this._layerswidth = val;
-                            this.setAttribute('layerswidth', val);
+                            this._layerwidth = val;
+                            this.setAttribute('layerwidth', val);
                             this.update();
                         },
                         get: function(){
-                            return this._layerswidth;
+                            return this._layerwidth;
                         }
                     });
-                    Object.defineProperty(prototype, "layersheight", {
+                    Object.defineProperty(prototype, "layerheight", {
                         set: function(val){
                             if(typeof val !== 'number') {
-                                throw new Error("Property 'layersheight' must be a Number");
+                                throw new Error("Property 'layerheight' must be a Number");
                             }
-                            this._layersheight = val;
-                            this.setAttribute('layersheight', val);
+                            this._layerheight = val;
+                            this.setAttribute('layerheight', val);
                             this.update();
                         },
                         get: function(){
-                            return this._layersheight;
+                            return this._layerheight;
                         }
                     });
                     Object.defineProperty(prototype, "width", {
@@ -235,7 +235,7 @@
                         }
                     };
                     prototype.reset = function(){
-                        this.resetPanZoom();
+                        this.resetOffsetAndScale();
 
 
                         // Reset layers
@@ -259,11 +259,11 @@
                             }
                         }
                     };
-                    prototype.resetPanZoom = function(){
+                    prototype.resetOffsetAndScale = function(){
                         this.offsetX = 0;
                         this.offsetY = 0;
                         this.scale = 1;
-                    }
+                    };
                     prototype.registerEventListener = function(type, fn) {
                         this.addEventListener(type, fn, false);
                     };
@@ -275,8 +275,8 @@
 
                     };
                     prototype.checkLayerPosition = function(){
-                        var relativeWidth = this.layerswidth * this.scale,
-                            relativeHeight = this.layersheight * this.scale,
+                        var relativeWidth = this.layerwidth * this.scale,
+                            relativeHeight = this.layerheight * this.scale,
                             check = true,
                             margin = 10;
 
@@ -302,9 +302,9 @@
                         return check;
                     }
 
-                    ////////////////////
-                    ////// EVENTS //////
-                    ////////////////////
+                    //////////////////////////////////////
+                    ////// Composer Canvas - EVENTS //////
+                    //////////////////////////////////////
                     prototype.onMouseDown = function(ev){
                         this.moving = true;
                         this.update();
@@ -314,23 +314,23 @@
                         this.update();
                     };
                     prototype.onMouseMove = function(ev){
-                        if(this.mode === "pan" && this.layerswidth && this.layersheight) {
+                        if(this.mode === "pan" && this.layerwidth && this.layerheight) {
                             ev.stopPropagation();
                             if(this.moving){
                                 this.offsetX += ev.movementX;
                                 this.offsetY += ev.movementY;
-                                this.checkLayerPosition();
+                                //this.checkLayerPosition();
                             }
                             this.update();
                         }
                     };
                     prototype.onMouseWheel = function(ev){
-                        if(this.mode === "pan" && this.layerswidth && this.layersheight) {
-                            var relativeWidth = this.layerswidth * this.scale,
+                        if(this.mode === "pan" && this.layerwidth && this.layerheight) {
+                            var relativeWidth = this.layerwidth * this.scale,
                                 touchX = ev.layerX - this.offsetX,
                                 percentXOffset = touchX / relativeWidth,
 
-                                relativeHeight = this.layersheight * this.scale,
+                                relativeHeight = this.layerheight * this.scale,
                                 touchY = ev.layerY - this.offsetY,
                                 percentYOffset = touchY / relativeHeight;
 
@@ -338,16 +338,16 @@
 
                             this.checkLayerScale(mainCanvas, img);///// TODO: not implemented //////////
 
-                            var newRelativeWidth = this.layerswidth * this.scale,
+                            var newRelativeWidth = this.layerwidth * this.scale,
                                 dx = (relativeWidth - newRelativeWidth) * percentXOffset,
 
-                                newRelativeHeight = this.layersheight * this.scale,
+                                newRelativeHeight = this.layerheight * this.scale,
                                 dy = (relativeHeight - newRelativeHeight) * percentYOffset;
 
                             this.offsetX += dx;
                             this.offsetY += dy;
 
-                            this.checkLayerPosition();////////////
+                            //this.checkLayerPosition();////////////
 
                             this.update();
                         }
@@ -369,10 +369,14 @@
                             this.offsetY = this.getAttribute('offset-y');
                         if(this.hasAttribute('scale'))
                             this.scale = this.getAttribute('scale');
-                        if(this.hasAttribute('layerswidth'))
-                            this.layerswidth = this.getAttribute('layerswidth');
-                        if(this.hasAttribute('layersheight'))
-                            this.layersheight = this.getAttribute('layersheight');
+                        if(this.hasAttribute('layerwidth'))
+                            this.layerwidth = this.getAttribute('layerwidth');
+                        else
+                            this.layerwidth = this.width;
+                        if(this.hasAttribute('layerheight'))
+                            this.layerheight = this.getAttribute('layerheight');
+                        else
+                            this.layerheight = this.height;
 
                         this.addEventListener('mousedown', this.onMouseDown.bind(this), false);
                         this.addEventListener('mouseup', this.onMouseUp.bind(this), false);
@@ -397,11 +401,11 @@
                                 this.image.src = src;
                                 this.image.onload = function(){
                                     var composer = self.getComposerCanvas();
-                                    composer.layerswidth = self.image.width;
-                                    composer.layersheight = self.image.height;
-                                    self.redraw();
+                                    // composer.layerwidth = self.image.width;
+                                    // composer.layerheight = self.image.height;
+                                    composer.update();
                                 }
-                                this.redraw();
+                                this.update();
                             },
                             get: function(){
                                 return this.image.src;
@@ -409,7 +413,41 @@
                         });
                         prototype.getComposerCanvas = function(){
                             return this.parentNode;
-                        }
+                        };
+                        prototype.checkLayerPosition = function(){
+                            // This function manipulates the canvas-composer element.
+                            
+                            // It checks the edges of the image on this layer
+                            // to the bounds of the composer dimensions.
+
+                            var composer = this.getComposerCanvas(),
+                                relativeWidth = this.image.width * composer.scale,
+                                relativeHeight = this.image.height * composer.scale,
+                                check = true,
+                                margin = 10;
+
+                            if(composer.offsetX + relativeWidth < 0 + margin) {
+                                composer.offsetX =  margin - relativeWidth;
+                                check = false;
+                            }
+
+                            if(composer.offsetY + relativeHeight < 0 + margin) {
+                                composer.offsetY = margin - relativeHeight;
+                                check = false;
+                            }
+
+                            if(composer.offsetX > composer.width - margin) {
+                                composer.offsetX = composer.width - margin;
+                                check = false;
+                            }
+                            
+                            if(composer.offsetY > composer.height - margin) {
+                                composer.offsetY = composer.height - margin;
+                                check = false;
+                            }
+                            composer.update();
+                            return check;
+                        };
                         prototype.reset = function(){
                             this.image.src = '';
                             this.clear();
@@ -417,22 +455,22 @@
                         prototype.clear = function(){
                             this.width = this.width;
                         };
-                        prototype.redraw = function(){
-                            this.clear();
-                            this.draw();
-                        };
+
                         prototype.draw = function(){
                             var ctx = this.getContext('2d'),
-                                composer = this.getComposerCanvas();
+                                composer = this.getComposerCanvas(),
+                                relativeWidth = '',
+                                relativeHeight = '';
                             if(this.image.width && this.image.height) {
                                 ctx.drawImage(this.image,
                                     composer.offsetX, composer.offsetY,
-                                    composer.layerswidth * composer.scale,
-                                    composer.layersheight * composer.scale);
+                                    this.image.width * composer.scale,
+                                    this.image.height * composer.scale);
                             }
                         };
                         prototype.update = function(){
-                            this.redraw();
+                            this.clear();
+                            this.draw();
                         }
 
                         prototype.createdCallback = function() {
@@ -455,21 +493,30 @@
                         prototype.clear = function(){
                             this.width = this.width;
                         };
-                        prototype.redraw = function(){
-                            this.clear();
-                            this.draw();
-                        };
                         prototype.draw = function(){
                             var ctx = this.getContext('2d'),
-                                composer = this.getComposerCanvas();
+                                composer = this.getComposerCanvas(),
+                                imageLayer = composer.querySelector('canvas[is="composer-image-layer"]');
 
-                            // ctx.fillRect(25 + composer.offsetX, 25 + composer.offsetY,
-                            //     composer.scale * 100, composer.scale * 100);
-                            // ctx.strokeRect(25 + composer.offsetX, 25 + composer.offsetY,
-                            //     composer.scale * 100, composer.scale * 100);
+                            /*
+                                drawing formulae:
+                                    x = c * scale + offsetx
+                                    y = c * scale + offsety
+                                    width = scale * layer width
+                                    height = scale * layer height
+                            */
+                            if(imageLayer.image.width){
+                                ctx.fillStyle = "blue"
+                                ctx.fillRect(
+                                    (25 * composer.scale) + composer.offsetX,
+                                    (25 * composer.scale) + composer.offsetY,
+                                    composer.scale * imageLayer.image.width,
+                                    composer.scale * imageLayer.image.height);
+                            }
                         };
                         prototype.update = function(){
-                            this.redraw();
+                            this.clear();
+                            this.draw();
                         }
 
                         prototype.onComposerMouseDown = function(ev) {
@@ -534,7 +581,7 @@
                         this.addEventListener('click', function(ev){
                             composer.reset();
                             composerImageLayer.src = this.src;
-                            //composerImageLayer.redraw();
+                            //composerImageLayer.update();
                         }, false);
                     };
                     Object.defineProperty(prototype, "bar", {value: 100});
@@ -611,14 +658,16 @@
                     ev.stopPropagation();
                     if(composer.moving){
                         console.log(composer.moving)
-                        this.redraw();
+                        this.checkLayerPosition();
+                        this.update();
                     }
                 }
             },
             onComposerMouseWheel: function (ev) {
                 var composer = this.getComposerCanvas();
                 if(composer.mode === "pan") {
-                    this.redraw();
+                    this.checkLayerPosition();
+                    this.update();
                 }
             }
         },
@@ -629,7 +678,7 @@
                     ev.stopPropagation();
                     if(composer.moving){
                         console.log(composer.moving)
-                        this.redraw();
+                        this.update();
                     }
                 }
             }
