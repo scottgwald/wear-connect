@@ -233,7 +233,7 @@
             color: black;
         }
 
-        pictures-container {
+        picture-container {
             /* almost identical to ul */
             position: relative;
             margin-top: 0;
@@ -260,7 +260,7 @@
             list-style-type: none;
 
         }
-        pictures-container picture-element img {
+        picture-container picture-element img {
             width: 200px;
         }
 
@@ -315,7 +315,7 @@
             position: relative;
         }
 
-        picture-caption {
+        composer-caption {
             position: relative;
             display: block;
 
@@ -324,13 +324,13 @@
             background-color: #3F51B5;
             padding: 8px;
         }
-        picture-caption > heading {
+        composer-caption > heading {
             white-space: nowrap;
             color: #f9f9f9;
             font-size: 24px;
             margin: 0 8px;
         }
-        picture-caption > picture-caption-text {
+        composer-caption > composer-caption-text {
             position: absolute;
             display: inline-block;
             height: auto;
@@ -352,7 +352,7 @@
                         min-width 0.5s cubic-bezier(0.36, 0.01, 0.11, 0.99);
         }
         /*@media (max-width:960px){
-            picture-caption > picture-caption-text:focus {
+            composer-caption > composer-caption-text:focus {
                 top: -227px;
                 bottom: auto;
                 min-width: 75%;
@@ -386,11 +386,11 @@
 
 
 
-                <picture-caption>
+                <composer-caption>
                     <heading>Caption:</heading>
-                    <picture-caption-text contenteditable="true"></picture-caption-text>
+                    <composer-caption-text contenteditable="true"></composer-caption-text>
                     <span class="spacer"></span>
-                </picture-caption>
+                </composer-caption>
             </tagalong-composer>
             <incoming-images>
                 <img is="incoming-image" src="images/jpg.jpg">
@@ -399,11 +399,12 @@
         </section>
         <aside class="right-container" state="closed">
             <heading id="rightContainerToggle"><i class="fa fa-arrow-left"></i> Images</heading>
-            <pictures-container>
+            <picture-container>
                 <picture-element>
-                    <img is="outgoing-image" src="images/glass.jpg">
+                    <img src="images/glass.jpg">
+                    <picture-caption>Sample</picture-caption>
                 </picture-element>
-            </pictures-container>
+            </picture-container>
         </aside>
     </main>
     <require-fullscreen displayed="false">Tap to go fullscreen</require-fullscreen>

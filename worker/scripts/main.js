@@ -100,6 +100,8 @@
                     prototype._offsetX = 0;
                     prototype._offsetY = 0;
                     prototype._scale   = 1;
+                    prototype.compositeCanvas = document.createElement('canvas');
+                    prototype.compositeCtx = null;
 
                     Object.defineProperty(prototype, "layerwidth", {
                         set: function(val){
@@ -259,7 +261,39 @@
                             }
                         }
                     };
-                    prototype.resetOffsetAndScale = function(){
+                    prototype.compileImage = function(callback) {
+                        var layers = this.querySelectorAll('canvas[layer]'),
+                            img = new Image(),
+                            srcs = [],
+                            srcsIndex = 0,
+                            self = this;
+                        this.compositeCanvas.width = this.width;
+                        this.compositeCanvas.height = this.height;
+
+                        var done = function(){
+                            callback(self.compositeCanvas.toDataURL());
+                        }
+                        var helper = function (){
+                            srcsIndex++;
+                            if(srcsIndex >= srcs.length){
+                                done();
+                            } else {
+                                self.compositeCtx.drawImage(this,
+                                    0,0,
+                                    self.compositeCanvas.width,
+                                    self.compositeCanvas.height)
+                                img.src = srcs[srcsIndex];
+                            }
+                        };
+
+                        img.onload = helper;
+                        for(var i = 0; i < layers.length; i++) {
+                            srcs.push(layers[i].toDataURL());
+                        }
+                        img.src = srcs[srcsIndex];
+
+                    };
+                    prototype.resetOffsetAndScale = function() {
                         this.offsetX = 0;
                         this.offsetY = 0;
                         this.scale = 1;
@@ -267,14 +301,14 @@
                     prototype.registerEventListener = function(type, fn) {
                         this.addEventListener(type, fn, false);
                     };
-                    prototype.getComposerRoot = function(){
+                    prototype.getComposerRoot = function() {
                         return this.parentNode;
                     };
 
-                    prototype.checkLayerScale = function(){
+                    prototype.checkLayerScale = function() {
 
                     };
-                    prototype.checkLayerPosition = function(){
+                    prototype.checkLayerPosition = function() {
                         var relativeWidth = this.layerwidth * this.scale,
                             relativeHeight = this.layerheight * this.scale,
                             check = true,
@@ -358,6 +392,7 @@
                             tools = root.querySelector('composer-tools'),
                             tool = tools.querySelector('composer-tool[selected]');
 
+                        this.compositeCtx = this.compositeCanvas.getContext('2d');
                         this.mode = tool.type;
                         this.width = parseFloat(this.getAttribute('width')) || this._width;
                         this.height = parseFloat(this.getAttribute('height')) || this._height;
@@ -505,14 +540,14 @@
                                     width = scale * layer width
                                     height = scale * layer height
                             */
-                            if(imageLayer.image.width){
-                                ctx.fillStyle = "blue"
-                                ctx.fillRect(
-                                    (25 * composer.scale) + composer.offsetX,
-                                    (25 * composer.scale) + composer.offsetY,
-                                    composer.scale * imageLayer.image.width,
-                                    composer.scale * imageLayer.image.height);
-                            }
+                            // if(imageLayer.image.width){
+                            //     ctx.fillStyle = "blue"
+                            //     ctx.fillRect(
+                            //         (25 * composer.scale) + composer.offsetX,
+                            //         (25 * composer.scale) + composer.offsetY,
+                            //         composer.scale * imageLayer.image.width,
+                            //         composer.scale * imageLayer.image.height);
+                            // }
                         };
                         prototype.update = function(){
                             this.clear();
@@ -603,14 +638,80 @@
                 return { prototype: prototype,
                          extends: 'img' };
             },
-            'pictures-container': defaultPrototypeFunction,
-            'picture-element': defaultPrototypeFunction
+            'picture-container': function () {
+                var superClass = HTMLElement,
+                    prototype = Object.create(superClass.prototype);
+                
+                prototype.addPicture = function(src, caption) {
+                    var newPicture = new PictureElement();
+                    newPicture.src = src;
+                    newPicture.caption = caption;
+                    this.appendChild(newPicture);
+                };
+
+                return { prototype: prototype };
+            },
+                'picture-element': function () {
+                    var superClass = HTMLElement,
+                        prototype = Object.create(superClass.prototype);
+
+                    prototype._src = "";
+                    prototype._caption = "";
+                    prototype._image = null;
+                    Object.defineProperty(prototype, "src", {
+                        set: function(src) {
+                            var image;
+                            if(this.querySelector('img')) {
+                                image = this.querySelector('img');
+                            } else {
+                                image = new Image();
+                                this.appendChild(image);
+                            }
+                            image.src = src;
+                            this._src = src;
+                        },
+                        get: function(){
+                            return this.image.src;
+                        }
+                    });
+                    Object.defineProperty(prototype, "caption", {
+                        set: function(str) {
+                            this._caption = str;
+                            var pictureCaption = this.querySelector('picture-caption');
+                            if(!pictureCaption) {
+                                pictureCaption = new PictureCaption();
+                                this.appendChild(pictureCaption);
+                            }
+                            pictureCaption.textContent = str;
+                        },
+                        get: function(){
+                            return this._caption;
+                        }
+                    });
+                    console.log('defaultPrototypeFunction()')
+                    prototype.createdCallback = function() {
+                        if(this.hasAttribute('caption'))
+                            this.caption = this.getAttribute('caption');
+                    };
+                    return { prototype: prototype };
+                },
+                    'picture-caption': function () {
+                        var superClass = HTMLElement,
+                            prototype = Object.create(superClass.prototype);
+
+                        prototype.createdCallback = function() {
+
+                        };
+                        return { prototype: prototype };
+                    }
+
         };
 
     function defaultPrototypeFunction() {
         var superClass = HTMLElement,
             prototype = Object.create(superClass.prototype);
         console.log('defaultPrototypeFunction()')
+        prototype.createdCallback = function() {};
         return { prototype: prototype };
     }
 
@@ -638,8 +739,10 @@
     ////////////////////////////
     /*          Main          */
     ////////////////////////////
-    var composer = document.querySelector('composer-canvas'),
+    var wearScriptConnection,
+        composer = document.querySelector('composer-canvas'),
         imageLayer = composer.querySelector('canvas[is="composer-image-layer"]'),
+        doodleLayer = composer.querySelector('canvas[is="composer-doodle-layer"]'),
         imageLayerEvents = {
             onComposerMouseDown: function (ev) {
                 var composer = this.getComposerCanvas();
@@ -671,13 +774,39 @@
                 }
             }
         },
+        doodleLayerEvents = {
+            onComposerMouseDown: function (ev) {
+                var composer = this.getComposerCanvas();
+                if(composer.mode === "doodle") {
+                }
+            },
+            onComposerMouseUp: function (ev) {
+                var composer = this.getComposerCanvas();
+                if(composer.mode === "doodle") {
+                    ev.stopPropagation();
+                }
+            },
+            onComposerMouseMove: function (ev) {
+                var composer = this.getComposerCanvas();
+                if(composer.mode === "doodle") {
+                    ev.stopPropagation();
+                    if(composer.drawing){
+                        this.update();
+                    }
+                }
+            },
+            onComposerMouseWheel: function (ev) {
+                var composer = this.getComposerCanvas();
+                if(composer.mode === "doodle") {
+                }
+            }
+        },
         documentEvents = {
             onMouseMove: function(ev){
                 var composer = this.getComposerCanvas();
                 if(composer.mode === "pan") {
                     ev.stopPropagation();
                     if(composer.moving){
-                        console.log(composer.moving)
                         this.update();
                     }
                 }
@@ -691,6 +820,11 @@
     composer.registerEventListener('mousemove', imageLayerEvents.onComposerMouseMove.bind(imageLayer), false);
     composer.registerEventListener('mouseup', imageLayerEvents.onComposerMouseUp.bind(imageLayer), false);
     composer.registerEventListener('mousewheel', imageLayerEvents.onComposerMouseWheel.bind(imageLayer), false);
+    
+    composer.registerEventListener('mousedown', doodleLayerEvents.onComposerMouseDown.bind(doodleLayer), false);
+    composer.registerEventListener('mousemove', doodleLayerEvents.onComposerMouseMove.bind(doodleLayer), false);
+    composer.registerEventListener('mouseup', doodleLayerEvents.onComposerMouseUp.bind(doodleLayer), false);
+    composer.registerEventListener('mousewheel', doodleLayerEvents.onComposerMouseWheel.bind(doodleLayer), false);
 
     // if the cursor is off of the canvas, this allows the user to continue
     // dragging the image around
@@ -703,11 +837,22 @@
     // imageLayer.oncomposermousemove = imageLayerEvents.onComposerMouseMove;
     // imageLayer.oncomposermousewheel = imageLayerEvents.onComposerMouseWheel;
 
+    var sendButton = document.querySelector('composer-tool[type="send"]');
+    sendButton.addEventListener('click', function(ev) {
+        var tagalongComposer = this.getComposerRoot(),
+            composer = tagalongComposer.querySelector('composer-canvas');
 
+        composer.compileImage(function(imageDataURL){
+            var src = imageDataURL,
+                pictureContainer = document.querySelector('picture-container'),
+                caption = tagalongComposer.querySelector('composer-caption-text').textContent;
 
-
-
-
+            pictureContainer.addPicture(src, caption);
+            if(wearScriptConnection){
+                wearScriptConnection.send('picture', src, caption);
+            }
+        });
+    });
 
 
 
@@ -1341,7 +1486,7 @@
     function addNewPictureFromDataURL(imageData){
         var image = new Image(),
             picture = document.createElement('picture-element'),
-            pictures = document.querySelector('pictures-container');
+            pictures = document.querySelector('picture-container');
         image.onload = function() {
             picture.appendChild(image);
             prependElement(pictures, picture);
