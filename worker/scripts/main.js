@@ -102,6 +102,13 @@
                     prototype._scale   = 1;
                     prototype.compositeCanvas = document.createElement('canvas');
                     prototype.compositeCtx = null;
+                    prototype.touchListHandler = new TouchListHandler();
+
+                    prototype.touch1start = null;
+                    prototype.touch2start = null;
+                    prototype.prevOffsetX = 0;
+                    prototype.prevOffsetY = 0;
+                    prototype.prevScale = 1;
 
                     Object.defineProperty(prototype, "layerwidth", {
                         set: function(val){
@@ -299,14 +306,17 @@
                         this.scale = 1;
                     };
                     prototype.registerEventListener = function(type, fn) {
+
                         this.addEventListener(type, fn, false);
                     };
                     prototype.getComposerRoot = function() {
+
                         return this.parentNode;
                     };
 
                     prototype.checkLayerScale = function() {
 
+                        //
                     };
                     prototype.checkLayerPosition = function() {
                         var relativeWidth = this.layerwidth * this.scale,
@@ -387,6 +397,217 @@
                         }
                     };
 
+
+
+
+
+                    prototype.onTouchStart = function(ev){
+                        
+                        console.log('[composer-canvas] onTouchStart',
+                            'touch list length: ', ev.changedTouches.length,
+                            'id of 0: ', ev.changedTouches[0].identifier);
+
+                        var touches = ev.changedTouches,
+                            numTouches = touches.length,
+                            x = 0,
+                            y = 0,
+                            id = -1;
+                        
+                        // Current: find average x and y touch point
+                        for (var i=0; i < touches.length; i++) {
+                            var touch = touches[i];
+
+                            console.log("touchstart:"+i+"...");
+                            id = touch.identifier;
+                            x = pageXToLocal(touch.pageX);
+                            y = pageYToLocal(touch.pageY);
+                            this.touchListHandler.addTouch(this.touchListHandler.copyTouch(touch));
+                            console.log("touchstart:"+i+".");
+                        }
+                        if(!this.moving){
+                            // this.prevOffsetX = this.offsetX;
+                            // this.prevOffsetY = this.offsetY;
+                            // this.prevScale = this.scale;
+                            this.moving = true;
+                        }
+                        if(this.touchListHandler.numTouches == 1) {
+                            var t1Index = this.touchListHandler.getTouchIndexById(0),
+                                t1 = this.touchListHandler.touches[t1Index];
+                            this.touch1start = {x: t1.pageX, y: t1.pageY, id: id};
+
+                            this.prevOffsetX = this.offsetX;
+                            this.prevOffsetY = this.offsetY;
+
+                        } else if(this.touchListHandler.numTouches == 2) {
+                            var t1Index = this.touchListHandler.getTouchIndexById(0),
+                                t2Index = this.touchListHandler.getTouchIndexById(1),
+                                t1 = this.touchListHandler.touches[t1Index],
+                                t2 = this.touchListHandler.touches[t2Index];
+                            this.touch1start = {x: t1.pageX, y: t1.pageY, id: id};
+                            this.touch2start = {x: t2.pageX, y: t2.pageY, id: id};
+
+                            this.prevOffsetX = this.offsetX;
+                            this.prevOffsetY = this.offsetY;
+                            this.prevScale = this.scale;
+
+
+                            this.startLength = Math.sqrt(
+                                    Math.pow(this.touch1start.x - this.touch2start.x, 2) + 
+                                    Math.pow(this.touch1start.y - this.touch2start.y, 2)
+                                ),
+                            this.startCenter = {
+                                x: (this.touch1start.x + this.touch2start.x) / 2,
+                                y: (this.touch1start.y + this.touch2start.y) / 2
+                            }
+
+                            this.startRelativeWidth = this.layerwidth * this.scale;
+                            var touchX = this.startCenter.x - this.offsetX;
+
+                            this.startRelativeHeight = this.layerheight * this.scale;
+                            var touchY = this.startCenter.y - this.offsetY;
+
+                            this.startPercentXOffset = touchX / this.startRelativeWidth;
+                            this.startPercentYOffset = touchY / this.startRelativeHeight;
+                        }
+
+                    }
+                    prototype.onTouchMove = function(ev){
+                        if(this.touchListHandler.numTouches == 1 && this.touch1start) {
+                            // Panning
+                            if(this.mode === "pan" && this.moving && this.layerwidth && this.layerheight) {
+                                ev.stopPropagation();
+
+                                var touches = ev.changedTouches,
+                                    x2 = 0,
+                                    y2 = 0,
+                                    numTouches = touches.length;
+
+                                // iterateover each touch point and calculate
+                                // the average x and y coord.
+                                for (var i=0; i < numTouches; i++) {
+                                    var touch = touches[i],
+                                        idx = this.touchListHandler.getTouchIndexById(touch.identifier);
+                                    if(idx >= 0) {
+                                        // swap in the new touch record
+                                        this.touchListHandler.updateTouchFromEventByIndex(
+                                            this.touchListHandler.copyTouch(touches[i]), idx);
+                                    } else {
+                                        console.log("can't figure out which touch to continue");
+                                    }
+                                }
+
+                                var t1Index = this.touchListHandler.getTouchIndexById(0);
+
+                                if(t1Index != -1){
+                                    var t1 = this.touchListHandler.touches[t1Index];
+
+                                    var dx = t1.pageX - this.touch1start.x,
+                                        dy = t1.pageY - this.touch1start.y;
+
+                                    this.offsetX = this.prevOffsetX + dx;
+                                    this.offsetY = this.prevOffsetY + dy;
+                                }
+
+                                this.update();
+                            }
+
+
+                        } else if(this.touchListHandler.numTouches == 2 && this.touch1start && this.touch2start) {
+                            // Zooming
+                            if(this.mode === "pan" && this.moving && this.layerwidth && this.layerheight) {
+                                ev.stopPropagation();
+
+                                var touches = ev.changedTouches,
+                                    numTouches = touches.length;
+                                    //console.log(startLength);
+
+                                // iterateover each touch point and calculate
+                                // the average x and y coord.
+                                for (var i=0; i < numTouches; i++) {
+                                    var touch = touches[i],
+                                        idx = this.touchListHandler.getTouchIndexById(touch.identifier);
+                                    if(idx >= 0) {
+                                        // swap in the new touch record
+                                        this.touchListHandler.updateTouchFromEventByIndex(
+                                            this.touchListHandler.copyTouch(touches[i]), idx);
+                                    } else {
+                                        console.log("can't figure out which touch to continue");
+                                    }
+                                }
+                                var t1Index = this.touchListHandler.getTouchIndexById(0),
+                                    t2Index = this.touchListHandler.getTouchIndexById(1),
+                                    t1 = this.touchListHandler.touches[t1Index],
+                                    t2 = this.touchListHandler.touches[t2Index],
+                                    newLength = Math.sqrt(
+                                            Math.pow(t1.pageX - t2.pageX, 2) + 
+                                            Math.pow(t1.pageY - t2.pageY, 2)
+                                        ),
+                                    newCenter = {
+                                        x: (t1.pageX + t2.pageX) / 2,
+                                        y: (t1.pageY + t2.pageY) / 2
+                                    };
+
+                                var relativeWidth = this.layerwidth * this.scale,
+                                    touchX = newCenter.x - this.offsetX,
+                                    percentXOffset = touchX / relativeWidth,
+
+                                    relativeHeight = this.layerheight * this.scale,
+                                    touchY = newCenter.y - this.offsetY,
+                                    percentYOffset = touchY / relativeHeight;
+
+                                var dScale = newLength / this.startLength;
+                                this.scale = this.prevScale * dScale;
+
+                                var newRelativeWidth = this.layerwidth * this.scale,
+                                    dx = ((this.startRelativeWidth - newRelativeWidth) * this.startPercentXOffset) + (newCenter.x - this.startCenter.x),
+
+                                    newRelativeHeight = this.layerheight * this.scale,
+                                    dy = ((this.startRelativeHeight - newRelativeHeight) * this.startPercentYOffset) + (newCenter.y - this.startCenter.y);
+
+                                this.offsetX = (this.prevOffsetX ) + dx;
+                                this.offsetY = (this.prevOffsetY ) + dy;
+
+                                this.update();
+                            }
+                        }
+                    }
+                    prototype.onTouchEnd = function(ev){
+                        console.log('onTouchEnd');
+
+                        var touches = ev.changedTouches;
+                        //this.touchListHandler.removeTouchById(ev)
+                        for (var i=0; i < touches.length; i++) {
+                            var touch = touches[i];
+                            this.touchListHandler.removeTouchById(touch.identifier);
+                            if(touch.id == 0){
+                                this.touch1start = null;
+                                this.touch2start = null;
+
+                            }
+                        }
+                        if(this.touchListHandler.numTouches === 0){
+                            this.moving = false;
+
+                            this.prevOffsetX = this.offsetX;
+                            this.prevOffsetY = this.offsetY;
+                            this.prevScale = this.scale;
+                        } else if(this.touchListHandler.numTouches === 1) {
+                            var t1Index = this.touchListHandler.getTouchIndexById(0);
+                            if(t1Index != -1){
+                                var t1 = this.touchListHandler.touches[t1Index];
+                                this.touch1start = {x: t1.pageX, y: t1.pageY, id: t1.identifier};
+                            }
+                            this.prevOffsetX = this.offsetX;
+                            this.prevOffsetY = this.offsetY;
+                        }
+                    }
+                    prototype.onTouchCancel = function(ev){
+                        
+                    }
+                    prototype.onTouchLeave = function(ev){
+                        
+                    }
+
                     prototype.createdCallback = function(){
                         var root = this.getComposerRoot(),
                             tools = root.querySelector('composer-tools'),
@@ -417,6 +638,14 @@
                         this.addEventListener('mouseup', this.onMouseUp.bind(this), false);
                         this.addEventListener('mousemove', this.onMouseMove.bind(this), false);
                         this.addEventListener('mousewheel', this.onMouseWheel.bind(this), false);
+
+                        this.addEventListener('touchstart', this.onTouchStart.bind(this), false);
+                        this.addEventListener('touchmove', this.onTouchMove.bind(this), false);
+                        this.addEventListener('touchend', this.onTouchEnd.bind(this), false);
+                        this.addEventListener('touchcancel', this.onTouchCancel.bind(this), false);
+                        this.addEventListener('touchleave', this.onTouchLeave.bind(this), false);
+
+
 
                         document.addEventListener('mouseup', this.onMouseUp.bind(this), false);
                         document.addEventListener('mousemove', this.onMouseMove.bind(this), false);
@@ -772,6 +1001,93 @@
                     this.checkLayerPosition();
                     this.update();
                 }
+            },
+
+
+
+
+            onComposerTouchStart: function (ev) {
+                // console.log('onTouchStart', 'touch list length: ', ev.changedTouches.length, 'id of 0: ', 
+                //     ev.changedTouches[0].identifier);
+
+                // var touches = ev.changedTouches,
+                //     numTouches = touches.length,
+                //     sumX = 0,
+                //     sumY = 0;
+                    
+                // for (var i=0; i < touches.length; i++) {
+                //     console.log("touchstart:"+i+"...");
+                //     touchList.addTouch(touchList.copyTouch(touches[i]));
+                //     sumX += pageXToLocal(touches[i].pageX);
+                //     sumY += pageYToLocal(touches[i].pageY);
+                //     console.log("touchstart:"+i+".");
+                // }
+                // if(!movingImage){
+                //     startX = (sumX / numTouches) - img.posX;
+                //     startY = (sumY / numTouches) - img.posY;
+                //     movingImage = true;
+                // }
+            },
+            onComposerTouchMove: function (ev) {
+                // var touches = ev.changedTouches,
+                //     sumX = 0,
+                //     sumY = 0,
+                //     numTouches = touches.length,
+                //     avgX = 0,
+                //     avgY = 0;
+
+                // // iterateover each touch point and calculate
+                // // the average x and y coord.
+                // for (var i=0; i < touches.length; i++) {
+                //     var idx = touchList.getTouchIndexById(touches[i].identifier);
+                //     if(idx >= 0) {
+                //         // swap in the new touch record
+                //         touchList.updateTouchFromEventByIndex(
+                //             touchList.copyTouch(touches[i]), idx);
+                //         //touchList.updateTouchByIndex(touches[i], idx);
+                //         sumX += pageXToLocal(touches[i].pageX);
+                //         sumY += pageYToLocal(touches[i].pageY);
+                //     } else {
+                //         console.log("can't figure out which touch to continue");
+                //     }
+                // }
+
+                // avgX = sumX / numTouches;
+                // avgY = sumY / numTouches;
+
+                // // TODO: I don't think I'm suppose to be using the average when I draw
+                // //       like this. If a new finger is added, the image shouldn't jump
+                // //       from one position to a new averaged position.
+                // img.posX = avgX - startX;
+                // img.posY = avgY - startY;
+                // redrawImage(mainCanvas, img);
+
+                // // if(movingImage){
+                // //     //console.log(ev);
+                // //     var dx = ev.x - curX,
+                // //         dy = ev.y - curY;
+                // //     img.posX += dx;
+                // //     img.posY += dy;
+                // //     redrawImage(img);
+                // // }
+            },
+            onComposerTouchEnd: function (ev) {
+                // console.log('onTouchEnd');
+
+                // var touches = ev.changedTouches;
+                // //touchList.removeTouchById(ev)
+                // for (var i=0; i < touches.length; i++) {
+                //     touchList.removeTouchById(touches[i].identifier);
+                // }
+                // if(touchList.numTouches === 0){
+                //     movingImage = false;
+                // }
+            },
+            onComposerTouchCancel: function (ev) {
+
+            },
+            onComposerTouchLeave: function (ev) {
+
             }
         },
         doodleLayerEvents = {
@@ -849,7 +1165,9 @@
 
             pictureContainer.addPicture(src, caption);
             if(wearScriptConnection){
-                wearScriptConnection.send('picture', src, caption);
+                // wearScriptConnection.send('picture', src, caption);
+
+                wearScriptConnection.send('words', caption, src);
             }
         });
     });
@@ -863,28 +1181,169 @@
 
 
 
+    var touchList = new TouchListHandler(),
+        startX = 0,
+        startY = 0;
+
+    function onTouchStart(ev){
+        console.log('onTouchStart', 'touch list length: ', ev.changedTouches.length, 'id of 0: ', 
+            ev.changedTouches[0].identifier);
+
+        var touches = ev.changedTouches,
+            numTouches = touches.length,
+            sumX = 0,
+            sumY = 0;
+            
+        for (var i=0; i < touches.length; i++) {
+            console.log("touchstart:"+i+"...");
+            touchList.addTouch(touchList.copyTouch(touches[i]));
+            sumX += pageXToLocal(touches[i].pageX);
+            sumY += pageYToLocal(touches[i].pageY);
+            console.log("touchstart:"+i+".");
+        }
+        if(!movingImage){
+            startX = (sumX / numTouches) - img.posX;
+            startY = (sumY / numTouches) - img.posY;
+            movingImage = true;
+        }
+    }
+    function onTouchMove(ev){
+        var touches = ev.changedTouches,
+            sumX = 0,
+            sumY = 0,
+            numTouches = touches.length,
+            avgX = 0,
+            avgY = 0;
+
+        // iterateover each touch point and calculate
+        // the average x and y coord.
+        for (var i=0; i < touches.length; i++) {
+            var idx = touchList.getTouchIndexById(touches[i].identifier);
+            if(idx >= 0) {
+                // swap in the new touch record
+                touchList.updateTouchFromEventByIndex(
+                    touchList.copyTouch(touches[i]), idx);
+                //touchList.updateTouchByIndex(touches[i], idx);
+                sumX += pageXToLocal(touches[i].pageX);
+                sumY += pageYToLocal(touches[i].pageY);
+            } else {
+                console.log("can't figure out which touch to continue");
+            }
+        }
+
+        avgX = sumX / numTouches;
+        avgY = sumY / numTouches;
+
+        // TODO: I don't think I'm suppose to be using the average when I draw
+        //       like this. If a new finger is added, the image shouldn't jump
+        //       from one position to a new averaged position.
+        img.posX = avgX - startX;
+        img.posY = avgY - startY;
+        redrawImage(mainCanvas, img);
+
+        // if(movingImage){
+        //     //console.log(ev);
+        //     var dx = ev.x - curX,
+        //         dy = ev.y - curY;
+        //     img.posX += dx;
+        //     img.posY += dy;
+        //     redrawImage(img);
+        // }
+    }
+    function onTouchEnd(ev){
+        console.log('onTouchEnd');
+
+        var touches = ev.changedTouches;
+        //touchList.removeTouchById(ev)
+        for (var i=0; i < touches.length; i++) {
+            touchList.removeTouchById(touches[i].identifier);
+        }
+        if(touchList.numTouches === 0){
+            movingImage = false;
+        }
+    }
+    function onTouchCancel(){
+
+    }
+    function onTouchLeave(){
+
+    }
+
+    composer.registerEventListener('touchstart', imageLayerEvents.onComposerTouchStart.bind(imageLayer), false);
+    composer.registerEventListener('touchmove', imageLayerEvents.onComposerTouchMove.bind(imageLayer), false);
+    composer.registerEventListener('touchend', imageLayerEvents.onComposerTouchEnd.bind(imageLayer), false);
+    composer.registerEventListener('touchcancel', imageLayerEvents.onComposerTouchCancel.bind(imageLayer), false);
+    composer.registerEventListener('touchleave', imageLayerEvents.onComposerTouchLeave.bind(imageLayer), false);
 
 
 
 
 
+    /*
+     * @name TouchListHandler
+     * @description Used to manage multiple touches on a touch enabled device
+     *
+     * @reference https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Touch_events
+     */
+    function TouchListHandler(){
+        this.touches = [];
+        this.numTouches = 0;
+    }
+    TouchListHandler.prototype.addTouch = function(touch){
+        for(var i = 0; i < this.touches.length; i++){
+            if(this.touches[i] === undefined){
+                this.touches[i] = touch;
+                this.numTouches++;
+                return;
+            }
+        }
+        this.touches.push(touch);
+        this.numTouches++;
+    };
+    TouchListHandler.prototype.getTouchIndexById = function(id){
+        for(var i = 0; i < this.touches.length; i++){
+            if(this.touches[i] && this.touches[i].identifier === id){
+                return i;
+            }
+        }
+        return -1;
+    };
+    TouchListHandler.prototype.removeTouchById = function(id){
+        for(var i = 0; i < this.touches.length; i++){
+            if(this.touches[i] && this.touches[i].identifier === id){
+                this.touches[i] = undefined;
+                this.numTouches--;
+            }
+        }
+    };
+    TouchListHandler.prototype.copyTouch = function(touch) {
+        return { 
+            identifier: touch.identifier,
+            pageX: pageXToLocal(touch.pageX), 
+            pageY: pageYToLocal(touch.pageY) 
+        };
+    };
+    
+    TouchListHandler.prototype.updateTouchFromEventByIndex = function(touch, idx){
+        this.touches.splice(idx, 1, touch);
+    };
+    TouchListHandler.prototype.updateTouchByIndex = function(t, idx){
+        // todo: handle converting pageX and pageY to local
+        var touch = this.touches[idx];
+        touch.pageX = t.pageX;
+        touch.pageY = t.pageY;
+    };
+    TouchListHandler.prototype.updateTouchById = function(id){
+        this.updateTouchByIndex(this.getTouchIndexById(id));
+    };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    function pageXToLocal(x){
+        return x - 8;
+    }
+    function pageYToLocal(y){
+        return y - 84;
+    }
 
 
 
@@ -1309,166 +1768,166 @@
     }
 */
 
-    /*
-     * @name TouchListHandler
-     * @description Used to manage multiple touches on a touch enabled device
-     *
-     * @reference https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Touch_events
-     */
-    function TouchListHandler(){
-        this.touches = [];
-        this.numTouches = 0;
-    }
-    TouchListHandler.prototype.addTouch = function(touch){
-        for(var i = 0; i < this.touches.length; i++){
-            if(this.touches[i] === undefined){
-                this.touches[i] = touch;
-                this.numTouches++;
-                return;
-            }
-        }
-        this.touches.push(touch);
-        this.numTouches++;
-    };
-    TouchListHandler.prototype.getTouchIndexById = function(id){
-        for(var i = 0; i < this.touches.length; i++){
-            if(this.touches[i] && this.touches[i].identifier === id){
-                return i;
-            }
-        }
-        return -1;
-    };
-    TouchListHandler.prototype.removeTouchById = function(id){
-        for(var i = 0; i < this.touches.length; i++){
-            if(this.touches[i] && this.touches[i].identifier === id){
-                this.touches[i] = undefined;
-                this.numTouches--;
-            }
-        }
-    };
-    TouchListHandler.prototype.copyTouch = function(touch) {
-        return { 
-            identifier: touch.identifier,
-            pageX: pageXToLocal(touch.pageX), 
-            pageY: pageXToLocal(touch.pageY) 
-        };
-    };
+    // /*
+    //  * @name TouchListHandler
+    //  * @description Used to manage multiple touches on a touch enabled device
+    //  *
+    //  * @reference https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Touch_events
+    //  */
+    // function TouchListHandler(){
+    //     this.touches = [];
+    //     this.numTouches = 0;
+    // }
+    // TouchListHandler.prototype.addTouch = function(touch){
+    //     for(var i = 0; i < this.touches.length; i++){
+    //         if(this.touches[i] === undefined){
+    //             this.touches[i] = touch;
+    //             this.numTouches++;
+    //             return;
+    //         }
+    //     }
+    //     this.touches.push(touch);
+    //     this.numTouches++;
+    // };
+    // TouchListHandler.prototype.getTouchIndexById = function(id){
+    //     for(var i = 0; i < this.touches.length; i++){
+    //         if(this.touches[i] && this.touches[i].identifier === id){
+    //             return i;
+    //         }
+    //     }
+    //     return -1;
+    // };
+    // TouchListHandler.prototype.removeTouchById = function(id){
+    //     for(var i = 0; i < this.touches.length; i++){
+    //         if(this.touches[i] && this.touches[i].identifier === id){
+    //             this.touches[i] = undefined;
+    //             this.numTouches--;
+    //         }
+    //     }
+    // };
+    // TouchListHandler.prototype.copyTouch = function(touch) {
+    //     return { 
+    //         identifier: touch.identifier,
+    //         pageX: pageXToLocal(touch.pageX), 
+    //         pageY: pageXToLocal(touch.pageY) 
+    //     };
+    // };
     
-    TouchListHandler.prototype.updateTouchFromEventByIndex = function(touch, idx){
-        this.touches.splice(idx, 1, touch);
-    };
-    TouchListHandler.prototype.updateTouchByIndex = function(t, idx){
-        // todo: handle converting pageX and pageY to local
-        var touch = this.touches[idx];
-        touch.pageX = t.pageX;
-        touch.pageY = t.pageY;
-    };
-    TouchListHandler.prototype.updateTouchById = function(id){
-        this.updateTouchByIndex(this.getTouchIndexById(id));
-    };
+    // TouchListHandler.prototype.updateTouchFromEventByIndex = function(touch, idx){
+    //     this.touches.splice(idx, 1, touch);
+    // };
+    // TouchListHandler.prototype.updateTouchByIndex = function(t, idx){
+    //     // todo: handle converting pageX and pageY to local
+    //     var touch = this.touches[idx];
+    //     touch.pageX = t.pageX;
+    //     touch.pageY = t.pageY;
+    // };
+    // TouchListHandler.prototype.updateTouchById = function(id){
+    //     this.updateTouchByIndex(this.getTouchIndexById(id));
+    // };
 
 
-    function pageXToLocal(x){
-        return x - navDrawWidth - middleContainerPadding;
-    }
-    function pageYToLocal(y){
-        return y - canvasTop;
-    }
+    // function pageXToLocal(x){
+    //     return x - navDrawWidth - middleContainerPadding;
+    // }
+    // function pageYToLocal(y){
+    //     return y - canvasTop;
+    // }
 
 
-    var touchList = new TouchListHandler(),
-        startX = 0,
-        startY = 0;
+    // var touchList = new TouchListHandler(),
+    //     startX = 0,
+    //     startY = 0;
 
-    function onTouchStart(ev){
-        console.log('onTouchStart', 'touch list length: ', ev.changedTouches.length, 'id of 0: ', 
-            ev.changedTouches[0].identifier);
+    // function onTouchStart(ev){
+    //     console.log('onTouchStart', 'touch list length: ', ev.changedTouches.length, 'id of 0: ', 
+    //         ev.changedTouches[0].identifier);
 
-        var touches = ev.changedTouches,
-            numTouches = touches.length,
-            sumX = 0,
-            sumY = 0;
+    //     var touches = ev.changedTouches,
+    //         numTouches = touches.length,
+    //         sumX = 0,
+    //         sumY = 0;
             
-        for (var i=0; i < touches.length; i++) {
-            console.log("touchstart:"+i+"...");
-            touchList.addTouch(touchList.copyTouch(touches[i]));
-            sumX += pageXToLocal(touches[i].pageX);
-            sumY += pageYToLocal(touches[i].pageY);
-            console.log("touchstart:"+i+".");
-        }
-        if(!movingImage){
-            startX = (sumX / numTouches) - img.posX;
-            startY = (sumY / numTouches) - img.posY;
-            movingImage = true;
-        }
-    }
-    function onTouchMove(ev){
-        var touches = ev.changedTouches,
-            sumX = 0,
-            sumY = 0,
-            numTouches = touches.length,
-            avgX = 0,
-            avgY = 0;
+    //     for (var i=0; i < touches.length; i++) {
+    //         console.log("touchstart:"+i+"...");
+    //         touchList.addTouch(touchList.copyTouch(touches[i]));
+    //         sumX += pageXToLocal(touches[i].pageX);
+    //         sumY += pageYToLocal(touches[i].pageY);
+    //         console.log("touchstart:"+i+".");
+    //     }
+    //     if(!movingImage){
+    //         startX = (sumX / numTouches) - img.posX;
+    //         startY = (sumY / numTouches) - img.posY;
+    //         movingImage = true;
+    //     }
+    // }
+    // function onTouchMove(ev){
+    //     var touches = ev.changedTouches,
+    //         sumX = 0,
+    //         sumY = 0,
+    //         numTouches = touches.length,
+    //         avgX = 0,
+    //         avgY = 0;
 
-        // iterateover each touch point and calculate
-        // the average x and y coord.
-        for (var i=0; i < touches.length; i++) {
-            var idx = touchList.getTouchIndexById(touches[i].identifier);
-            if(idx >= 0) {
-                // swap in the new touch record
-                touchList.updateTouchFromEventByIndex(
-                    touchList.copyTouch(touches[i]), idx);
-                //touchList.updateTouchByIndex(touches[i], idx);
-                sumX += pageXToLocal(touches[i].pageX);
-                sumY += pageYToLocal(touches[i].pageY);
-            } else {
-                console.log("can't figure out which touch to continue");
-            }
-        }
+    //     // iterateover each touch point and calculate
+    //     // the average x and y coord.
+    //     for (var i=0; i < touches.length; i++) {
+    //         var idx = touchList.getTouchIndexById(touches[i].identifier);
+    //         if(idx >= 0) {
+    //             // swap in the new touch record
+    //             touchList.updateTouchFromEventByIndex(
+    //                 touchList.copyTouch(touches[i]), idx);
+    //             //touchList.updateTouchByIndex(touches[i], idx);
+    //             sumX += pageXToLocal(touches[i].pageX);
+    //             sumY += pageYToLocal(touches[i].pageY);
+    //         } else {
+    //             console.log("can't figure out which touch to continue");
+    //         }
+    //     }
 
-        avgX = sumX / numTouches;
-        avgY = sumY / numTouches;
+    //     avgX = sumX / numTouches;
+    //     avgY = sumY / numTouches;
 
-        // TODO: I don't think I'm suppose to be using the average when I draw
-        //       like this. If a new finger is added, the image shouldn't jump
-        //       from one position to a new averaged position.
-        img.posX = avgX - startX;
-        img.posY = avgY - startY;
-        redrawImage(mainCanvas, img);
+    //     // TODO: I don't think I'm suppose to be using the average when I draw
+    //     //       like this. If a new finger is added, the image shouldn't jump
+    //     //       from one position to a new averaged position.
+    //     img.posX = avgX - startX;
+    //     img.posY = avgY - startY;
+    //     redrawImage(mainCanvas, img);
 
-        // if(movingImage){
-        //     //console.log(ev);
-        //     var dx = ev.x - curX,
-        //         dy = ev.y - curY;
-        //     img.posX += dx;
-        //     img.posY += dy;
-        //     redrawImage(img);
-        // }
-    }
-    function onTouchEnd(ev){
-        console.log('onTouchEnd');
+    //     // if(movingImage){
+    //     //     //console.log(ev);
+    //     //     var dx = ev.x - curX,
+    //     //         dy = ev.y - curY;
+    //     //     img.posX += dx;
+    //     //     img.posY += dy;
+    //     //     redrawImage(img);
+    //     // }
+    // }
+    // function onTouchEnd(ev){
+    //     console.log('onTouchEnd');
 
-        var touches = ev.changedTouches;
-        //touchList.removeTouchById(ev)
-        for (var i=0; i < touches.length; i++) {
-            touchList.removeTouchById(touches[i].identifier);
-        }
-        if(touchList.numTouches === 0){
-            movingImage = false;
-        }
-    }
-    function onTouchCancel(){
+    //     var touches = ev.changedTouches;
+    //     //touchList.removeTouchById(ev)
+    //     for (var i=0; i < touches.length; i++) {
+    //         touchList.removeTouchById(touches[i].identifier);
+    //     }
+    //     if(touchList.numTouches === 0){
+    //         movingImage = false;
+    //     }
+    // }
+    // function onTouchCancel(){
 
-    }
-    function onTouchLeave(){
+    // }
+    // function onTouchLeave(){
 
-    }
+    // }
 
-    mainCanvas.addEventListener('touchstart', onTouchStart);
-    mainCanvas.addEventListener('touchmove', onTouchMove);
-    mainCanvas.addEventListener('touchend',   onTouchEnd);
-    mainCanvas.addEventListener('touchcancel', onTouchCancel);
-    mainCanvas.addEventListener('touchleave', onTouchLeave);
+    // mainCanvas.addEventListener('touchstart', onTouchStart);
+    // mainCanvas.addEventListener('touchmove', onTouchMove);
+    // mainCanvas.addEventListener('touchend',   onTouchEnd);
+    // mainCanvas.addEventListener('touchcancel', onTouchCancel);
+    // mainCanvas.addEventListener('touchleave', onTouchLeave);
 
     
 
