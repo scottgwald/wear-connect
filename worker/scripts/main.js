@@ -314,33 +314,30 @@
                         return this.parentNode;
                     };
 
-                    prototype.checkLayerScale = function() {
-
-                        //
-                    };
                     prototype.checkLayerPosition = function() {
                         var relativeWidth = this.layerwidth * this.scale,
                             relativeHeight = this.layerheight * this.scale,
                             check = true,
-                            margin = 10;
+                            marginVertical = 360,
+                            marginHorizontal = 640;
 
-                        if(this.offsetX + relativeWidth < 0 + margin) {
-                            this.offsetX =  margin - relativeWidth;
+                        if(this.offsetX + relativeWidth < 0 + marginHorizontal) {
+                            this.offsetX =  marginHorizontal - relativeWidth;
                             check = false;
                         }
 
-                        if(this.offsetY + relativeHeight < 0 + margin) {
-                            this.offsetY = margin - relativeHeight;
+                        if(this.offsetY + relativeHeight < 0 + marginVertical) {
+                            this.offsetY = marginVertical - relativeHeight;
                             check = false;
                         }
 
-                        if(this.offsetX > this.width - margin) {
-                            this.offsetX = this.width - margin;
+                        if(this.offsetX > this.width - marginHorizontal) {
+                            this.offsetX = this.width - marginHorizontal;
                             check = false;
                         }
                         
-                        if(this.offsetY > this.height - margin) {
-                            this.offsetY = this.height - margin;
+                        if(this.offsetY > this.height - marginVertical) {
+                            this.offsetY = this.height - marginVertical;
                             check = false;
                         }
                         return check;
@@ -378,9 +375,10 @@
                                 touchY = ev.layerY - this.offsetY,
                                 percentYOffset = touchY / relativeHeight;
 
-                            this.scale *= ev.wheelDelta > 0 ? 1 + .05 : 1 - 0.05;
+                            //this.scale *= ev.wheelDelta > 0 ? 1 + .05 : 1 - 0.05;
+                            this.scale += ev.wheelDelta > 0 ?  + .1 :  - 0.1;
 
-                            this.checkLayerScale(mainCanvas, img);///// TODO: not implemented //////////
+                            // this.checkLayerScale(mainCanvas, img);///// TODO: not implemented //////////
 
                             var newRelativeWidth = this.layerwidth * this.scale,
                                 dx = (relativeWidth - newRelativeWidth) * percentXOffset,
@@ -667,6 +665,11 @@
                                     var composer = self.getComposerCanvas();
                                     // composer.layerwidth = self.image.width;
                                     // composer.layerheight = self.image.height;
+                                    var imageWidth = this.width;
+                                    var imageHeight = this.height;
+
+                                    var initialScale = composer.width / imageWidth;
+                                    composer.scale = initialScale;
                                     composer.update();
                                 }
                                 this.update();
@@ -678,6 +681,18 @@
                         prototype.getComposerCanvas = function(){
                             return this.parentNode;
                         };
+                        prototype.checkLayerScale = function() {
+                                debugger;
+                            var composer = this.getComposerCanvas(),
+                                minimumWidth = 640,
+                                relativeImageWidth = this.image.width * composer.scale,
+                                imageWidth = this.image.width;
+
+                            if(relativeImageWidth < minimumWidth) {
+                                composer.scale = composer.width / imageWidth;
+                            }
+
+                        };
                         prototype.checkLayerPosition = function(){
                             // This function manipulates the canvas-composer element.
                             
@@ -688,25 +703,26 @@
                                 relativeWidth = this.image.width * composer.scale,
                                 relativeHeight = this.image.height * composer.scale,
                                 check = true,
-                                margin = 10;
+                                marginVertical = 360,
+                                marginHorizontal = 640;
 
-                            if(composer.offsetX + relativeWidth < 0 + margin) {
-                                composer.offsetX =  margin - relativeWidth;
+                            if(composer.offsetX + relativeWidth < 0 + marginHorizontal) {
+                                composer.offsetX =  marginHorizontal - relativeWidth;
                                 check = false;
                             }
 
-                            if(composer.offsetY + relativeHeight < 0 + margin) {
-                                composer.offsetY = margin - relativeHeight;
+                            if(composer.offsetY + relativeHeight < 0 + marginVertical) {
+                                composer.offsetY = marginVertical - relativeHeight;
                                 check = false;
                             }
 
-                            if(composer.offsetX > composer.width - margin) {
-                                composer.offsetX = composer.width - margin;
+                            if(composer.offsetX > composer.width - marginHorizontal) {
+                                composer.offsetX = composer.width - marginHorizontal;
                                 check = false;
                             }
                             
-                            if(composer.offsetY > composer.height - margin) {
-                                composer.offsetY = composer.height - margin;
+                            if(composer.offsetY > composer.height - marginVertical) {
+                                composer.offsetY = composer.height - marginVertical;
                                 check = false;
                             }
                             composer.update();
@@ -762,6 +778,7 @@
                                 composer = this.getComposerCanvas(),
                                 imageLayer = composer.querySelector('canvas[is="composer-image-layer"]');
 
+                            myDrawFunction(this, ctx, composer);
                             /*
                                 drawing formulae:
                                     x = c * scale + offsetx
@@ -989,7 +1006,6 @@
                 if(composer.mode === "pan") {
                     ev.stopPropagation();
                     if(composer.moving){
-                        console.log(composer.moving)
                         this.checkLayerPosition();
                         this.update();
                     }
@@ -998,6 +1014,7 @@
             onComposerMouseWheel: function (ev) {
                 var composer = this.getComposerCanvas();
                 if(composer.mode === "pan") {
+                    this.checkLayerScale();
                     this.checkLayerPosition();
                     this.update();
                 }
@@ -1029,6 +1046,12 @@
                 // }
             },
             onComposerTouchMove: function (ev) {
+
+                if(composer.mode === "pan") {
+                    this.checkLayerScale();
+                    this.checkLayerPosition();
+                    this.update();
+                }
                 // var touches = ev.changedTouches,
                 //     sumX = 0,
                 //     sumY = 0,
@@ -1346,10 +1369,26 @@
     }
 
 
+    function myDrawFunction(customCanvas, ctx, composer){
+        var rectX = 0,
+            rectY = 0,
+            rectWidth = 100,
+            rectHeight = 100;
+        // ctx.fillStyle = "red";
+        // ctx.fillRect(rectX + composer.offsetX, rectY+composer.offsetY,
+        //             rectWidth * composer.scale, rectHeight * composer.scale);
+    }
 
 
-
-
+    function cropDimensions(){
+        var imageLayer = document.querySelector('canvas[is="composer-image-layer"]'),
+            composer = imageLayer.getComposerCanvas(),
+            pixelX = -(composer.offsetX / composer.scale),
+            pixelY = -(composer.offsetY / composer.scale),
+            width = composer.width / composer.scale,
+            height = composer.height / composer.scale;
+        return {pixelX: pixelX, pixelY:pixelY, width: width, height: height};
+    }
 
 
 
