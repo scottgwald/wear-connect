@@ -4,7 +4,7 @@ from distutils.core import setup
 setup(
     name='wearconnect',
     version='0.1',
-    packages=['.'],
+    packages=['wearconnect'],
     author='Scott Greenwald',
     author_email='scottgwald@gmail.com',
     license='Apache 2.0',
