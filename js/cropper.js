@@ -39,8 +39,8 @@ var actualCanvasHeight = actualCanvasWidth/2;
 // var pixelImageHeight = 1856;
 
 // for images from glass
-var pixelImageWidth = 416;
-var pixelImageHeight = 304;
+var pixelImageWidth = 1500;
+var pixelImageHeight = 1096;
 
 var cameraZ = 400;
 
@@ -96,6 +96,16 @@ var touchStartPosition = new THREE.Vector2();
 var currentTouchPosition = new THREE.Vector2();
 var lastTouch= new THREE.Vector2();
 
+var currentPicture = 0;
+var input = [];
+var ready = false;
+var start;
+var times = [];
+var errors = [];
+var currentPictureTime;
+var finish = false;
+
+
 init();
 
 // GEOMETRY / MATERIAL / MESH
@@ -112,6 +122,161 @@ var textMessageGeometry;
 var fullListItemY=[];
 
 // COORDINATE MAPPINGS
+
+function advance(){
+    errors[currentPicture]= [-1,-1];
+    nextPicture();
+}
+
+ function nextPicture() {
+        var finishTime = new Date().getTime();
+        times.push(finishTime- currentPictureTime);
+        scene.remove(input[currentPicture].prev);
+
+        if (currentPicture == 9){
+            finish = true;
+            times.push(finishTime-start);
+
+            console.log('-----------Times---------')
+
+            for (var i = 0; i<11 ; i++){
+                console.log('picture '+ i + ' :'+times[i]);
+            }
+            
+            console.log('-----------Error---------')
+
+            for (var i = 0; i<10 ; i++){
+                console.log('picture ' +i+ 'pixel: '+errors[i][0]+ ' non: '+ errors[i][1]);
+            }
+        }
+
+        currentPicture = (currentPicture + 1) % input.length ;
+        placePicture(input[currentPicture].image);
+        currentPictureTime = new Date().getTime();
+        scene.add(input[currentPicture].prev);
+    }
+
+
+function error( crop_topleft_positionX, crop_topleft_positionY, crop_width, crop_height, bounding_topleft_positionX, bounding_topleft_positionY, bounding_width, bounding_height ){
+        var error=0;
+        // console.log("crop_topleft_positionX: "+crop_topleft_positionX +" crop_topleft_positionY: "+ crop_topleft_positionY+ " crop_width: "+crop_width+ " crop_height: "+crop_height+" bounding_topleft_positionX: "+ bounding_topleft_positionX+" bounding_topleft_positionY: "+ bounding_topleft_positionY+ " bounding_width: "+bounding_width+" bounding_height: "+ bounding_height);
+ 
+        boundingCenter={x:getCenterX (bounding_topleft_positionX, bounding_width), y:getCenterY (bounding_topleft_positionY, bounding_height)}
+        // console.log("boundingCenter: x "+boundingCenter.x+" y "+boundingCenter.y);
+ 
+    crop_topLeft={x:crop_topleft_positionX,y:crop_topleft_positionY};
+    // console.log("crop_topLeft: x "+crop_topLeft.x+" y "+crop_topLeft.y);
+       
+        crop_topRight={x:get_topRightX(crop_topleft_positionX, crop_width),y:get_topRightY(crop_topleft_positionY)};
+        // console.log("crop_topRight: x "+crop_topRight.x+" y "+crop_topRight.y);
+       
+        crop_bottomRight={x:get_bottomRightX(crop_topleft_positionX, crop_width),y:get_bottomRightY (crop_topleft_positionY, crop_height)};
+        // console.log("crop_bottomRight: x "+crop_bottomRight.x+" y "+crop_bottomRight.y);
+ 
+        crop_bottomLeft={x:get_bottomLeftX(crop_topleft_positionX),y:get_bottomLeftY (crop_topleft_positionY, crop_height)};
+        // console.log("crop_bottomLeft: x "+crop_bottomLeft.x+" y "+crop_bottomLeft.y);
+ 
+        fixedHalfDiagonal=halfDiagonal(bounding_width,bounding_height);
+        // console.log("fixedHalfDiagonal: "+fixedHalfDiagonal);
+ 
+        distanceTopLeft=distanceBtwPoints(boundingCenter, crop_topLeft);
+        distanceTopRight=distanceBtwPoints(boundingCenter, crop_topRight);
+        distanceBottomLeft=distanceBtwPoints(boundingCenter, crop_bottomLeft);
+        distanceBottomRight=distanceBtwPoints(boundingCenter, crop_bottomRight);
+ 
+        // console.log("distanceTopLeft: "+distanceTopLeft);
+        // console.log("distanceTopRight: "+distanceTopRight);
+        // console.log("distanceBottomLeft: "+distanceBottomLeft);
+        // console.log("distanceBottomRight: "+distanceBottomRight);
+ 
+        diffTopLeft=Math.abs(distanceTopLeft-fixedHalfDiagonal);
+        diffTopRight=Math.abs(distanceTopRight-fixedHalfDiagonal);
+        diffBottomLeft=Math.abs(distanceBottomLeft-fixedHalfDiagonal);
+        diffBottomRight=Math.abs(distanceBottomRight-fixedHalfDiagonal);
+   
+        // console.log("diff all start");
+        // console.log(diffTopLeft);
+        // console.log(diffTopRight);
+        // console.log(diffBottomLeft);
+        // console.log(diffBottomRight);
+        // console.log("diff all end");
+ 
+        errorTopLeft=(diffTopLeft/fixedHalfDiagonal)*100;
+        errorTopRight=(diffTopRight/fixedHalfDiagonal)*100;
+        errorBottomLeft=(diffBottomLeft/fixedHalfDiagonal)*100;
+        errorBottomRight=(diffBottomRight/fixedHalfDiagonal)*100;
+ 
+    // console.log("errorTopLeft: "+errorTopLeft);
+    // console.log("errorTopRight: "+errorTopRight);
+    // console.log("errorBottomLeft: "+errorBottomLeft);
+    // console.log("errorBottomRight: "+errorBottomRight);
+ 
+        error=Math.max(errorTopLeft, errorTopRight, errorBottomLeft, errorBottomRight);
+    error_pixel=Math.max(diffTopLeft, diffTopRight, diffBottomLeft, diffBottomRight);
+    console.log("error: "+error);
+        return [error, error_pixel];
+}
+ 
+function distanceBtwPoints(pointA, pointB){
+        var Xdiff=pointB.x-pointA.x;
+        var Ydiff=pointB.y-pointA.y;
+        var dist_square=Math.pow(Xdiff,2)+Math.pow(Ydiff,2);
+//      console.log("distanceBtwPoints :"+dist_square);
+        var dist=Math.pow(dist_square, 0.5);
+        return dist;
+}
+ 
+function halfDiagonal(width, height){
+        var halfDiag;
+        var diag_square=Math.pow(width,2)+Math.pow(height,2);
+        var diag=Math.pow(diag_square, 0.5);
+        halfDiag=0.5*diag;
+        return halfDiag;
+}
+ 
+function getCenterX (topLeftX, width){
+        var centerX;
+        centerX=topLeftX+width/2;
+        return centerX;
+}
+ 
+function getCenterY (topLeftY, height){
+        var centerY;
+        centerY=topLeftY+height/2;
+        return centerY;
+}
+ 
+function get_topRightX (topLeftX, width){
+        var topRightX;
+        topRightX=topLeftX+width;
+        return topRightX;
+}
+ 
+function get_topRightY (topLeftY){
+        return topLeftY;
+}
+ 
+function get_bottomRightX (topLeftX, width){
+        var bottomRightX;
+        bottomRightX=topLeftX+width;
+        return bottomRightX;
+}
+ 
+function get_bottomRightY (topLeftY, height){
+        var bottomRightY;
+        bottomRightY=topLeftY+height;
+        return bottomRightY;
+}
+ 
+function get_bottomLeftX (topLeftX){
+        return topLeftX;
+}
+ 
+function get_bottomLeftY (topLeftY, height){
+        var bottomLeftY;
+        bottomLeftY=topLeftY+height;
+        return bottomLeftY;
+}
 
 function actualToVirtualScale( coord ) {
     return new THREE.Vector2( coord.x * virtualCanvasWidth / actualCanvasWidth,
@@ -158,9 +323,36 @@ function submit() {
     currentPreview2.position.y = currentPreview.position.y; // - height/2;
     currentPreview2.position.z = currentPreview.position.z;
     scene.remove(currentPreview);
-    scene.add(currentPreview2);
-    greenList.push(currentPreview2);
-    ws.publish('words', selectedItem.tagText, dataURL);
+    var t = input[currentPicture].prev;
+    var g = input[currentPicture].geo;
+
+    var targetDim = virtualToPixelScale( new THREE.Vector2(
+                    t.width,
+                    t.height));
+    var cropDim = virtualToPixelScale( new THREE.Vector2(
+                    currentPreview.width,
+                    currentPreview.height));
+
+    var targetPos = virtualToPixelPos(new THREE.Vector2(t.position.x - t.width/2, t.position.y + t.height/2));
+
+    var cropPos = virtualToPixelPos(new THREE.Vector2(currentPreview.position.x - currentPreview.width/2, currentPreview.position.y+ currentPreview.height/2));
+
+
+
+
+    errors.push(error(cropPos.x - cropDim.x/2 ,cropPos.y + cropDim.y/2 ,cropDim.x,cropDim.y,targetPos.x - targetDim.x/2 ,targetPos.y +targetDim.y/2 ,targetDim.x,targetDim.y));
+    console.log('---------------------------------');
+    console.log('corner x:'+ (targetPos.x));
+    console.log('corner y:'+(targetPos.y));
+    console.log('width:'+targetDim.x);
+    console.log('height:'+targetDim.y);
+    console.log('---------------------------------');
+
+
+    //scene.add(currentPreview2);
+    //greenList.push(currentPreview2);
+    //ws.publish('words', selectedItem.tagText, dataURL);
+    nextPicture();
     
 }
 function placePicture(imageData) {
@@ -170,8 +362,6 @@ function placePicture(imageData) {
         scene.remove(plane);
     image = new Image();
     image.src = imageData;
-    console.log("imageData: "+image.src)
-    console.log("width, height of image is " + image.width + "," + image.height);
 
     var img = new THREE.MeshBasicMaterial({ //CHANGED to MeshBasicMaterial
         map: THREE.ImageUtils.loadTexture(imageData)
@@ -193,12 +383,10 @@ function placePicture(imageData) {
 
 function makeTextDataURL( text ) {
 
-	console.log("in makeTextDataURL");
     textContext.font = 'normal 80px "Times New Roman"';  
    
 
-    console.log("String measurements: " + JSON.stringify( textContext.measureText( text )));
-    console.log("text: " + text);
+   
 
     //textContext.clearRect( 0, 0, 500, 90 );
     textContext.fillStyle = "#bdbdbd";
@@ -208,7 +396,6 @@ function makeTextDataURL( text ) {
 
     textContext.fillText( text, textCanvasPadding, 70, textCanvasWidth - 2 * textCanvasPadding );
     var durl = textCanvas.toDataURL( 'image/jpeg' );
-    console.log(durl);
     return durl;
 
 }
@@ -219,7 +406,6 @@ function enterText(){
     var textbox=document.getElementById("text_field");
     var textvalue=textbox.value;
     var textMessageURL = makeTextDataURL( textvalue );
-    console.log("entering text: "+textvalue);
 
     var text_img = new THREE.MeshBasicMaterial({
                     map: THREE.ImageUtils.loadTexture( textMessageURL )});
@@ -236,7 +422,6 @@ function enterText(){
     itemList.unshift( textmessage_mesh );
     fullListItemY.push(listItemY);
 
-    console.log("textmessage_mesh.position.x: "+textmessage_mesh.position.x);
     
     for (var i=0; i<itemList.length; i++){
     console.log("itemList: "+itemList);
@@ -322,8 +507,85 @@ function init() {
     textMessageGeometry = new THREE.BoxGeometry( listWidth - 2 * listItemPadding, (listWidth - 2 * listItemPadding)*(textCanvasHeight/textCanvasWidth), 1 );
 
     scene.add( list );
+
+
+    getReady();
+
+    function instanceImage(filename,twidth,theight,tx,ty){
+
+         var pic1 = new Object();
+
+            var geometry = new THREE.BoxGeometry( twidth, theight, 10 );
+            var material = new THREE.MeshBasicMaterial( {  color:0xff0000, wireframe:true,wireframeLinewidth: 3} );
+            var target1 = new THREE.Mesh( geometry, material );
+            target1.position.x = tx; // + width / 2;
+            target1.position.y = ty ; // - height/2;
+            target1.position.z = 1;
+            target1.width = twidth;
+            target1.height = theight;
+
+
+            var pic1 = new Object();
+
+            pic1.image = filename;
+            pic1.prev = target1;
+            pic1.geo = geometry;
+
+
+            return pic1;
+
+    }
+
+    function getReady(){
+        ready = false;
+        placePicture('ready.jpg');
+    }
+
+    function startTest() {
+
+        //'i3.jpg','i7.jpg','i10.jpg'
+        
+
+            start = new Date().getTime();
+
+            var pic1 = instanceImage('i3.jpg',420.78580481622305,236.6920152091255,890.5259822560204,561.787072243346);
+            var pic2 = instanceImage('i7.jpg',352.34474017743975,198.19391634980988,287.3891001267427,630.9410646387832);
+            var pic3 = instanceImage('i1.jpg',564.7058823529412,317.6470588235294,669.9095022624434,165.90780542986425);
+            var pic4 = instanceImage('i10.jpg',154.4494720965309,86.87782805429865 ,580.844645550528,171.71945701357467);
+            var pic5 = instanceImage('i2.jpg',139.96983408748113,78.73303167420815 ,591.2518853695325,642.7601809954751);
+            var pic6 = instanceImage('i4.jpg',465.761689291101,261.99095022624437 ,884.4645550527904,217.1945701357466);
+            var pic7 = instanceImage('i5.jpg',533.3333333333333,300 ,270.7390648567119,591.8552036199095);
+            var pic8 = instanceImage('i6.jpg',398.1900452488688,223.98190045248867 ,417.64705882352933,628.5067873303168);
+            var pic9 = instanceImage('i8.jpg',361.9909502262443,203.61990950226243 ,265.158371040724,498.868778280543);
+            var pic10 = instanceImage('i9.jpg',106.184012066365,59.72850678733032 ,145.3996983408748,287.10407239819006);
+
+
+            input.push(pic1);
+            input.push(pic2);
+            input.push(pic3);
+            input.push(pic4);
+            input.push(pic5);
+            input.push(pic6);
+            input.push(pic7);
+            input.push(pic8);
+            input.push(pic9);
+            input.push(pic10);
+
+
+
+            placePicture(input[0].image);
+            currentPictureTime =  new Date().getTime();
+            //placePicture('i9.jpg');
+
+            scene.add(input[0].prev);
+
+            //setInterval(advance, 5000);
+
+
+    }
+
+   
     
-    placePicture('glass.jpg');
     // placePicture('number.jpg');
 
     nextListPosition = virtualCanvasHeight / 2 - (virtualCanvasHeight * listItemProportion) - 10;
@@ -393,6 +655,11 @@ function init() {
         } else if (keycode == 17) {
             event.preventDefault();
             ctrlPressed = false;
+        }
+
+        if (keycode == 13 && !ready){
+            ready = true;
+            startTest();
         }
     }
 
@@ -921,6 +1188,9 @@ function init() {
             }
         }
     }
+
+
+
 
     $(document).ready(function() {
         $('#textform').submit(submit);
