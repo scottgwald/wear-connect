@@ -1214,19 +1214,14 @@
 
     var imageSource="";
     var imageNum;
-    var imagesString=["file:///Users/khan32m/mygit/wear-connect/worker/images/i3.jpg",
-        "file:///Users/khan32m/mygit/wear-connect/worker/images/i7.jpg",
-        "file:///Users/khan32m/mygit/wear-connect/worker/images/i1.jpg",
-        "file:///Users/khan32m/mygit/wear-connect/worker/images/i10.jpg",
-        "file:///Users/khan32m/mygit/wear-connect/worker/images/i2.jpg",
-        "file:///Users/khan32m/mygit/wear-connect/worker/images/i4.jpg",
-        "file:///Users/khan32m/mygit/wear-connect/worker/images/i5.jpg",
-        "file:///Users/khan32m/mygit/wear-connect/worker/images/i6.jpg",
-        "file:///Users/khan32m/mygit/wear-connect/worker/images/i8.jpg",
-        "file:///Users/khan32m/mygit/wear-connect/worker/images/i9.jpg"]
+    var imagesString=["i3.jpg", "i7.jpg", "i1.jpg", "i10.jpg", "i2.jpg", "i4.jpg",
+        "i5.jpg", "i6.jpg","i8.jpg","i9.jpg"]
 
     function setImageSource(){
-        imageNum=imagesString.indexOf(imageSource);
+        var index=imageSource.indexOf("images/");
+        index=index+7;
+        var imageID=imageSource.substring(index);
+        imageNum=imagesString.indexOf(imageID);
     }
 
     // var width_factor=640/1500;
