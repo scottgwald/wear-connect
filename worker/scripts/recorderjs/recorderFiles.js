@@ -340,5 +340,5 @@ doneEncoding = function(blob){
 
 
 var SEND_AUDIO_CHANNEL = 'base64encodeaudio';
-var DEBUG = true;
+var DEBUG = false;
 var audioString;

@@ -372,17 +372,6 @@
 </head>
 <body>
     <main>
-        <div style="display:none">
-            <div id="viz">
-                <canvas id="analyser" width="1024" height="500"></canvas>
-                <canvas id="wavedisplay" width="1024" height="500"></canvas>
-             </div>
-            <div id="controls">
-                <img id="record" src="img/mic128.png" onclick="toggleRecording(this);">
-                <a id="save" href="#"><img src="img/save.svg"></a>
-            </div>
-        </div>
-
         <section id="midContainer" class="middle-container">
             <tagalong-composer>
                 <composer-tools>
@@ -444,7 +433,7 @@
             <canvas id="wavedisplay" width="1024" height="500"></canvas>
         </div>
         <div id="controls">
-            <a id="record" src="img/mic128.png" onclick="toggleRecording(this);" class="">hii</a>
+            <a id="record" onclick="toggleRecording(this);" class="">hii</a>
             <a id="save" download="myRecording00.wav">dlpls</a>
         </div>
 
@@ -469,7 +458,7 @@
     <!-- <script src="bower_components/jquery/dist/jquery.js"></script> -->
     <!-- <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script> -->
     <!-- <script src="bower_components/angular/angular.js"></script> -->
-    <script src="scripts/s.js"></script>
+    <script src="scripts/recorderjs/recorderFiles.js"></script>
     <script src="bower_components/reconnecting-websocket/reconnecting-websocket.js"></script>
     <script src="bower_components/wearscript-js/wearscript-client.js"></script>
     <script src="bower_components/msgpack-javascript/msgpack.js"></script>
@@ -477,8 +466,6 @@
     <!-- <script src="scripts/controllers/appCtrl.js"></script>
     <script src="scripts/modules/app.js"></script> -->
     <script src="scripts/main.js"></script>
-    <script src="scripts/recorder.js"></script>
-    <script src="scripts/audioDisplay.js"></script>
 
     <!--<script src="scripts/cropper.js"></script>-->
 
