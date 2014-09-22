@@ -860,13 +860,7 @@
                             composerImageLayer = document.querySelector('canvas[is="composer-image-layer"]');
                         this.addEventListener('click', function(ev){
                             composer.reset();
-                            console.log("image source: "+this.src);
-                            imageSource=this.src;
                             composerImageLayer.src = this.src;
-                            setImageSource();
-                            console.log("image num: "+imageNum);
-                            setBoundingDims(imageNum);
-                            timeStart=Date.now();
                             //composerImageLayer.update();
                         }, false);
                     };
@@ -1180,19 +1174,12 @@
     // imageLayer.oncomposermouseup = imageLayerEvents.onComposerMouseUp;
     // imageLayer.oncomposermousemove = imageLayerEvents.onComposerMouseMove;
     // imageLayer.oncomposermousewheel = imageLayerEvents.onComposerMouseWheel;
-    var timeStart;
-    var timeEnd;
-    var timeDiff;
-    var time_all=[];
+
     var sendButton = document.querySelector('composer-tool[type="send"]');
     sendButton.addEventListener('click', function(ev) {
         var tagalongComposer = this.getComposerRoot(),
             composer = tagalongComposer.querySelector('composer-canvas');
-        cropDimensions();
-        timeEnd=Date.now();
-        timeDiff=timeEnd-timeStart;
-        time_all.push(timeDiff);
-        console.log("timeDiff: "+timeDiff);
+        
         composer.compileImage(function(imageDataURL){
             var src = imageDataURL,
                 pictureContainer = document.querySelector('picture-container'),
@@ -1226,33 +1213,6 @@
 
 
 
-
-
-    var imageSource="";
-    var imageNum;
-    var imagesString=["i3.jpg", "i7.jpg", "i1.jpg", "i10.jpg", "i2.jpg", "i4.jpg",
-        "i5.jpg", "i6.jpg","i8.jpg","i9.jpg"]
-
-    function setImageSource(){
-        var index=imageSource.indexOf("images/");
-        index=index+7;
-        var imageID=imageSource.substring(index);
-        imageNum=imagesString.indexOf(imageID);
-    }
-
-    // var width_factor=640/1500;
-    // var height_factor=468/1096;
-
-    var boundingCoordinates=[[906.8, 102.1, 561, 315.56],
-    [148.3, 29.2, 469.8, 264.26], 
-    [516.7, 621.5, 752.9, 423.5], 
-    [671.5, 781.6, 205.9, 115.8], 
-    [695, 99.2, 186.6, 104.96], 
-    [868.8, 587.2, 621, 349.3], 
-    [5.4, 11.9, 711.1, 399.99], 
-    [291.4, 13.9, 530.9, 298.63], 
-    [112.2, 218.2, 482.7, 271.52],
-    [123.1,632.8, 141.6, 79.65]];
 
     var touchList = new TouchListHandler(),
         startX = 0,
@@ -1420,186 +1380,10 @@
 
 
     function myDrawFunction(customCanvas, ctx, composer){
-        var rectX = bounding_topleft_positionX*composer.scale+composer.offsetX,
-            rectY = bounding_topleft_positionY*composer.scale+composer.offsetY,
-            rectWidth = bounding_width*composer.scale,
-            rectHeight = bounding_height*composer.scale;
-            ctx.strokeStyle="red"; 
-            ctx.rect(rectX, rectY, rectWidth, rectHeight); 
-            ctx.stroke();
-            // console.log(rectX+ ", "+ rectY+", "+rectWidth+", "+rectHeight);
+
     }
 
-    var bounding_topleft_positionX=0; 
-    var bounding_topleft_positionY=0; 
-    var bounding_width=0; 
-    var bounding_height=0;
-    var error_all=[];
-    var error_all_pixel=[];
-
-    function setBoundingDims(){
-        bounding_topleft_positionX=boundingCoordinates[imageNum][0]; 
-        bounding_topleft_positionY=boundingCoordinates[imageNum][1]; 
-        bounding_width=boundingCoordinates[imageNum][2]; 
-        bounding_height=boundingCoordinates[imageNum][3];
-        // console.log("boundingCoordinates: "+bounding_topleft_positionX+" "+bounding_topleft_positionY+" "+bounding_width+" "+bounding_height) 
-    }
-
-    function cropDimensions(){
-        var imageLayer = document.querySelector('canvas[is="composer-image-layer"]'),
-            composer = imageLayer.getComposerCanvas(),
-            pixelX = -(composer.offsetX / composer.scale),
-            pixelY = -(composer.offsetY / composer.scale),
-            width = composer.width / composer.scale,
-            height = composer.height / composer.scale;
-            error(pixelX, pixelY, width, height, bounding_topleft_positionX, bounding_topleft_positionY,bounding_width, bounding_height);
-            console.log(pixelX +", "+pixelY, width+", "+height);
-            console.log(bounding_topleft_positionX+", "+bounding_topleft_positionY+", "+bounding_width+", "+bounding_height);
-        return [pixelX, pixelY, width, height];
-    }
-
-    /* 
-    Your previous Plain Text content is preserved below:
-
-    /*
-    1. crop_topleft_position.x
-    2. crop_topleft_position.y
-    3. crop_width
-    4. crop_height
-    5. bounding_width
-    6. bounding_height
-    */
-
-    function error( crop_topleft_positionX, crop_topleft_positionY, crop_width, crop_height, bounding_topleft_positionX, bounding_topleft_positionY, bounding_width, bounding_height ){
-        var error=0;
-        var error_pixel=0;
-        // console.log("crop_topleft_positionX: "+crop_topleft_positionX +" crop_topleft_positionY: "+ crop_topleft_positionY+ " crop_width: "+crop_width+ " crop_height: "+crop_height+" bounding_topleft_positionX: "+ bounding_topleft_positionX+" bounding_topleft_positionY: "+ bounding_topleft_positionY+ " bounding_width: "+bounding_width+" bounding_height: "+ bounding_height);
-      
-        boundingCenter={x:getCenterX (bounding_topleft_positionX, bounding_width), y:getCenterY (bounding_topleft_positionY, bounding_height)}
-        // console.log("boundingCenter: x "+boundingCenter.x+" y "+boundingCenter.y);
-
-        crop_topLeft={x:crop_topleft_positionX,y:crop_topleft_positionY};
-        // console.log("crop_topLeft: x "+crop_topLeft.x+" y "+crop_topLeft.y);
-        
-        crop_topRight={x:get_topRightX(crop_topleft_positionX, crop_width),y:get_topRightY(crop_topleft_positionY)};
-        // console.log("crop_topRight: x "+crop_topRight.x+" y "+crop_topRight.y);
-        
-        crop_bottomRight={x:get_bottomRightX(crop_topleft_positionX, crop_width),y:get_bottomRightY (crop_topleft_positionY, crop_height)};
-        // console.log("crop_bottomRight: x "+crop_bottomRight.x+" y "+crop_bottomRight.y);
-      
-        crop_bottomLeft={x:get_bottomLeftX(crop_topleft_positionX),y:get_bottomLeftY (crop_topleft_positionY, crop_height)};
-        // console.log("crop_bottomLeft: x "+crop_bottomLeft.x+" y "+crop_bottomLeft.y);
-
-        fixedHalfDiagonal=halfDiagonal(bounding_width,bounding_height);
-        // console.log("fixedHalfDiagonal: "+fixedHalfDiagonal);
-
-        distanceTopLeft=distanceBtwPoints(boundingCenter, crop_topLeft);
-        distanceTopRight=distanceBtwPoints(boundingCenter, crop_topRight);
-        distanceBottomLeft=distanceBtwPoints(boundingCenter, crop_bottomLeft);
-        distanceBottomRight=distanceBtwPoints(boundingCenter, crop_bottomRight);
-
-        // console.log("distanceTopLeft: "+distanceTopLeft);
-        // console.log("distanceTopRight: "+distanceTopRight);
-        // console.log("distanceBottomLeft: "+distanceBottomLeft);
-        // console.log("distanceBottomRight: "+distanceBottomRight);
-
-        diffTopLeft=Math.abs(distanceTopLeft-fixedHalfDiagonal);
-        diffTopRight=Math.abs(distanceTopRight-fixedHalfDiagonal);
-        diffBottomLeft=Math.abs(distanceBottomLeft-fixedHalfDiagonal);
-        diffBottomRight=Math.abs(distanceBottomRight-fixedHalfDiagonal);
-        
-        // console.log("diff all start");
-        // console.log(diffTopLeft);
-        // console.log(diffTopRight);
-        // console.log(diffBottomLeft);
-        // console.log(diffBottomRight);
-        // console.log("diff all end");
-      
-        errorTopLeft=(diffTopLeft/fixedHalfDiagonal)*100;
-        errorTopRight=(diffTopRight/fixedHalfDiagonal)*100;
-        errorBottomLeft=(diffBottomLeft/fixedHalfDiagonal)*100;
-        errorBottomRight=(diffBottomRight/fixedHalfDiagonal)*100;
-
-        // console.log("errorTopLeft: "+errorTopLeft);
-        // console.log("errorTopRight: "+errorTopRight);
-        // console.log("errorBottomLeft: "+errorBottomLeft);
-        // console.log("errorBottomRight: "+errorBottomRight);
-      
-        error=Math.max(errorTopLeft, errorTopRight, errorBottomLeft, errorBottomRight);
-        error_pixel=Math.max(diffTopLeft, diffTopRight, diffBottomLeft, diffBottomRight);
-        console.log("error: "+error);
-        error_all.push(error);
-        error_all_pixel.push(error_pixel);
-        return [error, error_pixel];
-    }
-
-    function distanceBtwPoints(pointA, pointB){
-        var Xdiff=pointB.x-pointA.x;
-        var Ydiff=pointB.y-pointA.y;
-        var dist_square=Math.pow(Xdiff,2)+Math.pow(Ydiff,2);
-    //  console.log("distanceBtwPoints :"+dist_square);
-        var dist=Math.pow(dist_square, 0.5);
-        return dist;
-    }
-
-    function halfDiagonal(width, height){
-        var halfDiag;
-        var diag_square=Math.pow(width,2)+Math.pow(height,2);
-        var diag=Math.pow(diag_square, 0.5);
-        halfDiag=0.5*diag;
-        return halfDiag;
-    }
-
-    function getCenterX (topLeftX, width){
-        var centerX;
-        centerX=topLeftX+width/2;
-        return centerX;
-    }
-
-    function getCenterY (topLeftY, height){
-        var centerY;
-        centerY=topLeftY+height/2;
-        return centerY;
-    }
-
-    function get_topRightX (topLeftX, width){
-        var topRightX;
-        topRightX=topLeftX+width;
-        return topRightX;
-    }
-
-    function get_topRightY (topLeftY){
-        return topLeftY;
-    }
-
-    function get_bottomRightX (topLeftX, width){
-        var bottomRightX;
-        bottomRightX=topLeftX+width;
-        return bottomRightX;
-    }
-
-    function get_bottomRightY (topLeftY, height){
-        var bottomRightY;
-        bottomRightY=topLeftY+height;
-        return bottomRightY;
-    }
-
-    function get_bottomLeftX (topLeftX){
-        return topLeftX;
-    }
-
-    function get_bottomLeftY (topLeftY, height){
-        var bottomLeftY;
-        bottomLeftY=topLeftY+height;
-        return bottomLeftY;
-    }
-
-    //100% increase in size with same center position
-    error(0,0,100,100,25,25,50,50); 
-
-    //100% increase in size with same center position
-    error(120,120,160,160,160,160,80,80);
-
+    
 
 
 

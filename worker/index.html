@@ -368,6 +368,12 @@
         .audio-stuff {
             display: none;
         }
+
+
+        composer-tools > composer-tool[type="audio"]:not(.recording) {
+            background-color: inherit;
+            color: black;
+        }
     </style>
 </head>
 <body>
@@ -398,17 +404,7 @@
                 </composer-caption>
             </tagalong-composer>
             <incoming-images>
-                <img is="incoming-image" src="images/i3.jpg">
-                <img is="incoming-image" src="images/i7.jpg">
-                <img is="incoming-image" src="images/i1.jpg">
-                <img is="incoming-image" src="images/i10.jpg">
-                <img is="incoming-image" src="images/i2.jpg">
-                <img is="incoming-image" src="images/i4.jpg">
-                <img is="incoming-image" src="images/i5.jpg">
-                <img is="incoming-image" src="images/i6.jpg">
-                <img is="incoming-image" src="images/i8.jpg">
-                <img is="incoming-image" src="images/i9.jpg">
-                <img is="incoming-image">
+                <img is="incoming-image" src="http://upload.wikimedia.org/wikipedia/commons/0/05/MIT_Building_10_and_the_Great_Dome,_Cambridge_MA.jpg">
             </incoming-images>
             <audio id="t1" autoplay controls type="audio/wav" name="audioplayer">
         </section>
