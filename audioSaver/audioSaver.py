@@ -1,12 +1,10 @@
 import gevent.monkey
 gevent.monkey.patch_all()
-from twisted.web.server import Site
-from twisted.web.static import File 
-from twisted.internet import reactor 
-import subprocess
 import wearscript
 import argparse
-from .. import wear_connect_server
+# from .. import wear_connect_server
+from ..wearconnect import WearConnectServer 
+
 import time
 from apscheduler.schedulers.gevent import GeventScheduler as Scheduler
 import logging
@@ -15,13 +13,20 @@ import sys
 from datetime import datetime
 from datetime import timedelta
 from Queue import Queue
+from gevent.queue import Queue as GQueue
+from gevent.event import Event
+from gevent.event import AsyncResult
+# from Queue import Queue
 import base64
+import re
 
 image_name_templ = 'wear-connect/test/img/text-wear-connect-test-%s.jpg'
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
-number_of_messages = 1000
-number_of_test_images = 10
+# this is only relevant with tile_windows = False. Else controlled by tile_x, tile_y
+number_of_clients = 4
+number_of_messages = 15
+number_of_test_images = 5
 delta_to_start = 1
 delta_between_messages = 1
 final_wait = 3
@@ -46,18 +51,113 @@ log_outfile_name = "playback.log"
 LOG_OUTFILE = open(log_outfile_name, 'wb')
 HTTP_PORT = 8991
 base64_encode_image = False
+tile_windows = True
+# tile_x = [0, 400, 800]
+tile_x = [0, 400]
+tile_y = [20, 420]
+tile_number_of_rows = len(tile_y)
+tile_number_of_columns = len(tile_x)
+tile_number_of_clients = tile_number_of_rows * tile_number_of_columns # fixed for now
+TILE_WIDTH = 400
+TILE_HEIGHT = 400
+test_window_id = AsyncResult()
 
-def open_page():
-    print "Opening page in Chrome"
-    # address=('http://localhost:%d/stage-displays/viewer.html' % HTTP_PORT)
-    address=('http://localhost:%d/' % HTTP_PORT)
-    p = subprocess.Popen(['chrome-cli', 'open', address, '-i'], stdout=LOG_OUTFILE)
-    r = p.wait()
-    if r:
-        raise RuntimeError('An error occurred opening the page')
+webserver_running = Event()
+windows_are_open = Event()
+windows_are_ready = Event()
+ready_for_alice = Event()
+wcs_initialized = Event()
+ready_for_bob = Event()
+ready_for_scheduler = Event()
+ready_for_queue = Event()
+page_address = ('http://localhost:%d/' % HTTP_PORT)
+window_id_queue = GQueue()
+window_pos_queue = GQueue()
+window_info = []
+wcs = ""
+
+def queue_window_params():
+    for x in tile_x:
+        for y in tile_y:
+            window_pos_queue.put([x, y])
+
+def open_pages():
+    webserver_running.wait()
+    if tile_windows:
+        open_tile_pages()
+    else:
+        for client_number in range(number_of_clients):
+            gevent.spawn(open_page, client_number)
+
+def open_tile_pages():
+    queue_window_params()
+    for client_number in range(tile_number_of_clients):
+        gevent.spawn(open_page_id)
+    gevent.spawn(arrange_tile_pages)
+
+def close_tile_pages():
+    for params in window_info:
+        p = subprocess.Popen(['chrome-cli', 'close', '-w', params['id']])
+
+def arrange_tile_pages():
+    global window_info
+    window_greenlets = [];
+    windows_are_open.wait()
+    print("Windows are ready, yay!")
+    while not window_id_queue.empty():
+        params = window_id_queue.get()
+        #
+        # SET POSITION
+        #
+        p = subprocess.Popen(['chrome-cli', 'position', params['x'], params['y'], '-w', params['id']])
+        window_greenlets.append(p)
+        p.wait()
+        #
+        # SET SIZE
+        #
+        p = subprocess.Popen(['chrome-cli', 'size', params['w'], params['h'], '-w', params['id']])
+        window_greenlets.append(p)
+        window_info.append(params)
+        gevent.sleep(0)
+    gevent.wait(window_greenlets)
+    windows_are_ready.set()
+
+
+def open_page_id():
+    # parse tab id from command output and subtract 1 to get window id
+    chrome_cli_output = subprocess.check_output(['chrome-cli', 'open', page_address, '-i'])
+    top_line = chrome_cli_output.split("\n")[0]
+    m = re.search( '(?P<id>[0-9]+)', top_line )
+    window_id = str(int(m.group('id')) - 1 )
+    x,y = window_pos_queue.get()
+    window_id_queue.put( {'id': window_id, 'x': str(x), 'y': str(y), 'w': str(TILE_WIDTH), 'h': str(TILE_HEIGHT) } )
+    if window_id_queue.qsize() >= tile_number_of_clients:
+        windows_are_open.set()
+
+def open_page(client_number):
+    if client_number == 0:
+        print("Opening first client")
+        #
+        # open in new window and grab the window id
+        #
+        p = subprocess.Popen(['chrome-cli', 'open', page_address, '-i'])
+        p.wait()
+        p1 = subprocess.Popen(['chrome-cli', 'list', 'windows'], stdout=subprocess.PIPE)
+        #
+        # 'out' contains window list. The last one is the new one.
+        #
+        out, err = p1.communicate()
+        chrome_windows = out.split("\n")
+        m = re.search('\[(?P<id>[0-9]+)\]', chrome_windows[-2])
+        print("Found id of new window: %s" % m.group('id'))
+        test_window_id.set(m.group('id'))
+    else:
+        print("Opening client %i" % client_number)
+        p = subprocess.Popen(['chrome-cli', 'open', page_address, '-w', test_window_id.get()])
 
 def start_web_server():
     reactor.listenTCP(HTTP_PORT, Site(File("wear-connect"))); 
+    webserver_running.set()
     reactor.run()
 
 def image_name(i):
@@ -68,6 +168,7 @@ def load_image_data(i):
     img = open(file_path, 'rb')
     img.seek(0)
     imgBytes = img.read()
+    # print "imgBytes " + imgBytes
     img.close()
     if giant_message and i % number_of_test_images == number_of_test_images - 1:
         print("Prepping a giant message")
@@ -76,8 +177,6 @@ def load_image_data(i):
     if base64_encode_image:
         imgBytes = base64.b64encode(imgBytes)
     return imgBytes
-
-print("Bytes in image: " + str(len(load_image_data(0))))
 
 # Goal: Clearly demonstrate a clogged websocket by sending a bunch of images 
 # and showing that they occasionally take many seconds to arrive. Could try
@@ -103,6 +202,7 @@ def callback_alice(ws, **kw):
     ws.subscribe( ws.group_device, narrowcast_cb )
     ws.subscribe( test_channel, narrowcast_cb )
     ws.subscribe( 'subscriptions', subscriptions_cb )
+    ready_for_scheduler.set()
     try:
         ws.handler_loop()
     except Exception:
@@ -126,22 +226,27 @@ def callback_bob(ws, **kw):
     print "I'm Bob and my group_device is " + ws.group_device
     ws.subscribe( ws.group_device, narrowcast_cb )
     ws.subscribe( test_channel, get_test_channel )
+    ready_for_alice.set()
     ws.handler_loop()
 
 def scheduler_loop(arg):
     global sched
+    ready_for_scheduler.wait()
+    print("STARTING SCHEDULER.")
     sched = Scheduler()
     sched.start()
     logging.basicConfig()
     scheduler_main("")
+    ready_for_queue.set()
     while True:
-        sleep( 1 )
         sys.stdout.write( '.' )
         sys.stdout.flush()
+        gevent.sleep(1)
 
 def do_process_queue():
     global messages_published
     global msg_queue
+    ready_for_queue.wait()
     msg_queue = Queue()
     print "Starting queue processing yay 8987987"
     while True:
@@ -162,6 +267,7 @@ def do_process_queue():
         if is_last_message:
             "Processing the last message."
             finish()
+        gevent.sleep(0)
 
 def queue_test_message(i_orig):
     global messages_queued
@@ -183,22 +289,29 @@ def queue_test_message(i_orig):
         print "Exception raised in ws_alice publish"
 
 def finish():
-    return
-    # global finish_called
-    # if finish_called:
-    #     print "Finished called multiple times."
-    #     return
+    global finish_called
+    if finish_called:
+        print "Finished called multiple times."
+        return
 
-    # print "Finishing."
-    # finish_called = True
+    print "Finishing."
+    finish_called = True
 
-    # # shut down the scheduler right away
-    # sched.shutdown(wait=False)
+    # shut down the scheduler right away
+    sched.shutdown(wait=False)
 
-    # # wait a few seconds for running jobs to finish
-    # delayed_finish()
+    # shut down the web server
+    reactor.stop()
+
+    # close chrome windows
+    if tile_windows:
+        close_tile_pages()
+
+    # wait a few seconds for running jobs to finish
+    delayed_finish()
 
 def delayed_finish():
+    global final_sched
     final_sched = Scheduler()
     final_sched.start()
     now = datetime.today()
@@ -208,6 +321,7 @@ def delayed_finish():
     # final_sched.shutdown()
 
 def final_finish():
+    final_sched.shutdown( wait = False )
     kill_greenlets()
     final_report()
 
@@ -219,6 +333,9 @@ def kill_greenlets():
         cnt += 1
 
 def final_report():
+    global messages_received
+    if messages_received == 0:
+        messages_received = 1
     print """
     Final report: messages queued %i, messages published %i, messages received %i, average transit time %s
     """ % (messages_queued, messages_published, messages_received, str(total_transit_time / messages_received))
@@ -238,37 +355,62 @@ def scheduler_main(arg):
         print "Queueing job at " + str( thistime )
         jobs.append( sched.add_job( queue_test_message, 'date', run_date = thistime, args= [ i ] ))
         thistime += delta5sec
+        gevent.sleep(0)
 
 def start_ws_client_alice():
+    ready_for_alice.wait()
+    print("STARTING ALICE")
     wearscript.websocket_client_factory( callback_alice, 'ws://localhost:' + str(WS_PORT) + '/', 
         group = clientGroup, device = aliceDevice )
     # wearscript.websocket_client_factory( callback_alice, 'ws://localhost:' + str(WS_PORT) + '/')
 
 def start_ws_client_bob():
+    wcs_initialized.wait()
+    wcs.public_ready.wait()
+    # ready_for_bob.wait()
+    print("STARTING BOB.")
     wearscript.websocket_client_factory( callback_bob, 'ws://localhost:' + str(WS_PORT) + '/', 
         group = clientGroup, device = bobDevice )
     # wearscript.websocket_client_factory( callback_bob, 'ws://localhost:' + str(WS_PORT) + '/')
 
 def start_ws_server():
-    wear_connect_server.main()
+    windows_are_ready.wait()
+    print("WINDOWS ARE READY. STARTING WS SERVER.")
+    return wear_connect_server.main()
+
+def start_everybody_else():
+    uber_client_ready.wait()
+    ready_for_alice.set()
+    ready_for_bob.set()
+    ready_for_scheduler.set()
+
+def start_wearconnect():
+    global wcs
+    windows_are_ready.wait()
+    wcs = WearConnectServer()
+    wcs_initialized.set()
+    wcs.run()
+
+def return_a_value():
+    return "my badass value"
+
+def event_test():
+    wcs.uber_client_ready.wait()
+    print("Got uber_client_ready event!")
+
+def moving_forward():
+    wcs.public_ready.wait()
+    print("WearConnectServer is ready for action.")
 
 if __name__ == '__main__':
-    # fire up wear-connect server, client bob, and client alice
-    ws_server_greenlet = gevent.spawn(start_ws_server)
-    ws_client_greenlet_bob = gevent.spawn_later(2, start_ws_client_bob)
-    ws_client_greenlet_alice = gevent.spawn_later(3, start_ws_client_alice)
+    the_greenlets.append( gevent.spawn( start_web_server) )
+    the_greenlets.append( gevent.spawn( open_pages) )
+    the_greenlets.append( gevent.spawn( start_wearconnect ) )
+    the_greenlets.append( gevent.spawn( start_ws_client_bob ) )
+    the_greenlets.append( gevent.spawn( start_ws_client_alice ) )
+    the_greenlets.append( gevent.spawn( scheduler_loop, "" ) )
+    the_greenlets.append( gevent.spawn( do_process_queue ) )
 
-    # schedule test messages from client Alice
-    scheduler_loop_greenlet = gevent.spawn_later(6, scheduler_loop, "")
-    do_process_queue_greenlet = gevent.spawn(do_process_queue)
-
-    page_greenlet = gevent.spawn_later(5, open_page)
-    server_greenlet = gevent.spawn(start_web_server)
-
-    print "Spawned Greenlets: ws_server_greenlet, ws_client_greenlet_alice, " \
-        +  "ws_client_greenlet_bob, scheduler_loop_greenlet, and more"
-
-    the_greenlets = [page_greenlet, server_greenlet, ws_server_greenlet, ws_client_greenlet_alice, ws_client_greenlet_bob, scheduler_loop_greenlet, do_process_queue_greenlet]
-    gevent.joinall(the_greenlets)
-
+    gevent.joinall( the_greenlets )
+    # gevent.wait()
 

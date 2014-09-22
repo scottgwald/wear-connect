@@ -1202,10 +1202,26 @@
             if(wearScriptConnection){
                 // wearScriptConnection.send('picture', src, caption);
 
-                wearScriptConnection.send('words', caption, src);
+                wearScriptConnection.publish('words', caption, src);
+                if(audioString) {
+                    wearScriptConnection.publish(SEND_AUDIO_CHANNEL, audioString, 'thefile')
+                    autioString = undefined;
+                }
             }
         });
     });
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2319,6 +2335,12 @@
 
             });
             ws.send('register', 'registered', 'worker:' + currentTimeString());
+
+            ws.subscribe('audiofile', function(chan, data, title){
+                var t1 = document.querySelector('#t1');
+                debugger;
+                t1.src = data;
+            });
         }
     };
 
@@ -2346,6 +2368,5 @@
     IncomingImageHandler.prototype.addImageFromDataURL = function(){
 
     }
-
 
 //}());

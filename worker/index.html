@@ -365,6 +365,9 @@
                 transform: translate(-55px, -300px);
             }
         }*/
+        .audio-stuff {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -375,6 +378,7 @@
                     <heading>Tools</heading>
                     <composer-tool type="pan" selected><i class="fa fa-arrows"></i></composer-tool>
                     <composer-tool type="doodle"><i class="fa fa-paint-brush"></i></composer-tool>
+                    <composer-tool type="audio" onclick="toggleRecording(this);"><i class="fa fa-microphone"></i></composer-tool>
                     <composer-tool type="send" right static unselectable><i class="fa fa-send"></i></composer-tool>
                     <composer-tool type="reset" right static unselectable><i class="fa fa-refresh"></i></composer-tool>
                 </composer-tools>
@@ -406,6 +410,7 @@
                 <img is="incoming-image" src="images/i9.jpg">
                 <img is="incoming-image">
             </incoming-images>
+            <audio id="t1" autoplay controls type="audio/wav" name="audioplayer">
         </section>
         <aside class="right-container" state="closed">
             <heading id="rightContainerToggle"><i class="fa fa-arrow-left"></i> Images</heading>
@@ -416,13 +421,44 @@
                 </picture-element>
             </picture-container>
         </aside>
+        
     </main>
+
+    
+
+
+    <div class="audio-stuff">
+        <div id="viz">
+            <canvas id="analyser" width="1024" height="500"></canvas>
+            <canvas id="wavedisplay" width="1024" height="500"></canvas>
+        </div>
+        <div id="controls">
+            <a id="record" src="img/mic128.png" onclick="toggleRecording(this);" class="">hii</a>
+            <a id="save" download="myRecording00.wav">dlpls</a>
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <require-fullscreen displayed="false">Tap to go fullscreen</require-fullscreen>
 
     <!-- <script src="bower_components/jquery/dist/jquery.js"></script> -->
     <!-- <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script> -->
     <!-- <script src="bower_components/angular/angular.js"></script> -->
-
+    <script src="scripts/s.js"></script>
     <script src="bower_components/reconnecting-websocket/reconnecting-websocket.js"></script>
     <script src="bower_components/wearscript-js/wearscript-client.js"></script>
     <script src="bower_components/msgpack-javascript/msgpack.js"></script>
