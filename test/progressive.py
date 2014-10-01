@@ -7,7 +7,7 @@ import gevent.subprocess as subprocess
 import wearscript
 import argparse
 # from .. import wear_connect_server
-from ..wearconnect import WearConnectServer 
+from wearconnect.wearconnect import WearConnectServer
 
 import time
 from apscheduler.schedulers.gevent import GeventScheduler as Scheduler
