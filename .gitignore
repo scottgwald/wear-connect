@@ -4,5 +4,6 @@ src/pip-delete-this-directory.txt
 config.json
 config.json.old
 /src/
+/build/
 *.py[cod]
 wearscript.apk
