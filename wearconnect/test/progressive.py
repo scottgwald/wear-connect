@@ -6,6 +6,7 @@ from twisted.internet import reactor
 import gevent.subprocess as subprocess
 import wearscript
 import argparse
+import os
 # from .. import wear_connect_server
 from wearconnect.wearconnect import WearConnectServer
 
@@ -24,7 +25,8 @@ from gevent.event import AsyncResult
 import base64
 import re
 
-image_name_templ = 'wear-connect/test/img/text-wear-connect-test-%s.jpg'
+TEST_DIR = os.path.dirname(os.path.realpath(__file__))
+image_name_templ = os.path.join(TEST_DIR, 'img','text-wear-connect-test-%s.jpg')
 # TODO: this needs to be in only one place!!
 WS_PORT = 8112
 # this is only relevant with tile_windows = False. Else controlled by tile_x, tile_y
@@ -160,7 +162,7 @@ def open_page(client_number):
         p = subprocess.Popen(['chrome-cli', 'open', page_address, '-w', test_window_id.get()])
 
 def start_web_server():
-    reactor.listenTCP(HTTP_PORT, Site(File("wear-connect"))); 
+    reactor.listenTCP(HTTP_PORT, Site(File(TEST_DIR)));
     webserver_running.set()
     reactor.run()
 
