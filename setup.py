@@ -18,6 +18,7 @@ setup(
         'Pillow',
         'twisted',
         'redis',
-        'apscheduler'
+        'apscheduler',
+        'wearscript'
     ]
 )
