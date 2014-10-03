@@ -24,6 +24,17 @@ from gevent.event import AsyncResult
 # from Queue import Queue
 import base64
 import re
+import platform
+
+def os_detector():
+    uname = platform.uname()
+    if uname[0] == 'Darwin' and uname[-2] == 'x86_64':
+        return 'osx'
+    elif uname[0] == 'Linux' and uname[-2] == 'x86_64':
+        return 'linux64'
+    return 'other'
+
+THIS_OS = os_detector()
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 image_name_templ = os.path.join(TEST_DIR, 'img','text-wear-connect-test-%s.jpg')
@@ -102,64 +113,75 @@ def open_tile_pages():
     gevent.spawn(arrange_tile_pages)
 
 def close_tile_pages():
-    for params in window_info:
-        p = subprocess.Popen(['chrome-cli', 'close', '-w', params['id']])
+    if THIS_OS == 'osx':
+        for params in window_info:
+            p = subprocess.Popen(['chrome-cli', 'close', '-w', params['id']])
 
 def arrange_tile_pages():
     global window_info
     window_greenlets = [];
     windows_are_open.wait()
     print("Windows are ready, yay!")
-    while not window_id_queue.empty():
-        params = window_id_queue.get()
-        #
-        # SET POSITION
-        #
-        p = subprocess.Popen(['chrome-cli', 'position', params['x'], params['y'], '-w', params['id']])
-        window_greenlets.append(p)
-        p.wait()
-        #
-        # SET SIZE
-        #
-        p = subprocess.Popen(['chrome-cli', 'size', params['w'], params['h'], '-w', params['id']])
-        window_greenlets.append(p)
-        window_info.append(params)
-        gevent.sleep(0)
-    gevent.wait(window_greenlets)
+    if THIS_OS == 'osx':
+	while not window_id_queue.empty():
+	    params = window_id_queue.get()
+	    #
+	    # SET POSITION
+	    #
+	    p = subprocess.Popen(['chrome-cli', 'position', params['x'], params['y'], '-w', params['id']])
+	    window_greenlets.append(p)
+	    p.wait()
+	    #
+	    # SET SIZE
+	    #
+	    p = subprocess.Popen(['chrome-cli', 'size', params['w'], params['h'], '-w', params['id']])
+	    window_greenlets.append(p)
+	    window_info.append(params)
+	    gevent.sleep(0)
+            gevent.wait(window_greenlets)
     windows_are_ready.set()
 
 
 def open_page_id():
     # parse tab id from command output and subtract 1 to get window id
-    chrome_cli_output = subprocess.check_output(['chrome-cli', 'open', page_address, '-i'])
-    top_line = chrome_cli_output.split("\n")[0]
-    m = re.search( '(?P<id>[0-9]+)', top_line )
-    window_id = str(int(m.group('id')) - 1 )
-    x,y = window_pos_queue.get()
-    window_id_queue.put( {'id': window_id, 'x': str(x), 'y': str(y), 'w': str(TILE_WIDTH), 'h': str(TILE_HEIGHT) } )
-    if window_id_queue.qsize() >= tile_number_of_clients:
+    if THIS_OS == 'osx':
+        chrome_cli_output = subprocess.check_output(['chrome-cli', 'open', page_address, '-i'])
+        top_line = chrome_cli_output.split("\n")[0]
+        m = re.search( '(?P<id>[0-9]+)', top_line )
+        window_id = str(int(m.group('id')) - 1 )
+        x,y = window_pos_queue.get()
+        window_id_queue.put( {'id': window_id, 'x': str(x), 'y': str(y), 'w': str(TILE_WIDTH), 'h': str(TILE_HEIGHT) } )
+        if window_id_queue.qsize() >= tile_number_of_clients:
+            windows_are_open.set()
+    else:
+        p = subprocess.Popen(['google-chrome', '--incognito', page_address])
+        p.wait()
         windows_are_open.set()
 
 def open_page(client_number):
-    if client_number == 0:
-        print("Opening first client")
-        #
-        # open in new window and grab the window id
-        #
-        p = subprocess.Popen(['chrome-cli', 'open', page_address, '-i'])
-        p.wait()
-        p1 = subprocess.Popen(['chrome-cli', 'list', 'windows'], stdout=subprocess.PIPE)
-        #
-        # 'out' contains window list. The last one is the new one.
-        #
-        out, err = p1.communicate()
-        chrome_windows = out.split("\n")
-        m = re.search('\[(?P<id>[0-9]+)\]', chrome_windows[-2])
-        print("Found id of new window: %s" % m.group('id'))
-        test_window_id.set(m.group('id'))
+    if THIS_OS == 'osx':
+        if client_number == 0:
+            print("Opening first client")
+            #
+            # open in new window and grab the window id
+            #
+            p = subprocess.Popen(['chrome-cli', 'open', page_address, '-i'])
+            p.wait()
+            p1 = subprocess.Popen(['chrome-cli', 'list', 'windows'], stdout=subprocess.PIPE)
+            #
+            # 'out' contains window list. The last one is the new one.
+            #
+            out, err = p1.communicate()
+            chrome_windows = out.split("\n")
+            m = re.search('\[(?P<id>[0-9]+)\]', chrome_windows[-2])
+            print("Found id of new window: %s" % m.group('id'))
+            test_window_id.set(m.group('id'))
+        else:
+            print("Opening client %i" % client_number)
+            p = subprocess.Popen(['chrome-cli', 'open', page_address, '-w', test_window_id.get()])
     else:
-        print("Opening client %i" % client_number)
-        p = subprocess.Popen(['chrome-cli', 'open', page_address, '-w', test_window_id.get()])
+        p = subprocess.Popen(['google-chrome', '--incognito', page_address])
+        p.wait()
 
 def start_web_server():
     reactor.listenTCP(HTTP_PORT, Site(File(TEST_DIR)));
