@@ -28,7 +28,7 @@ class develop_with_submodules(develop):
 setup(
     name='wearconnect',
     version='0.1',
-    packages=['wearconnect', 'wearscript'],
+    packages=['wearscript','wearconnect'],
     package_dir={'wearscript': 'submodule/wearscript-python/wearscript'},
     author='Scott Greenwald',
     author_email='scottgwald@gmail.com',
