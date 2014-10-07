@@ -11,7 +11,7 @@ def get_submodules():
         check_call(['git', 'reset', '--hard'])
         check_call(['git', 'submodule', 'init'])
         check_call(['git', 'submodule', 'update'])
-        check_call(['pip', 'install', '-e', 'submodule/wearscript-python'])
+        check_call(['pip', 'install', '--no-clean', '-e', 'submodule/wearscript-python'])
 
 class build_with_submodules(build):
     def run(self):
