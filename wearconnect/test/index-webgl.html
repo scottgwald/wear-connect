@@ -6,7 +6,15 @@
   <link href="css/cropper.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-<img style="display:block;width: 100%;">
+<canvas id="myCanvas" width="1300" height="1300"></canvas> 
+<canvas id="textCanvas"></canvas>
+<div id="cropper"></div>
+<script src="js/three.min.js"></script>
+<script src="js/TrackBallControl.js"> </script>
+<script src="js/pixastic.custom.js"></script>
+<script src = "js/helvetiker_regular.typeface.js"></script>
+<!-- <script src = "js/Arial_400.font.js"></script> -->
+<script src = "js/ms_mincho_regular.typeface.js"></script>
 <script src="js/msgpack.js"></script>
 <script src="js/wearscript-client.js"></script>
 <script type="text/javascript" src="js/reconnecting-websocket.js"></script>
@@ -15,6 +23,7 @@
 <script src="////code.jquery.com/jquery-1.11.0.min.js"></script>
 <script src="js/wc-get-endpoint.js"></script>
 
+<script src ="js/cropper.js"></script>
 <script>
 function wc() {
   get_wc_endpoint( main );
@@ -57,17 +66,33 @@ function main( wc_endpoint ) {
   
   function onopen() {
     console.log("WearScriptConnection onopen");
-    ws.subscribe(ws.groupDevice, function(channel, message) {
-      console.log("Got narrowcast message to " + channel);
-    })
+    ws.subscribe('registered', function(channel, name) {
+      console.log('registered as ' + name);
+    });
     ws.subscribe('image', function (chan, timestamp, image) {
       console.log('got image');
       console.log(JSON.stringify({chan: chan, timestamp: timestamp}));
-      $('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
+                                                   
+      //$('img').attr('src', 'data:image/jpg;base64,' + btoa(image));
+      if(!isTagging) {
+        placePicture('data:image/jpg;base64,' + btoa(image));
+        console.log('in if (!isTagging)');
+      } else {
+        console.log('if(!isTagging) else ');
+      }
+      
+      //ws.publish('words',,)
+      
     });
+    ws.send('register', 'registered', 'worker:' + currentTimeString());
   }
 };
 
 </script>
+
+<form id="textform" action="javascript:void(0);" >
+<input type="text" id="field" />
+</form>
+
 </body>
 </html>
