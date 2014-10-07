@@ -29,7 +29,7 @@ setup(
     name='wearconnect',
     version='0.1',
     packages=['wearconnect', 'wearscript'],
-    package_dir={'wearscript': 'submodule/wearscript-python'},
+    package_dir={'wearscript': 'submodule/wearscript-python/wearscript'},
     author='Scott Greenwald',
     author_email='scottgwald@gmail.com',
     license='Apache 2.0',
