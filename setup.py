@@ -11,19 +11,22 @@ def get_submodules():
         check_call(['git', 'reset', '--hard'])
         check_call(['git', 'submodule', 'init'])
         check_call(['git', 'submodule', 'update'])
-        check_call(['python', 'submodule/wearscript-python/setup.py', 'develop'])
+
+def install_submodules():
+    if path.exists('.git'):
+        check_call(['pip', 'install', '-e', 'submodule/wearscript-python'])
 
 class build_with_submodules(build):
     def run(self):
         get_submodules()
         build.run(self)
-
+        install_submodules()
 
 class develop_with_submodules(develop):
     def run(self):
         get_submodules()
         develop.run(self)
-
+        install_submodules()
 
 setup(
     name='wearconnect',
