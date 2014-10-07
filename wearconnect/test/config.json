@@ -1,0 +1,4 @@
+{
+   "use_local": "true",
+   "wc_endpoint": "ws://localhost:8112/"
+}

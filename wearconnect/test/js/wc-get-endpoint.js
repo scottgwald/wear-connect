@@ -12,13 +12,16 @@ function parseEndpoint(wcConfigRaw, callback) {
 
 function getEndpoint(wcConfig, callback) {
   if (wcConfig.use_local) {
-    callback(wcConfig.wc_ip_address);
+    console.log("using local config with endpoint " + wcConfig.wc_endpoint);
+    callback(wcConfig.wc_endpoint);
   } else {
+    console.log("using remote config, getting endpoint from parse.");
     Parse.initialize(wcConfig.applicationId, wcConfig.javaScriptKey);
     var query = new Parse.Query(wcConfig.className);
     query.get(wcConfig.objectId, {
       success: function(object) {
         wc_endpoint = object.attributes[wcConfig.columnName];
+        console.log("Got endpoint from parse: " + wc_endpoint);
         callback(wc_endpoint);
       },
       error: function(object, error) {
