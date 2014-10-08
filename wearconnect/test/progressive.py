@@ -32,6 +32,8 @@ def os_detector():
         return 'osx'
     elif uname[0] == 'Linux' and uname[-2] == 'x86_64':
         return 'linux64'
+    elif uname[0] == 'Windows':
+        return 'windows'
     return 'other'
 
 THIS_OS = os_detector()
@@ -65,7 +67,7 @@ total_transit_time = timedelta( seconds = 0 )
 giant_message = False
 giant_message_doubling_exponent = 7
 log_outfile_name = "playback.log"
-LOG_OUTFILE = open(log_outfile_name, 'wb')
+LOG_OUTFILE = open(log_outfile_name, 'w+b')
 HTTP_PORT = 8991
 base64_encode_image = False
 tile_windows = True
@@ -151,11 +153,15 @@ def open_page_id():
         window_id = str(int(m.group('id')) - 1 )
         x,y = window_pos_queue.get()
         window_id_queue.put( {'id': window_id, 'x': str(x), 'y': str(y), 'w': str(TILE_WIDTH), 'h': str(TILE_HEIGHT) } )
-        if window_id_queue.qsize() >= tile_number_of_clients:
-            windows_are_open.set()
+    elif THIS_OS == 'windows':
+        p = subprocess.Popen([os.path.join("C:\\", "Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe"), page_address, "-i"])
+        p.wait()
+        window_id_queue.put({})
     else:
         p = subprocess.Popen(['google-chrome', '--incognito', page_address])
         p.wait()
+        window_id_queue.put({})
+    if window_id_queue.qsize() >= tile_number_of_clients:
         windows_are_open.set()
 
 def open_page(client_number):
