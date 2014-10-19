@@ -37,7 +37,6 @@ class WearConnectServer(object):
         #
         self.ws_dict_chan = {}
 
-        self.sockets_to_channels = {}
         #
         # Dictionary: key is a channel name, value is a list of websockets
         #
