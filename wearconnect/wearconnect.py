@@ -26,9 +26,21 @@ DEBUG_EXTERNAL = False
 class WearConnectServer(object):
 
     def __init__(self):
+
+        #
+        # Dictionary: key is a websocket, value is a name
+        #
         self.ws_dict = {}
+
+        #
+        # Dictionary: key is a name, value is a websocket
+        #
         self.ws_dict_chan = {}
+
         self.sockets_to_channels = {}
+        #
+        # Dictionary: key is a channel name, value is a list of websockets
+        #
         self.channels_to_sockets = {}
         self.uber_client_ws_client = ""
         self.uber_client_ws_server = ""
