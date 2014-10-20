@@ -38,9 +38,9 @@ class WearConnectServer(object):
         self.ws_dict_chan = {}
 
         #
-        # Dictionary: key is a channel name, value is a list of websockets
+        # Dictionary: key is a channel name, value is a list of groupDevices
         #
-        self.channels_to_sockets = {}
+        self.channels_to_groupDevices = {}
         self.uber_client_ws_client = ""
         self.uber_client_ws_server = ""
         self.WS_PRIVATE_PORT = 8111
@@ -52,6 +52,8 @@ class WearConnectServer(object):
         self.uber_client_subscriptions_queue = Queue()
         self.DEBUG_INTERNAL = DEBUG_INTERNAL
         self.DEBUG_EXTERNAL = DEBUG_EXTERNAL
+        self._lock = gevent.lock.RLock()
+
         print("Initialized WearConnectServer")
         # TODO: user gevent tools to do client start after server start instead of timing
 
@@ -296,10 +298,10 @@ class WearConnectServer(object):
 
             for channel in channels:
                 # could use "set"
-                if channel in self.channels_to_sockets.keys():
-                    self.channels_to_sockets[channel].add(groupDeviceSocket)
+                if channel in self.channels_to_groupDevices.keys():
+                    self.channels_to_groupDevices[channel].add(groupDevice)
                 else:
-                    self.channels_to_sockets[channel] = set([groupDeviceSocket])
+                    self.channels_to_groupDevices[channel] = set([groupDevice])
 
             if self.DEBUG_INTERNAL:
                 print "UBER CLIENT SUBSCRIPTIONS CALLBACK " + groupDevice + " forwarding subscriptions to " + str(self.ws_dict.values())
@@ -327,12 +329,21 @@ class WearConnectServer(object):
                     channel_cur = x
                 else:
                     channel_cur += ':' + x
-                if channel_cur in self.channels_to_sockets.keys():
+                if channel_cur in self.channels_to_groupDevices.keys():
                     if self.DEBUG_INTERNAL:
                         print "forwarding " + chan + " on channel " + channel_cur
-                    for ws_server_socket in self.channels_to_sockets[channel_cur]:
+                    groupDevices = self.channels_to_groupDevices[channel_cur]
+                    for groupDevice in groupDevices:
+                        # catch error?
+                        found = False
+                        try:
+                            ws_server_socket = self.ws_dict_chan[groupDevice]
+                            found = True
+                        except:
+                            print "Bummer, " + groupDevice + " not found in ws_dict_chan."
                         # important: never change the channel mid-flight
-                        gevent.spawn(self.ws_send, ws_server_socket, chan, *argv)
+                        if found:
+                            gevent.spawn(self.ws_send, ws_server_socket, chan, *argv)
 
         init_greenlets.append( gevent.spawn(self.ws_subscribe, ws, ws.group_device, narrowcast_cb ) )
         init_greenlets.append( gevent.spawn(self.ws_subscribe, ws, 'subscriptions', subscriptions_cb ) )
@@ -349,16 +360,38 @@ class WearConnectServer(object):
         print "server-side ws callback: " + ws.group_device
         def subscriptions_cb(chan, groupDevice, channels):
             if not ws.registered:
-                if groupDevice not in self.ws_dict_chan.keys():
-                    # might want to synchronize this ...
-                    self.ws_dict_chan[groupDevice] = ws
-                    self.ws_dict[ws] = groupDevice
-                    ws.registered = True
+                # CLOSE OLD SOCKET IF NEW CLIENT HAS SAME GROUPDEVICE AS EXISTING
+                # possible failure mode:
+                #  two devices keep trying to connect with the same groupDevice
+                #  the server keeps disconnecting one and connecting the other
+                if groupDevice in self.ws_dict_chan:
+                    if self.ws_dict_chan[groupDevice] != ws:
+                        # close old websocket
+                        old_ws = self.ws_dict_chan[groupDevice]
+                        old_ws.close()
+                        doRegister = True
+                    else:
+                        print("Strange, ws " + groupDevice + " has " +
+                            "ws.registered = False, but appears already in " +
+                            "  ws_dict_chan.")
+                else:
+                    doRegister = True
+
+                if doRegister:
+                    try:
+                        self._lock.acquire()
+                        self.ws_dict_chan[groupDevice] = ws
+                        self.ws_dict[ws] = groupDevice
+                        ws.registered = True
+                    finally:
+                        self._lock.release()
                     print "registered is now " + str(ws.registered)
+
                     # send out all existing subscriptions
                     try:
                         for device in self.uber_client_ws_client.device_to_channels.keys():
-                            gevent.spawn(self.ws_send, ws, 'subscriptions', device, self.uber_client_ws_client.device_to_channels[device])
+                            gevent.spawn(self.ws_send, ws, 'subscriptions', device,
+                                self.uber_client_ws_client.device_to_channels[device])
                     except AttributeError:
                         print "Trouble forwarding subscriptions to new client", sys.exc_info()[0]
 
