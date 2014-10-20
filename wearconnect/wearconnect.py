@@ -286,7 +286,7 @@ class WearConnectServer(object):
             if groupDevice.startswith(server_client_prefix):
                 return
             if groupDevice not in self.ws_dict_chan.keys():
-                print "Can't process subscriptions for " + groupDevice + ", not in ws_dict_chan.keys(): " + str(ws_dict_chan.keys())
+                print "Can't process subscriptions for " + groupDevice + ", not in ws_dict_chan.keys(): " + str(self.ws_dict_chan.keys())
                 return
             else:
                 print "Found " + groupDevice + " in ws_dict_chan.keys()"
@@ -367,8 +367,8 @@ class WearConnectServer(object):
                 if groupDevice in self.ws_dict_chan:
                     if self.ws_dict_chan[groupDevice] != ws:
                         # close old websocket
-                        old_ws = self.ws_dict_chan[groupDevice]
-                        old_ws.close()
+                        # old_ws = self.ws_dict_chan[groupDevice]
+                        # old_ws.close()
                         doRegister = True
                     else:
                         print("Strange, ws " + groupDevice + " has " +
