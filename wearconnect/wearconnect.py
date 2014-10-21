@@ -14,6 +14,7 @@ from gevent import pywsgi
 from gevent.queue import Queue, Empty
 
 retry_period = 1
+send_retry_interval = 1
 server_client_prefix = "server"
 uber_client_group = "client"
 uber_client_device = "uber_client"
@@ -102,6 +103,11 @@ class WearConnectServer(object):
             else:
                 if debug:
                     print "Sending to unregistered websocket failed with WebSocketError ", sys.exc_info()[0]
+        except AssertionError:
+            if registered and ws in self.ws_dict:
+                if debug:
+                    print "AssertionError while sending, retrying in %s seconds." % send_retry_interval
+                gevent.spawn_later(send_retry_interval, ws_send, ws, *argv, **kw)
         except:
             if registered and ws in self.ws_dict:
                 if debug:
