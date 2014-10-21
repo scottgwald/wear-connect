@@ -107,7 +107,7 @@ class WearConnectServer(object):
             if registered and ws in self.ws_dict:
                 if debug:
                     print "AssertionError while sending, retrying in %s seconds." % send_retry_interval
-                gevent.spawn_later(send_retry_interval, ws_send, ws, *argv, **kw)
+                gevent.spawn_later(send_retry_interval, self.ws_send, ws, *argv, **kw)
         except:
             if registered and ws in self.ws_dict:
                 if debug:
