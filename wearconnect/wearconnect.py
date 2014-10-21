@@ -22,6 +22,7 @@ uber_client_groupdevice = uber_client_group + ":" + uber_client_device
 sleep_before_uber_client_start = 1
 DEBUG_INTERNAL = False
 DEBUG_EXTERNAL = False
+DEBUG_OVERRIDE = False
 
 class WearConnectServer(object):
 
@@ -52,6 +53,7 @@ class WearConnectServer(object):
         self.uber_client_subscriptions_queue = Queue()
         self.DEBUG_INTERNAL = DEBUG_INTERNAL
         self.DEBUG_EXTERNAL = DEBUG_EXTERNAL
+        self.DEBUG_OVERRIDE = DEBUG_OVERRIDE
         self._lock = gevent.lock.RLock()
 
         print("Initialized WearConnectServer")
@@ -77,6 +79,8 @@ class WearConnectServer(object):
         if internal and self.DEBUG_INTERNAL:
             debug = True
         elif not internal and self.DEBUG_EXTERNAL:
+            debug = True
+        elif self.DEBUG_OVERRIDE:
             debug = True
         else:
             debug = False
